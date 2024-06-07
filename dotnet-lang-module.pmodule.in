@@ -1,0 +1,16 @@
+{
+    "fileVersion": 1,
+    "version": ${NETLM_VERSION},
+    "versionName": "v${NETLM_VERSION}",
+    "friendlyName": "C# (.NET) language module",
+    "language": "csharp",
+    "description": "Adds support for C# (.NET) plugins",
+    "createdBy": "untrustedmodders",
+    "createdByURL": "https://github.com/untrustedmodders/",
+    "docsURL": "https://github.com/untrustedmodders/dotnet-lang-module/README.md",
+    "downloadURL": "https://github.com/untrustedmodders/dotnet-lang-module/releases/download/v${NETLM_VERSION}/${NETLM_PACKAGE}.zip",
+    "updateURL": "https://untrustedmodders.github.com/dotnet-lang-module/dotnet-lang-module.json",
+    "supportedPlatforms": [],
+    "resourceDirectories": [],
+    "forceLoad": false
+}
