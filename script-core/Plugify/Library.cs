@@ -4,7 +4,7 @@ namespace Plugify;
 
 public static class Library
 {
-    [UnmanagedCalleUNrsOnly]
+    [UnmanagedCallersOnly]
     public static void Initialize()
     {
         // TODO: Implement basic staff

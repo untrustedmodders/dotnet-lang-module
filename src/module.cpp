@@ -877,5 +877,3 @@ void DotnetLanguageModule::ErrorWriter(const char_t* message) {
 	g_netlm._provider->Log(message, Severity::Error);
 #endif
 }
-
-#pragma clang diagnostic pop

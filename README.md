@@ -15,7 +15,7 @@ The C# (.NET) Language Module for Plugify facilitates the development of plugins
 
 ### Prerequisites
 
-- .NET Runtime [(.NET 4.7.2)](https://www.mono-project.com/docs/about-mono/compatibility/)
+- .NET Runtime [(.NET 8.0.3)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 - Plugify Framework Installed
 
 ### Installation

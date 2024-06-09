@@ -22,7 +22,7 @@ public static class NativeMethods
     public static extern IntPtr AllocateString();
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr CreateString([MarshalAs(UnmanagedType.LPStr)] string source);
+    public static extern IntPtr CreateString(string source);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.LPStr)]
@@ -32,7 +32,7 @@ public static class NativeMethods
     public static extern int GetStringSize(IntPtr ptr);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void AssignString(IntPtr ptr, [MarshalAs(UnmanagedType.LPStr)] string source);
+    public static extern void AssignString(IntPtr ptr, string source);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void FreeString(IntPtr ptr);
@@ -87,7 +87,7 @@ public static class NativeMethods
     public static extern IntPtr CreateVectorDouble([In] double[] arr, int len);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr CreateVectorString([MarshalAs(UnmanagedType.LPStr)] [In] string[] arr, int len);
+    public static extern IntPtr CreateVectorString([In] string[] arr, int len);
     
     #endregion
 
@@ -234,7 +234,7 @@ public static class NativeMethods
     public static extern void GetVectorDataDouble(IntPtr ptr, [In, Out] double[] arr);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void GetVectorDataString(IntPtr ptr, [MarshalAs(UnmanagedType.LPStr)] [In, Out] string[] arr);
+    public static extern void GetVectorDataString(IntPtr ptr, [In, Out] string[] arr);
 
     #endregion
 
