@@ -4,16 +4,18 @@
 #include <dotnet/hostfxr.h>
 
 namespace netlm {
+	constexpr int kApiVersion = 1;
+
+	using EntryPoint = void (*)();
+	using InitFunc = int (*)();
+	using StartFunc = void (*)();
+	using EndFunc = void (*)();
+
 	class Assembly;
-
 	struct Script {
-		std::string name;
-		std::function<void()> entryPoint;
+		StartFunc startFunc{ nullptr };
+		EndFunc endFunc{ nullptr };
 	};
-
-	template<class F> auto scope_guard(F&& f) {
-		return std::unique_ptr<void, typename std::decay<F>::type>{reinterpret_cast<void*>(1), std::forward<F>(f)};
-	}
 
 	class DotnetLanguageModule final : public plugify::ILanguageModule {
 	public:
@@ -27,12 +29,16 @@ namespace netlm {
 		void OnPluginEnd(const plugify::IPlugin& plugin) override;
 		void OnMethodExport(const plugify::IPlugin& plugin) override;
 
+		void* GetNativeMethod(const std::string& methodName) const;
+
 	private:
 		static void ErrorWriter(const char_t* message);
 
 	private:
 		std::shared_ptr<plugify::IPlugifyProvider> _provider;
 		std::unique_ptr<Assembly> _hostFxr;
-		std::vector<Script> _scripts;
+		std::deleted_unique_ptr<void> _context;
+		std::unordered_map<std::string, Script> _scripts;
+		std::unordered_map<std::string, void*> _nativesMap;
 	};
 }
