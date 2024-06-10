@@ -6,6 +6,7 @@
 #include <plugify/compat_format.h>
 #include <plugify/plugin_descriptor.h>
 #include <plugify/plugin.h>
+#include <plugify/module.h>
 #include <plugify/plugify_provider.h>
 #include <plugify/language_module.h>
 #include <plugify/log.h>
@@ -42,7 +43,7 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{ "Provider not exposed" };
 	}
 
-	fs::path hostPath(_provider->GetBaseDir() / "dotnet/host/fxr/8.0.3/" BINARY_MODULE_PREFIX "hostfxr" BINARY_MODULE_SUFFIX);
+	fs::path hostPath(module.GetBaseDir() / "dotnet/host/fxr/8.0.3/" BINARY_MODULE_PREFIX "hostfxr" BINARY_MODULE_SUFFIX);
 
 	// Load hostfxr and get desired exports
 	auto hostFxr = Assembly::LoadFromPath(hostPath);
@@ -82,7 +83,7 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 	hostfxr_set_error_writer(ErrorWriter);
 	std::error_code ec;
 	
-	fs::path configPath(_provider->GetBaseDir() / "api/PlugifyInterop.runtimeconfig.json");
+	fs::path configPath(module.GetBaseDir() / "api/Plugify.runtimeconfig.json");
 	if (!fs::exists(configPath, ec)) {
 		return ErrorData{std::format("Config is missing: {}", configPath.string())};
 	}
@@ -110,7 +111,7 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{std::format("hostfxr_get_runtime_delegate::hdt_load_assembly failed: {0:x}", result)};
 	}
 
-	fs::path assemblyPath(_provider->GetBaseDir() / "api/Plugify.dll");
+	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
 	if (!fs::exists(assemblyPath, ec)) {
 		return ErrorData{std::format("Assembly is missing: {}", assemblyPath.string())};
 	}
