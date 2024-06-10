@@ -721,7 +721,7 @@ extern "C" {
 			auto N = static_cast<size_t>(len);
 			vector->resize(N);
 			for (size_t i = 0; i < N; ++i) {
-				vector->at(i).assign(arr[i]);
+				(*vector)[i].assign(arr[i]);
 			}
 		}
 	}
