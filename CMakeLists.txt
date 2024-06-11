@@ -22,11 +22,6 @@ set(PLUGIFY_BUILD_FUNCTION ON CACHE INTERNAL "")
 add_subdirectory(external/plugify)
 
 #
-# Dyncall
-#
-add_subdirectory(external/dyncall)
-
-#
 # C# Language Module for Plugify
 #
 file(GLOB_RECURSE NETLM_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "src/*.cpp")
@@ -34,13 +29,12 @@ set(NETLM_PCH_FILE "src/pch.h")
 
 add_library(${PROJECT_NAME} SHARED ${NETLM_SOURCES})
 
-set(NETLM_LINK_LIBRARIES plugify::plugify plugify::plugify-function asmjit::asmjit dyncall_s)
+set(NETLM_LINK_LIBRARIES plugify::plugify)
 
 if(NOT COMPILER_SUPPORTS_FORMAT)
 	set(NETLM_LINK_LIBRARIES ${NETLM_LINK_LIBRARIES} fmt::fmt-header-only)
 endif()
 
-include_directories(external/dyncall/)
 include_directories(external/dotnet/include)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${NETLM_LINK_LIBRARIES})
