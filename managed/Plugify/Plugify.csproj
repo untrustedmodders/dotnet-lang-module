@@ -17,5 +17,10 @@
   <PropertyGroup>
     <RollForward>Major</RollForward>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
 
 </Project>
