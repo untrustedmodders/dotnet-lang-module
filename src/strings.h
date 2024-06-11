@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+
 #if NETLM_PLATFORM_WINDOWS
 #define STRING(str) L##str
 #define STR(str) String::UTF8StringToWideString(str)

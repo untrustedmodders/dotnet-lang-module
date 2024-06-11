@@ -29,7 +29,7 @@ public static class NativeMethods
     public static extern string GetStringData(IntPtr ptr);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int GetStringSize(IntPtr ptr);
+    public static extern int GetStringLength(IntPtr ptr);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void AssignString(IntPtr ptr, string source);

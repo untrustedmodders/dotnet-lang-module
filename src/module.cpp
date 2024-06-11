@@ -16,11 +16,9 @@
 #include <objbase.h>
 #define memAlloc(t) CoTaskMemAlloc(t)
 #define memFree(t) CoTaskMemFree(t)
-#define strCpy(d, b, s) StringCchCopyA(d, b, s)
 #else
 #define memAlloc(t) malloc(t)
 #define memFree(t) free(t)
-#define strCpy(d, b, s) strcpy_s(d, b, s)
 #endif
 
 #define LOG_PREFIX "[NETLM] "
@@ -303,13 +301,13 @@ extern "C" {
 		return source == nullptr ? new std::string() : new std::string(source);
 	}
 	NETLM_EXPORT const char* GetStringData(std::string* string) {
-		size_t length = string->size();
+		size_t length = string->length() + 1;
 		char* str = reinterpret_cast<char*>(memAlloc(length));
-		strCpy(str, length, string->c_str());
+		std::memcpy(str, string->c_str(), length);
 		return str;
 	}
-	NETLM_EXPORT int GetStringSize(std::string* string) {
-		return static_cast<int>(string->size());
+	NETLM_EXPORT int GetStringLength(std::string* string) {
+		return static_cast<int>(string->length());
 	}
 	NETLM_EXPORT void AssignString(std::string* string, const char* source) {
 		if (source == nullptr)
@@ -607,9 +605,9 @@ extern "C" {
 	NETLM_EXPORT void GetVectorDataString(std::vector<std::string>* vector, char* arr[]) {
 		for (size_t i = 0; i < vector->size(); ++i) {
 			const auto& source = (*vector)[i];
-			size_t length = source.size();
+			size_t length = source.size() + 1;
 			char* str = reinterpret_cast<char*>(memAlloc(length));
-			strCpy(str, length, source.data());
+			std::memcpy(str, source.c_str(), length);
 			memFree(arr[i]);
 			arr[i] = str;
 		}
