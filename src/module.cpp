@@ -128,7 +128,7 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{ "Provider not exposed" };
 	}
 
-	fs::path hostPath(module.GetBaseDir() / "dotnet/host/fxr/8.0.3/" BINARY_MODULE_PREFIX "hostfxr" BINARY_MODULE_SUFFIX);
+	fs::path hostPath(module.GetBaseDir() / "dotnet/host/fxr/8.0.3/" NETLM_LIBRARY_PREFIX "hostfxr" NETLM_LIBRARY_SUFFIX);
 
 	// Load hostfxr and get desired exports
 	auto hostFxr = Assembly::LoadFromPath(hostPath);
