@@ -17,11 +17,14 @@ namespace netlm {
 #if NETLM_PLATFORM_WINDOWS
 		void* handle = static_cast<void*>(LoadLibraryW(assemblyPath.c_str()));
 #elif NETLM_PLATFORM_LINUX || NETLM_PLATFORM_APPLE
-		void* handle = dlopen(assemblyPath.string().c_str(), RTLD_LAZY);
+		void* handle = dlopen(assemblyPath.string().c_str(), RTLD_LAZY | RTLD_NODELETE);
 #else
 		void* handle = nullptr;
 #endif
 		if (handle) {
+#if GOLM_PLATFORM_WINDOWS
+			GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, assemblyPath.filename().c_str(), reinterpret_cast<HMODULE*>(&handle));
+#endif
 			return std::unique_ptr<Assembly>(new Assembly(handle));
 		}
 #if NETLM_PLATFORM_WINDOWS
