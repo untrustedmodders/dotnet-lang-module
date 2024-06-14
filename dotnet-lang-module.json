@@ -2,9 +2,9 @@
   "content": {
        "dotnet-lang-module": {
          "name": "dotnet-lang-module",
-         "type": "csharp",
+         "type": "csharp-dotnet",
          "author": "untrustedmodders",
-         "description": "Adds support for C# plugins",
+         "description": "Adds support for C# (.NET) plugins",
          "versions": [
             {
                "version": 1,

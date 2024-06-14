@@ -3,7 +3,7 @@
     "version": ${NETLM_VERSION},
     "versionName": "v${NETLM_VERSION}",
     "friendlyName": "C# (.NET) language module",
-    "language": "csharp",
+    "language": "csharp-dotnet",
     "description": "Adds support for C# (.NET) plugins",
     "createdBy": "untrustedmodders",
     "createdByURL": "https://github.com/untrustedmodders/",
