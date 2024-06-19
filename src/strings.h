@@ -34,5 +34,7 @@ namespace netlm {
 #endif
 
 		static std::vector<std::string_view> Split(std::string_view strv, std::string_view delims = " ");
+
+		static std::string_view GetError(int32_t error);
 	};
 }

@@ -37,93 +37,6 @@ namespace {
 	load_assembly_fn load_assembly;
 }
 
-namespace ErrorCode {
-	constexpr int32_t Success                           = 0x00000000;
-	constexpr int32_t SuccessHostAlreadyInitialized     = 0x00000001;
-	constexpr int32_t SuccessDifferentRuntimeProperties = 0x00000002;
-	constexpr int32_t InvalidArgFailure                 = static_cast<int32_t>(0x80008081);
-	constexpr int32_t CoreHostLibLoadFailure            = static_cast<int32_t>(0x80008082);
-	constexpr int32_t CoreHostLibMissingFailure         = static_cast<int32_t>(0x80008083);
-	constexpr int32_t CoreHostEntryPointFailure         = static_cast<int32_t>(0x80008084);
-	constexpr int32_t CoreHostCurHostFindFailure        = static_cast<int32_t>(0x80008085);
-	constexpr int32_t CoreClrResolveFailure             = static_cast<int32_t>(0x80008087);
-	constexpr int32_t CoreClrBindFailure                = static_cast<int32_t>(0x80008088);
-	constexpr int32_t CoreClrInitFailure                = static_cast<int32_t>(0x80008089);
-	constexpr int32_t CoreClrExeFailure                 = static_cast<int32_t>(0x8000808a);
-	constexpr int32_t ResolverInitFailure               = static_cast<int32_t>(0x8000808b);
-	constexpr int32_t ResolverResolveFailure            = static_cast<int32_t>(0x8000808c);
-	constexpr int32_t LibHostCurExeFindFailure          = static_cast<int32_t>(0x8000808d);
-	constexpr int32_t LibHostInitFailure                = static_cast<int32_t>(0x8000808e);
-	constexpr int32_t LibHostSdkFindFailure             = static_cast<int32_t>(0x80008091);
-	constexpr int32_t LibHostInvalidArgs                = static_cast<int32_t>(0x80008092);
-	constexpr int32_t InvalidConfigFile                 = static_cast<int32_t>(0x80008093);
-	constexpr int32_t AppArgNotRunnable                 = static_cast<int32_t>(0x80008094);
-	constexpr int32_t AppHostExeNotBoundFailure         = static_cast<int32_t>(0x80008095);
-	constexpr int32_t FrameworkMissingFailure           = static_cast<int32_t>(0x80008096);
-	constexpr int32_t HostApiFailed                     = static_cast<int32_t>(0x80008097);
-	constexpr int32_t HostApiBufferTooSmall             = static_cast<int32_t>(0x80008098);
-	constexpr int32_t LibHostUnknownCommand             = static_cast<int32_t>(0x80008099);
-	constexpr int32_t LibHostAppRootFindFailure         = static_cast<int32_t>(0x8000809a);
-	constexpr int32_t SdkResolverResolveFailure         = static_cast<int32_t>(0x8000809b);
-	constexpr int32_t FrameworkCompatFailure            = static_cast<int32_t>(0x8000809c);
-	constexpr int32_t FrameworkCompatRetry              = static_cast<int32_t>(0x8000809d);
-	constexpr int32_t AppHostExeNotBundle               = static_cast<int32_t>(0x8000809e);
-	constexpr int32_t BundleExtractionFailure           = static_cast<int32_t>(0x8000809f);
-	constexpr int32_t BundleExtractionIOError           = static_cast<int32_t>(0x800080a0);
-	constexpr int32_t LibHostDuplicateProperty          = static_cast<int32_t>(0x800080a1);
-	constexpr int32_t HostApiUnsupportedVersion         = static_cast<int32_t>(0x800080a2);
-	constexpr int32_t HostInvalidState                  = static_cast<int32_t>(0x800080a3);
-	constexpr int32_t HostPropertyNotFound              = static_cast<int32_t>(0x800080a4);
-	constexpr int32_t CoreHostIncompatibleConfig        = static_cast<int32_t>(0x800080a5);
-	constexpr int32_t HostApiUnsupportedScenario        = static_cast<int32_t>(0x800080a6);
-	constexpr int32_t HostFeatureDisabled               = static_cast<int32_t>(0x800080a7);
-}
-
-std::string_view GetError(int32_t code) {
-    switch (code) {
-		case ErrorCode::Success:                           return "Success";
-        case ErrorCode::SuccessHostAlreadyInitialized:     return "SuccessHostAlreadyInitialized";
-        case ErrorCode::SuccessDifferentRuntimeProperties: return "SuccessDifferentRuntimeProperties";
-        case ErrorCode::InvalidArgFailure:                 return "InvalidArgFailure";
-        case ErrorCode::CoreHostLibLoadFailure:            return "CoreHostLibLoadFailure";
-        case ErrorCode::CoreHostLibMissingFailure:         return "CoreHostLibMissingFailure";
-        case ErrorCode::CoreHostEntryPointFailure:         return "CoreHostEntryPointFailure";
-        case ErrorCode::CoreHostCurHostFindFailure:        return "CoreHostCurHostFindFailure";
-        case ErrorCode::CoreClrResolveFailure:             return "CoreClrResolveFailure";
-        case ErrorCode::CoreClrBindFailure:                return "CoreClrBindFailure";
-        case ErrorCode::CoreClrInitFailure:                return "CoreClrInitFailure";
-        case ErrorCode::CoreClrExeFailure:                 return "CoreClrExeFailure";
-        case ErrorCode::ResolverInitFailure:               return "ResolverInitFailure";
-        case ErrorCode::ResolverResolveFailure:            return "ResolverResolveFailure";
-        case ErrorCode::LibHostCurExeFindFailure:          return "LibHostCurExeFindFailure";
-        case ErrorCode::LibHostInitFailure:                return "LibHostInitFailure";
-        case ErrorCode::LibHostSdkFindFailure:             return "LibHostSdkFindFailure";
-        case ErrorCode::LibHostInvalidArgs:                return "LibHostInvalidArgs";
-        case ErrorCode::InvalidConfigFile:                 return "InvalidConfigFile";
-        case ErrorCode::AppArgNotRunnable:                 return "AppArgNotRunnable";
-        case ErrorCode::AppHostExeNotBoundFailure:         return "AppHostExeNotBoundFailure";
-        case ErrorCode::FrameworkMissingFailure:           return "FrameworkMissingFailure";
-        case ErrorCode::HostApiFailed:                     return "HostApiFailed";
-        case ErrorCode::HostApiBufferTooSmall:             return "HostApiBufferTooSmall";
-        case ErrorCode::LibHostUnknownCommand:             return "LibHostUnknownCommand";
-        case ErrorCode::LibHostAppRootFindFailure:         return "LibHostAppRootFindFailure";
-        case ErrorCode::SdkResolverResolveFailure:         return "SdkResolverResolveFailure";
-        case ErrorCode::FrameworkCompatFailure:            return "FrameworkCompatFailure";
-        case ErrorCode::FrameworkCompatRetry:              return "FrameworkCompatRetry";
-        case ErrorCode::AppHostExeNotBundle:               return "AppHostExeNotBundle";
-        case ErrorCode::BundleExtractionFailure:           return "BundleExtractionFailure";
-        case ErrorCode::BundleExtractionIOError:           return "BundleExtractionIOError";
-        case ErrorCode::LibHostDuplicateProperty:          return "LibHostDuplicateProperty";
-        case ErrorCode::HostApiUnsupportedVersion:         return "HostApiUnsupportedVersion";
-        case ErrorCode::HostInvalidState:                  return "HostInvalidState";
-        case ErrorCode::HostPropertyNotFound:              return "HostPropertyNotFound";
-        case ErrorCode::CoreHostIncompatibleConfig:        return "CoreHostIncompatibleConfig";
-        case ErrorCode::HostApiUnsupportedScenario:        return "HostApiUnsupportedScenario";
-        case ErrorCode::HostFeatureDisabled:               return "HostFeatureDisabled";
-        default:                                           return "UnknownStatusCode";
-    }
-}
-
 InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> provider, const IModule& module) {
 	if (!(_provider = provider.lock())) {
 		return ErrorData{ "Provider not exposed" };
@@ -176,8 +89,8 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 	
 	hostfxr_handle ctx = nullptr;
 	int32_t result = hostfxr_initialize_for_runtime_config(configPath.c_str(), nullptr, &ctx);
-	if (result > ErrorCode::SuccessDifferentRuntimeProperties || ctx == nullptr) {
-		return ErrorData{std::format("hostfxr_initialize_for_runtime_config failed: {}", GetError(result))};
+	if (result < 0 || ctx == nullptr) {
+		return ErrorData{std::format("hostfxr_initialize_for_runtime_config failed: {}", String::GetError(result))};
 	}
 
 	std::deleted_unique_ptr<void> context(ctx, [](hostfxr_handle handle) {
@@ -185,16 +98,16 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 	});
 
 	result = hostfxr_get_runtime_delegate(ctx, hdt_load_assembly_and_get_function_pointer, reinterpret_cast<void**>(&load_assembly_and_get_function_pointer));
-	if (result != ErrorCode::Success || load_assembly_and_get_function_pointer == nullptr) {
-		return ErrorData{std::format("hostfxr_get_runtime_delegate::hdt_load_assembly_and_get_function_pointer failed: {}", GetError(result))};
+	if (result != 0 || load_assembly_and_get_function_pointer == nullptr) {
+		return ErrorData{std::format("hostfxr_get_runtime_delegate::hdt_load_assembly_and_get_function_pointer failed: {}", String::GetError(result))};
 	}
 	result = hostfxr_get_runtime_delegate(ctx, hdt_get_function_pointer, reinterpret_cast<void**>(&get_function_pointer));
-	if (result != ErrorCode::Success || get_function_pointer == nullptr) {
-		return ErrorData{std::format("hostfxr_get_runtime_delegate::hdt_get_function_pointer failed: {}", GetError(result))};
+	if (result != 0 || get_function_pointer == nullptr) {
+		return ErrorData{std::format("hostfxr_get_runtime_delegate::hdt_get_function_pointer failed: {}", String::GetError(result))};
 	}
 	result = hostfxr_get_runtime_delegate(ctx, hdt_load_assembly, reinterpret_cast<void**>(&load_assembly));
-	if (result != ErrorCode::Success || load_assembly == nullptr) {
-		return ErrorData{std::format("hostfxr_get_runtime_delegate::hdt_load_assembly failed: {}", GetError(result))};
+	if (result != 0 || load_assembly == nullptr) {
+		return ErrorData{std::format("hostfxr_get_runtime_delegate::hdt_load_assembly failed: {}", String::GetError(result))};
 	}
 
 	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
@@ -211,8 +124,8 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 			nullptr,
 			reinterpret_cast<void**>(&entryPoint)
 	);
-	if (result != ErrorCode::Success || entryPoint == nullptr) {
-		return ErrorData{std::format("load_assembly_and_get_function_pointer failed: {}", GetError(result))};
+	if (result != 0 || entryPoint == nullptr) {
+		return ErrorData{std::format("load_assembly_and_get_function_pointer failed: {}", String::GetError(result))};
 	}
 
 	entryPoint();
@@ -238,8 +151,8 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 	fs::path fileName(entryPath.filename().replace_extension());
 
 	int32_t result = load_assembly(assemblyPath.c_str(), nullptr, nullptr);
-	if (result != ErrorCode::Success) {
-		return ErrorData{std::format("Failed to load assembly: {}", GetError(result))};
+	if (result != 0) {
+		return ErrorData{std::format("Failed to load assembly: {}", String::GetError(result))};
 	}
 
 	std::vector<std::string_view> funcErrors;
@@ -255,7 +168,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 			nullptr,
 			reinterpret_cast<void**>(&initFunc)
 	);
-	if (result != ErrorCode::Success || initFunc == nullptr) {
+	if (result != 0 || initFunc == nullptr) {
 		funcErrors.emplace_back("OnInit");
 	}
 
@@ -268,7 +181,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 			nullptr,
 			reinterpret_cast<void**>(&startFunc)
 	);
-	if (result != ErrorCode::Success || startFunc == nullptr) {
+	if (result != 0 || startFunc == nullptr) {
 		funcErrors.emplace_back("OnStart");
 	}
 
@@ -281,7 +194,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 			nullptr,
 			reinterpret_cast<void**>(&endFunc)
 	);
-	if (result != ErrorCode::Success || endFunc == nullptr) {
+	if (result != 0 || endFunc == nullptr) {
 		funcErrors.emplace_back("OnEnd");
 	}
 
@@ -317,7 +230,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 				&addr
 		);
 
-		if (result != ErrorCode::Success || addr == nullptr) {
+		if (result != 0 || addr == nullptr) {
 			funcErrors.emplace_back(method.name);
 		} else {
 			methods.emplace_back(method.name, addr);
@@ -332,7 +245,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 	}
 
 	const int resultVersion = initFunc(&plugin);
-	if (resultVersion != ErrorCode::Success) {
+	if (resultVersion != 0) {
 		return ErrorData{ std::format("Not supported plugin api {}, max supported {}", resultVersion, kApiVersion) };
 	}
 

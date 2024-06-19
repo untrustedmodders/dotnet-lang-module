@@ -22,7 +22,7 @@ namespace netlm {
 		void* handle = nullptr;
 #endif
 		if (handle) {
-#if GOLM_PLATFORM_WINDOWS
+#if NETLM_PLATFORM_WINDOWS
 			GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, assemblyPath.filename().c_str(), reinterpret_cast<HMODULE*>(&handle));
 #endif
 			return std::unique_ptr<Assembly>(new Assembly(handle));
