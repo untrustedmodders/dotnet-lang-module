@@ -7,7 +7,7 @@ namespace netlm {
 	constexpr int kApiVersion = 1;
 
 	using EntryPoint = void (*)();
-	using InitFunc = int (*)();
+	using InitFunc = int (*)(const void*);
 	using StartFunc = void (*)();
 	using EndFunc = void (*)();
 

@@ -18,7 +18,7 @@ TYPES_MAP = {
     'uint16': 'ushort',
     'uint32': 'uint',
     'uint64': 'ulong',
-    'ptr64': 'IntPtr',
+    'ptr64': 'nint',
     'float': 'float',
     'double': 'double',
     'function': 'delegate',
@@ -34,7 +34,7 @@ TYPES_MAP = {
     'uint16*': 'ushort[]',
     'uint32*': 'uint[]',
     'uint64*': 'ulong[]',
-    'ptr64*': 'IntPtr[]',
+    'ptr64*': 'nint[]',
     'float*': 'float[]',
     'double*': 'double[]',
     'string*': 'string[]',
@@ -57,10 +57,10 @@ CTYPES_MAP = {
     'uint16': 'ushort',
     'uint32': 'uint',
     'uint64': 'ulong',
-    'ptr64': 'IntPtr',
+    'ptr64': 'nint',
     'float': 'float',
     'double': 'double',
-    'function': 'IntPtr',
+    'function': 'nint',
     'string': '*',
     'bool*': '*',
     'char8*': '*',
@@ -469,22 +469,18 @@ def convert_ctype(type_name, is_ref=False):
     type = CTYPES_MAP.get(type_name, 'int')
     if is_ref:
         if type == '*':
-            return 'IntPtr'
+            return 'nint'
         else:
             return 'ref ' + type
     else:
         if type == '*':
-            return 'IntPtr'
+            return 'nint'
         else:
             return type
 
- 
-def is_obj_type(type_name):
-    return '*' in type_name or type_name == 'string'
 
- 
 def is_obj_return(type_name):
-    return '*' in type_name or type_name == 'string' or 'vec' in type_name or 'mat' in type_name 
+    return '*' in type_name or type_name == 'string'# or 'vec' in type_name or 'mat' in type_name 
 
 
 def generate_name(name):
@@ -504,14 +500,11 @@ class ParamGen(Enum):
 def gen_params_string(method, param_gen: ParamGen):
     def gen_param(param):
         if param_gen == ParamGen.Types:
-            type = convert_type(param['type'], 'ref' in param and param['ref'] is True)
-            if 'delegate' in type and 'prototype' in param:
-                type = generate_name(param['prototype']['name'])
-            return type
+            return f'(delegate* unmanaged[Cdecl]<{gen_types_string(param['prototype'])}>)'
         elif param_gen == ParamGen.Names:
             return generate_name(param['name'])
         elif param_gen == ParamGen.CastNames:
-            if is_obj_type(param['type']):
+            if is_obj_return(param['type']):
                 return 'C_' + generate_name(param['name'])
             elif param['type'] == 'char8':
                 if 'ref' in param and param['ref'] is True:
@@ -525,7 +518,7 @@ def gen_params_string(method, param_gen: ParamGen):
                     return generate_name(param['name'])
         type = convert_type(param['type'], 'ref' in param and param['ref'] is True)
         if 'delegate' in type and 'prototype' in param:
-            type = generate_name(param['prototype']['name'])
+            type = f'delegate* unmanaged[Cdecl]<{gen_types_string(param['prototype'])}>'
         return f'{type} {generate_name(param['name'])}'
         
     def gen_return(param):
@@ -681,13 +674,6 @@ def gen_paramscast_cleanup_string(method):
     return output_string             
 
 
-def gen_delegate(prototype):
-    ret_type = prototype['retType']
-    return_type = convert_type(ret_type['type'], 'ref' in ret_type and ret_type['ref'] is True)
-    return (f'\tdelegate {return_type} '
-            f'{prototype['name']}({gen_params_string(prototype, ParamGen.TypesNames)});\n')
-
-
 def main(manifest_path, output_dir, override):
     if not os.path.isfile(manifest_path):
         print(f'Manifest file not exists {manifest_path}')
@@ -728,19 +714,11 @@ def main(manifest_path, output_dir, override):
     content += '\n'
     content += f'namespace {plugin_name}\n{{'
     content += '\n'
-    
-    for method in pplugin['exportedMethods']:
-        ret_type = method['retType']
-        if 'prototype' in ret_type:
-            content += gen_delegate(ret_type['prototype'])
-        for attribute in method['paramTypes']:
-            if 'prototype' in attribute:
-                content += gen_delegate(attribute['prototype'])
 
     content += f'\n\tinternal static unsafe class {plugin_name}\n\t{{'
     content += '\n'
     for method in pplugin['exportedMethods']:
-        content += f'\t\tprivate static IntPtr {method['name']}Ptr = IntPtr.Zero;\n'
+        content += f'\t\tprivate static nint {method['name']}Ptr = nint.Zero;\n'
     
         ret_type = method['retType']
         return_type = convert_type(ret_type['type'], 'ref' in ret_type and ret_type['ref'] is True)
@@ -752,7 +730,7 @@ def main(manifest_path, output_dir, override):
         if params != '':
             content += f'{params}\n'
         
-        content += f'\t\t\tif ({method['name']}Ptr == IntPtr.Zero) {method['name']}Ptr = NativeMethods.GetMethodPtr("{method['name']}");\n'
+        content += f'\t\t\tif ({method['name']}Ptr == nint.Zero) {method['name']}Ptr = NativeMethods.GetMethodPtr("{method['name']}");\n'
         content += f'\t\t\tvar {method['name']}Func = (delegate* unmanaged[Cdecl]<{gen_types_string(method)}>){method['name']}Ptr;\n'
         
         is_obj_ret = is_obj_return(ret_type['type'])

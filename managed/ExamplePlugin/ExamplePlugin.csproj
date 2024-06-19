@@ -13,8 +13,4 @@
 	    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Plugify\Plugify.csproj" />
-    </ItemGroup>
-
 </Project>

@@ -8,6 +8,12 @@
     <AssemblyName>Plugify</AssemblyName>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <SelfContained>true</SelfContained>
+	<Description>This package provides essential functionalities for creating simple plugins using the Plugify framework with the .NET Language Module. It offers a streamlined and efficient way to integrate .NET plugins into your applications to enhance your development workflow.</Description>
+    <Authors>untrustedmodders</Authors>
+    <PackageTags>plugify;dotnet-lang-module</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<RepositoryUrl>https://github.com/untrustedmodders/dotnet-lang-module.git</RepositoryUrl>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -22,5 +28,9 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="images\icon.png" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
 </Project>
