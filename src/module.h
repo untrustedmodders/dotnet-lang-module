@@ -29,6 +29,7 @@ namespace netlm {
 		void OnPluginEnd(const plugify::IPlugin& plugin) override;
 		void OnMethodExport(const plugify::IPlugin& plugin) override;
 
+		const std::shared_ptr<plugify::IPlugifyProvider>& GetProvider() { return _provider; }
 		void* GetNativeMethod(const std::string& methodName) const;
 
 	private:
