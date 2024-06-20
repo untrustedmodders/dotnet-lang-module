@@ -4,29 +4,25 @@
     <OutputType>Library</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <GenerateCompatibilitySuppressionFile>true</GenerateCompatibilitySuppressionFile>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <EnablePackageValidation>true</EnablePackageValidation>
     <AssemblyName>Plugify</AssemblyName>
+    <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <SelfContained>true</SelfContained>
-	<Description>This package provides essential functionalities for creating simple plugins using the Plugify framework with the .NET Language Module. It offers a streamlined and efficient way to integrate .NET plugins into your applications to enhance your development workflow.</Description>
     <Authors>untrustedmodders</Authors>
+    <Description>This package provides essential functionalities for creating simple plugins using the Plugify framework with the .NET Language Module. It offers a streamlined and efficient way to integrate .NET plugins into your applications to enhance your development workflow.</Description>
     <PackageTags>plugify;dotnet-lang-module</PackageTags>
+    <PackageProjectUrl>https://github.com/untrustedmodders/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/untrustedmodders/dotnet-lang-module.git</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-	<RepositoryUrl>https://github.com/untrustedmodders/dotnet-lang-module.git</RepositoryUrl>
-    <PackageIcon>icon.png</PackageIcon>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <RollForward>Major</RollForward>
-  </PropertyGroup>
-  
-  <PropertyGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <SourceControlInformationFeatureSupported>true</SourceControlInformationFeatureSupported>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
