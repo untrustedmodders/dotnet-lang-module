@@ -1,14 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+	<Version Condition="'$(Version)' == ''">1.0.8.0</Version>
     <OutputType>Library</OutputType>
     <TargetFramework>net8.0</TargetFramework>
+    <RuntimeFrameworkVersion>8.0.3</RuntimeFrameworkVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <GenerateCompatibilitySuppressionFile>true</GenerateCompatibilitySuppressionFile>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <EnablePackageValidation>true</EnablePackageValidation>
     <AssemblyName>Plugify</AssemblyName>
+    <RollForward>LatestMajor</RollForward>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <SelfContained>true</SelfContained>

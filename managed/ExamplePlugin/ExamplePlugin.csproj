@@ -7,10 +7,12 @@
         <Nullable>enable</Nullable>
         <AssemblyName>ExamplePlugin</AssemblyName>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<EnableDynamicLoading>true</EnableDynamicLoading>
+        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
     </PropertyGroup>
 
-    <PropertyGroup>
-	    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-    </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="Plugify" Version="1.0.8" />
+    </ItemGroup>
 
 </Project>

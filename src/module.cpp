@@ -1,5 +1,6 @@
 #include "module.h"
 #include "assembly.h"
+#include "managed_guid.h"
 #include "strings.h"
 #include <module_export.h>
 
@@ -30,11 +31,13 @@ using namespace netlm;
 namespace {
 	hostfxr_initialize_for_runtime_config_fn hostfxr_initialize_for_runtime_config;
 	hostfxr_get_runtime_delegate_fn hostfxr_get_runtime_delegate;
+	//hostfxr_set_runtime_property_value_fn hostfxr_set_runtime_property_value;
 	hostfxr_close_fn hostfxr_close;
 	hostfxr_set_error_writer_fn hostfxr_set_error_writer;
+
 	load_assembly_and_get_function_pointer_fn load_assembly_and_get_function_pointer;
-	get_function_pointer_fn get_function_pointer;
-	load_assembly_fn load_assembly;
+	//get_function_pointer_fn get_function_pointer;
+	//load_assembly_fn load_assembly;
 }
 
 InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> provider, const IModule& module) {
@@ -42,31 +45,99 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{ "Provider not exposed" };
 	}
 
-	fs::path hostPath(module.GetBaseDir() / "dotnet/host/fxr/8.0.3/" NETLM_LIBRARY_PREFIX "hostfxr" NETLM_LIBRARY_SUFFIX);
+	std::error_code ec;
 
-	// Load hostfxr and get desired exports
-	auto hostFxr = Assembly::LoadFromPath(hostPath);
-	if (!hostFxr) {
-		return ErrorData{ std::format("Failed to load assembly: {}", Assembly::GetError()) };
+	fs::path hostPath(module.GetBaseDir() / "dotnet/host/fxr/8.0.3/" NETLM_LIBRARY_PREFIX "hostfxr" NETLM_LIBRARY_SUFFIX);
+	if (!fs::exists(hostPath, ec)) {
+		return ErrorData{std::format("Host is missing: {}", hostPath.string())};
 	}
+
+	if (!LoadHostFXR(hostPath)) {
+		return ErrorData{ std::format("Failed to load host assembly: {}", Assembly::GetError()) };
+	}
+
+	fs::path configPath(module.GetBaseDir() / "api/Plugify.runtimeconfig.json");
+	if (!fs::exists(configPath, ec)) {
+		return ErrorData{std::format("Config is missing: {}", configPath.string())};
+	}
+
+	auto error = InitializeRuntimeHost(configPath);
+	if (error) {
+		return ErrorData{ std::move(*error) };
+	}
+
+	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
+	if (!fs::exists(assemblyPath, ec)) {
+		return ErrorData{std::format("Assembly is missing: {}", assemblyPath.string())};
+	}
+
+	auto className = STRING("Plugify.NativeInterop, Plugify");
 
 	std::vector<std::string_view> funcErrors;
 
-	hostfxr_initialize_for_runtime_config = hostFxr->GetFunction<hostfxr_initialize_for_runtime_config_fn>("hostfxr_initialize_for_runtime_config");
-	if (!hostfxr_initialize_for_runtime_config) {
-		funcErrors.emplace_back("hostfxr_initialize_for_runtime_config");
+	_initialize = nullptr;
+	int32_t result = load_assembly_and_get_function_pointer(
+			assemblyPath.c_str(),
+			className,
+			STRING("Initialize"),
+			UNMANAGEDCALLERSONLY_METHOD,
+			nullptr,
+			reinterpret_cast<void**>(&_initialize)
+	);
+	if (result != StatusCode::Success || _initialize == nullptr) {
+		funcErrors.emplace_back(std::format("Initialize: {:x} ({})", uint32_t(result), String::GetError(result)));
 	}
-	hostfxr_get_runtime_delegate = hostFxr->GetFunction<hostfxr_get_runtime_delegate_fn>("hostfxr_get_runtime_delegate");
-	if (!hostfxr_get_runtime_delegate) {
-		funcErrors.emplace_back("hostfxr_get_runtime_delegate");
+
+	_shutdown = nullptr;
+	result = load_assembly_and_get_function_pointer(
+			assemblyPath.c_str(),
+			className,
+			STRING("Shutdown"),
+			UNMANAGEDCALLERSONLY_METHOD,
+			nullptr,
+			reinterpret_cast<void**>(&_shutdown)
+	);
+	if (result != StatusCode::Success || _shutdown == nullptr) {
+		funcErrors.emplace_back(std::format("Shutdown: {:x} ({})", uint32_t(result), String::GetError(result)));
 	}
-	hostfxr_close = hostFxr->GetFunction<hostfxr_close_fn>("hostfxr_close");
-	if (!hostfxr_close) {
-		funcErrors.emplace_back("hostfxr_close");
+
+	_loadPlugin = nullptr;
+	result = load_assembly_and_get_function_pointer(
+			assemblyPath.c_str(),
+			className,
+			STRING("LoadPlugin"),
+			UNMANAGEDCALLERSONLY_METHOD,
+			nullptr,
+			reinterpret_cast<void**>(&_loadPlugin)
+	);
+	if (result != StatusCode::Success || _loadPlugin == nullptr) {
+		funcErrors.emplace_back(std::format("LoadPlugin: {:x} ({})", uint32_t(result), String::GetError(result)));
 	}
-	hostfxr_set_error_writer = hostFxr->GetFunction<hostfxr_set_error_writer_fn>("hostfxr_set_error_writer");
-	if (!hostfxr_set_error_writer) {
-		funcErrors.emplace_back("hostfxr_set_error_writer");
+
+	_startPlugin = nullptr;
+	result = load_assembly_and_get_function_pointer(
+			assemblyPath.c_str(),
+			className,
+			STRING("StartPlugin"),
+			UNMANAGEDCALLERSONLY_METHOD,
+			nullptr,
+			reinterpret_cast<void**>(&_startPlugin)
+	);
+	if (result != StatusCode::Success || _startPlugin == nullptr) {
+		funcErrors.emplace_back(std::format("StartPlugin: {:x} ({})", uint32_t(result), String::GetError(result)));
+	}
+
+	_endPlugin = nullptr;
+	result = load_assembly_and_get_function_pointer(
+			assemblyPath.c_str(),
+			className,
+			STRING("EndPlugin"),
+			UNMANAGEDCALLERSONLY_METHOD,
+			nullptr,
+			reinterpret_cast<void**>(&_endPlugin)
+	);
+	if (result != StatusCode::Success || _endPlugin == nullptr) {
+		funcErrors.emplace_back(std::format("EndPlugin: {:x} ({})", uint32_t(result), String::GetError(result)));
 	}
 
 	if (!funcErrors.empty()) {
@@ -77,61 +148,9 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{ std::format("Not found {} function(s)", funcs) };
 	}
 
-	funcErrors.clear();
-
 	hostfxr_set_error_writer(ErrorWriter);
-	std::error_code ec;
-	
-	fs::path configPath(module.GetBaseDir() / "api/Plugify.runtimeconfig.json");
-	if (!fs::exists(configPath, ec)) {
-		return ErrorData{std::format("Config is missing: {}", configPath.string())};
-	}
-	
-	hostfxr_handle ctx = nullptr;
-	int32_t result = hostfxr_initialize_for_runtime_config(configPath.c_str(), nullptr, &ctx);
-	if (result < 0 || ctx == nullptr) {
-		return ErrorData{std::format("hostfxr_initialize_for_runtime_config failed: {}", String::GetError(result))};
-	}
 
-	std::deleted_unique_ptr<void> context(ctx, [](hostfxr_handle handle) {
-		hostfxr_close(handle);
-	});
-
-	result = hostfxr_get_runtime_delegate(ctx, hdt_load_assembly_and_get_function_pointer, reinterpret_cast<void**>(&load_assembly_and_get_function_pointer));
-	if (result != 0 || load_assembly_and_get_function_pointer == nullptr) {
-		return ErrorData{std::format("hostfxr_get_runtime_delegate::hdt_load_assembly_and_get_function_pointer failed: {}", String::GetError(result))};
-	}
-	result = hostfxr_get_runtime_delegate(ctx, hdt_get_function_pointer, reinterpret_cast<void**>(&get_function_pointer));
-	if (result != 0 || get_function_pointer == nullptr) {
-		return ErrorData{std::format("hostfxr_get_runtime_delegate::hdt_get_function_pointer failed: {}", String::GetError(result))};
-	}
-	result = hostfxr_get_runtime_delegate(ctx, hdt_load_assembly, reinterpret_cast<void**>(&load_assembly));
-	if (result != 0 || load_assembly == nullptr) {
-		return ErrorData{std::format("hostfxr_get_runtime_delegate::hdt_load_assembly failed: {}", String::GetError(result))};
-	}
-
-	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
-	if (!fs::exists(assemblyPath, ec)) {
-		return ErrorData{std::format("Assembly is missing: {}", assemblyPath.string())};
-	}
-
-	EntryPoint entryPoint = nullptr;
-	result = load_assembly_and_get_function_pointer(
-			assemblyPath.c_str(),
-			STRING("Plugify.Library, Plugify"),
-			STRING("Initialize"),
-			UNMANAGEDCALLERSONLY_METHOD,
-			nullptr,
-			reinterpret_cast<void**>(&entryPoint)
-	);
-	if (result != 0 || entryPoint == nullptr) {
-		return ErrorData{std::format("load_assembly_and_get_function_pointer failed: {}", String::GetError(result))};
-	}
-
-	entryPoint();
-
-	_hostFxr = std::move(hostFxr);
-	_context = std::move(context);
+	_initialize();
 
 	_provider->Log(LOG_PREFIX "Inited!", Severity::Debug);
 
@@ -139,136 +158,143 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 }
 
 void DotnetLanguageModule::Shutdown() {
+	_shutdown();
+
 	_nativesMap.clear();
 	_context.reset();
 	_hostFxr.reset();
 	_provider.reset();
 }
 
+bool DotnetLanguageModule::LoadHostFXR(const fs::path& hostPath) {
+	_hostFxr = Assembly::LoadFromPath(hostPath);
+	if (!_hostFxr) {
+		return false;
+	}
+
+	hostfxr_initialize_for_runtime_config = _hostFxr->GetFunction<hostfxr_initialize_for_runtime_config_fn>("hostfxr_initialize_for_runtime_config");
+	hostfxr_get_runtime_delegate = _hostFxr->GetFunction<hostfxr_get_runtime_delegate_fn>("hostfxr_get_runtime_delegate");
+	//hostfxr_set_runtime_property_value = _hostFxr->GetFunction<hostfxr_set_runtime_property_value_fn>("hostfxr_set_runtime_property_value");
+	hostfxr_close = _hostFxr->GetFunction<hostfxr_close_fn>("hostfxr_close");
+	hostfxr_set_error_writer = _hostFxr->GetFunction<hostfxr_set_error_writer_fn>("hostfxr_set_error_writer");
+
+	return hostfxr_initialize_for_runtime_config &&
+		   hostfxr_get_runtime_delegate &&
+		   //hostfxr_set_runtime_property_value &&
+		   hostfxr_close &&
+		   hostfxr_set_error_writer;
+}
+
+ErrorString DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPath) {
+	hostfxr_handle ctx = nullptr;
+	int32_t result = hostfxr_initialize_for_runtime_config(configPath.c_str(), nullptr, &ctx);
+	std::deleted_unique_ptr<void> context(ctx, [](hostfxr_handle handle) {
+		hostfxr_close(handle);
+	});
+
+	if ((result < StatusCode::Success || result > StatusCode::Success_DifferentRuntimeProperties) || ctx == nullptr) {
+		return std::format("Failed to initialize hostfxr: {:x} ({})", uint32_t(result), String::GetError(result));
+	}
+
+	result = hostfxr_get_runtime_delegate(ctx, hdt_load_assembly_and_get_function_pointer, reinterpret_cast<void**>(&load_assembly_and_get_function_pointer));
+	if (result != StatusCode::Success || load_assembly_and_get_function_pointer == nullptr) {
+		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly_and_get_function_pointer failed: {:x} ({})", uint32_t(result), String::GetError(result));
+	}
+	/*result = hostfxr_get_runtime_delegate(ctx, hdt_get_function_pointer, reinterpret_cast<void**>(&get_function_pointer));
+	if (result != StatusCode::Success || get_function_pointer == nullptr) {
+		return std::format("hostfxr_get_runtime_delegate::hdt_get_function_pointer failed: {:x} ({})", uint32_t(result), String::GetError(result));
+	}
+	result = hostfxr_get_runtime_delegate(ctx, hdt_load_assembly, reinterpret_cast<void**>(&load_assembly));
+	if (result != StatusCode::Success || load_assembly == nullptr) {
+		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly failed: {:x} ({})", uint32_t(result), String::GetError(result));
+	}*/
+
+	_context = std::move(context);
+
+	return std::nullopt;
+}
+
+MethodRaw MapToRawMethod(const Method& method, PropertyHolder& rawProperties, MethodHolder& rawPrototypes)  {
+	auto paramCount = method.paramTypes.size();
+	auto properties = std::make_unique<PropertyRaw[]>(paramCount + 1);
+
+	for (size_t i = 0; i < paramCount; ++i) {
+		const auto& param = method.paramTypes[i];
+
+		MethodRaw* prototype = param.prototype ? rawPrototypes.emplace_back(std::make_unique<MethodRaw>(MapToRawMethod(*param.prototype, rawProperties, rawPrototypes))).get() : nullptr;
+
+		properties[i] = PropertyRaw{
+				param.type,
+				param.ref,
+				prototype
+		};
+	}
+
+	MethodRaw* prototype = method.retType.prototype ? rawPrototypes.emplace_back(std::make_unique<MethodRaw>(MapToRawMethod(*method.retType.prototype, rawProperties, rawPrototypes))).get() : nullptr;
+
+	properties[paramCount] = {
+			method.retType.type,
+			method.retType.ref,
+			prototype
+	};
+
+	MethodRaw methodRaw{
+		method.name.c_str(),
+		method.funcName.c_str(),
+		method.callConv.c_str(),
+		properties.get(),
+		&properties[paramCount],
+		method.varIndex,
+		static_cast<int32_t>(paramCount)
+	};
+
+	rawProperties.emplace_back(std::move(properties));
+
+	return methodRaw;
+}
+
 LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
-	fs::path entryPath(plugin.GetDescriptor().entryPoint);
-	fs::path assemblyPath(plugin.GetBaseDir() / entryPath);
-	fs::path fileName(entryPath.filename().replace_extension());
-
-	int32_t result = load_assembly(assemblyPath.c_str(), nullptr, nullptr);
-	if (result != 0) {
-		return ErrorData{std::format("Failed to load assembly: {}", String::GetError(result))};
-	}
-
-	std::vector<std::string_view> funcErrors;
-
-	auto mainType = std::format(STRING("{}, {}"), STRING("Plugify.Main"), fileName.c_str());
-
-	InitFunc initFunc = nullptr;
-	result = get_function_pointer(
-			mainType.data(),
-			STRING("OnInit"),
-			UNMANAGEDCALLERSONLY_METHOD,
-			nullptr,
-			nullptr,
-			reinterpret_cast<void**>(&initFunc)
-	);
-	if (result != 0 || initFunc == nullptr) {
-		funcErrors.emplace_back("OnInit");
-	}
-
-	StartFunc startFunc = nullptr;
-	result = get_function_pointer(
-			mainType.data(),
-			STRING("OnStart"),
-			UNMANAGEDCALLERSONLY_METHOD,
-			nullptr,
-			nullptr,
-			reinterpret_cast<void**>(&startFunc)
-	);
-	if (result != 0 || startFunc == nullptr) {
-		funcErrors.emplace_back("OnStart");
-	}
-
-	EndFunc endFunc = nullptr;
-	result = get_function_pointer(
-			mainType.data(),
-			STRING("OnEnd"),
-			UNMANAGEDCALLERSONLY_METHOD,
-			nullptr,
-			nullptr,
-			reinterpret_cast<void**>(&endFunc)
-	);
-	if (result != 0 || endFunc == nullptr) {
-		funcErrors.emplace_back("OnEnd");
-	}
-
-	if (!funcErrors.empty()) {
-		std::string funcs(funcErrors[0]);
-		for (auto it = std::next(funcErrors.begin()); it != funcErrors.end(); ++it) {
-			std::format_to(std::back_inserter(funcs), ", {}", *it);
-		}
-		return ErrorData{ std::format("Not found {} entry function(s)", funcs) };
-	}
+	fs::path assemblyPath(plugin.GetBaseDir() / plugin.GetDescriptor().entryPoint);
 
 	const auto& exportedMethods = plugin.GetDescriptor().exportedMethods;
+	auto methodCount = exportedMethods.size();
+
+	PropertyHolder rawProperties;
+	MethodHolder rawPrototypes;
+
+	auto rawMethods = std::make_unique<MethodRaw[]>(methodCount);
+	auto outMethods = std::make_unique<void*[]>(methodCount);
+
+	for (size_t i = 0; i < methodCount; ++i) {
+		rawMethods[i] = MapToRawMethod(exportedMethods[i], rawProperties, rawPrototypes);
+	}
+
+	char error[256] = {'\0'};
+	auto absolutePath= fs::absolute(assemblyPath).string();
+
+	ManagedGuid assemblyGuid{};
+	_loadPlugin(absolutePath.c_str(), error, &assemblyGuid, rawMethods.get(), outMethods.get(), static_cast<int>(methodCount));
+
+	if (error[0] != '\0') {
+		return ErrorData{ error };
+	}
+
 	std::vector<MethodData> methods;
-	methods.reserve(exportedMethods.size());
+	methods.reserve(methodCount);
 
-	for (const auto& method : exportedMethods) {
-		auto seperated = String::Split(method.funcName, ".");
-		if (seperated.size() != 3) {
-			funcErrors.emplace_back(std::format("Invalid function name: '{}'. Please provide name in that format: 'Namespace.Class.Method'", method.funcName));
-			continue;
-		}
-
-		auto typeName = std::format(STRING("{}.{}, {}"), STR(seperated[0]), STR(seperated[1]), fileName.c_str());
-		auto methodName = STR(seperated[3]);
-
-		void* addr = nullptr;
-		result = get_function_pointer(
-				typeName.data(),
-				methodName.data(),
-				UNMANAGEDCALLERSONLY_METHOD,
-				nullptr,
-				nullptr,
-				&addr
-		);
-
-		if (result != 0 || addr == nullptr) {
-			funcErrors.emplace_back(method.name);
-		} else {
-			methods.emplace_back(method.name, addr);
-		}
-	}
-	if (!funcErrors.empty()) {
-		std::string funcs(funcErrors[0]);
-		for (auto it = std::next(funcErrors.begin()); it != funcErrors.end(); ++it) {
-			std::format_to(std::back_inserter(funcs), ", {}", *it);
-		}
-		return ErrorData{ std::format("Not found {} method function(s)", funcs) };
-	}
-
-	const int resultVersion = initFunc(&plugin);
-	if (resultVersion != 0) {
-		return ErrorData{ std::format("Not supported plugin api {}, max supported {}", resultVersion, kApiVersion) };
-	}
-
-	const auto [_, status] = _scripts.try_emplace(plugin.GetName(), startFunc, endFunc);
-	if (!status) {
-		return ErrorData{ std::format("Plugin name duplicate") };
+	for (size_t i = 0; i < methodCount; ++i) {
+		methods.emplace_back(exportedMethods[i].name, outMethods[i]);
 	}
 
 	return LoadResultData{ std::move(methods) };
 }
 
-void DotnetLanguageModule::OnPluginStart(const IPlugin& plugin) {
-	if (const auto it = _scripts.find(plugin.GetName()); it != _scripts.end()) {
-		const auto& script = std::get<Script>(*it);
-		script.startFunc();
-	}
+void DotnetLanguageModule::OnPluginStart(const IPlugin& ) {
+	//_startPlugin();
 }
 
-void DotnetLanguageModule::OnPluginEnd(const IPlugin& plugin) {
-	if (const auto it = _scripts.find(plugin.GetName()); it != _scripts.end()) {
-		const auto& script = std::get<Script>(*it);
-		script.endFunc();
-	}
+void DotnetLanguageModule::OnPluginEnd(const IPlugin& ) {
+	//_endPlugin();
 }
 
 void* DotnetLanguageModule::GetNativeMethod(const std::string& methodName) const {
@@ -294,7 +320,7 @@ extern "C" {
 	NETLM_EXPORT void* GetMethodPtr(const char* methodName) {
 		return g_netlm.GetNativeMethod(methodName);
 	}
-	
+
 	NETLM_EXPORT const char* GetBaseDir() {
 		auto source = g_netlm.GetProvider()->GetBaseDir().string();
 		size_t size = source.length() + 1;
@@ -311,6 +337,10 @@ extern "C" {
 	NETLM_EXPORT bool IsPluginLoaded(const char* pluginName, int version, bool minimum) {
 		auto requiredVersion = (version >= 0 && version != INT_MAX) ? std::make_optional(version) : std::nullopt;
 		return g_netlm.GetProvider()->IsPluginLoaded(pluginName, requiredVersion, minimum);
+	}
+
+	NETLM_EXPORT void Log(Severity severity, const char* funcName, uint32_t line, const char* message) {
+		g_netlm.GetProvider()->Log(std::format("{}:{}: {}", funcName, line, message), severity);
 	}
 
 	NETLM_EXPORT UniqueId GetPluginId(const plugify::IPlugin& plugin) {
@@ -400,7 +430,7 @@ extern "C" {
 		}
 		return nullptr;
 	}
-	
+
 	// String Functions
 
 	NETLM_EXPORT std::string* AllocateString() {
