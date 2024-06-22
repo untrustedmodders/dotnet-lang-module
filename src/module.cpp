@@ -316,6 +316,14 @@ void DotnetLanguageModule::OnMethodExport(const IPlugin& plugin) {
 	}
 }
 
+void DotnetLanguageModule::AddMethodToCache(ManagedGuid assembly_guid, ManagedGuid method_guid, void* method_info_ptr) const {
+	m_add_method_to_cache(&assembly_guid, &method_guid, method_info_ptr);
+}
+
+void DotnetLanguageModule::AddObjectToCache(ManagedGuid assembly_guid, ManagedGuid object_guid, void* object_ptr, ManagedObject* out_managed_object) const {
+	m_add_object_to_cache(&assembly_guid, &object_guid, object_ptr, out_managed_object);
+}
+
 namespace netlm {
 	DotnetLanguageModule g_netlm;
 }

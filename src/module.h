@@ -10,6 +10,7 @@ namespace netlm {
 
 	struct MethodRaw;
 	struct ManagedGuid;
+	struct ManagedObject;
 
 	using InitializeFunc = void (*)();
 	using ShutdownFunc = void (*)();
@@ -17,6 +18,7 @@ namespace netlm {
 	using StartPluginFunc = void (*)();
 	using EndPluginFunc = void (*)();
 
+	class Assembly;
 	class Library;
 
 	struct PropertyRaw {
@@ -50,6 +52,12 @@ namespace netlm {
 		void OnPluginStart(const plugify::IPlugin& plugin) override;
 		void OnPluginEnd(const plugify::IPlugin& plugin) override;
 		void OnMethodExport(const plugify::IPlugin& plugin) override;
+
+		UniquePtr<Assembly> LoadAssembly(const char* path) const;
+		bool UnloadAssembly(ManagedGuid guid) const;
+
+		void AddMethodToCache(ManagedGuid assembly_guid, ManagedGuid method_guid, void* method_info_ptr) const;
+		void AddObjectToCache(ManagedGuid assembly_guid, ManagedGuid object_guid, void* object_ptr, ManagedObject* out_managed_object) const;
 
 		const std::shared_ptr<plugify::IPlugifyProvider>& GetProvider() { return _provider; }
 		void* GetNativeMethod(const std::string& methodName) const;
