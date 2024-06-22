@@ -6,12 +6,12 @@
 #include <memory>
 
 namespace netlm {
-	class Assembly {
+	class Library {
 	public:
-		static std::unique_ptr<Assembly> LoadFromPath(const std::filesystem::path& assemblyPath);
+		static std::unique_ptr<Library> LoadFromPath(const std::filesystem::path& assemblyPath);
 		static std::string GetError();
 
-		~Assembly();
+		~Library();
 
 		void* GetFunction(const char* functionName) const;
 		template<class _Fn> requires(std::is_pointer_v<_Fn> && std::is_function_v<std::remove_pointer_t<_Fn>>)
@@ -20,7 +20,7 @@ namespace netlm {
 		}
 
 	private:
-		explicit Assembly(void* handle);
+		explicit Library(void* handle);
 
 	private:
 		void* _handle{ nullptr };

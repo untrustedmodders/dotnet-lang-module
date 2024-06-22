@@ -1,4 +1,4 @@
-#include "assembly.h"
+#include "library.h"
 
 #if NETLM_PLATFORM_WINDOWS
 #include <windows.h>
@@ -13,19 +13,19 @@
 namespace netlm {
 	thread_local static std::string lastError;
 
-	std::unique_ptr<Assembly> Assembly::LoadFromPath(const std::filesystem::path& assemblyPath) {
+	std::unique_ptr<Library> Library::LoadFromPath(const std::filesystem::path& LibraryPath) {
 #if NETLM_PLATFORM_WINDOWS
-		void* handle = static_cast<void*>(LoadLibraryW(assemblyPath.c_str()));
+		void* handle = static_cast<void*>(LoadLibraryW(LibraryPath.c_str()));
 #elif NETLM_PLATFORM_LINUX || NETLM_PLATFORM_APPLE
-		void* handle = dlopen(assemblyPath.string().c_str(), RTLD_LAZY | RTLD_NODELETE);
+		void* handle = dlopen(LibraryPath.string().c_str(), RTLD_LAZY | RTLD_NODELETE);
 #else
 		void* handle = nullptr;
 #endif
 		if (handle) {
 #if NETLM_PLATFORM_WINDOWS
-			GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, assemblyPath.filename().c_str(), reinterpret_cast<HMODULE*>(&handle));
+			GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, LibraryPath.filename().c_str(), reinterpret_cast<HMODULE*>(&handle));
 #endif
-			return std::unique_ptr<Assembly>(new Assembly(handle));
+			return std::unique_ptr<Library>(new Library(handle));
 		}
 #if NETLM_PLATFORM_WINDOWS
 		uint32_t errorCode = GetLastError();
@@ -42,14 +42,14 @@ namespace netlm {
 		return nullptr;
 	}
 
-	std::string Assembly::GetError() {
+	std::string Library::GetError() {
 		return lastError;
 	}
 
-	Assembly::Assembly(void* handle) : _handle{handle} {
+	Library::Library(void* handle) : _handle{handle} {
 	}
 
-	Assembly::~Assembly() {
+	Library::~Library() {
 #if NETLM_PLATFORM_WINDOWS
 		FreeLibrary(static_cast<HMODULE>(_handle));
 #elif NETLM_PLATFORM_LINUX || NETLM_PLATFORM_APPLE
@@ -57,7 +57,7 @@ namespace netlm {
 #endif
 	}
 
-	void* Assembly::GetFunction(const char* functionName) const {
+	void* Library::GetFunction(const char* functionName) const {
 #if NETLM_PLATFORM_WINDOWS
 		return reinterpret_cast<void*>(GetProcAddress(static_cast<HMODULE>(_handle), functionName));
 #elif NETLM_PLATFORM_LINUX || NETLM_PLATFORM_APPLE

@@ -1,5 +1,8 @@
 ﻿namespace Plugify;
 
+/// <summary>
+/// Class which every c# (.net) plugin must implement.
+/// </summary>
 public abstract class Plugin : IEquatable<Plugin>, IComparable<Plugin>
 {
 	private readonly nint _handle;

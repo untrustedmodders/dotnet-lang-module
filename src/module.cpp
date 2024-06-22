@@ -1,7 +1,9 @@
 #include "module.h"
-#include "assembly.h"
-#include "managed_guid.h"
+#include "library.h"
 #include "strings.h"
+
+#include "interop/managed_guid.h"
+
 #include <module_export.h>
 
 #include <plugify/compat_format.h>
@@ -31,7 +33,7 @@ using namespace netlm;
 namespace {
 	hostfxr_initialize_for_runtime_config_fn hostfxr_initialize_for_runtime_config;
 	hostfxr_get_runtime_delegate_fn hostfxr_get_runtime_delegate;
-	//hostfxr_set_runtime_property_value_fn hostfxr_set_runtime_property_value;
+	hostfxr_set_runtime_property_value_fn hostfxr_set_runtime_property_value;
 	hostfxr_close_fn hostfxr_close;
 	hostfxr_set_error_writer_fn hostfxr_set_error_writer;
 
@@ -49,16 +51,21 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 
 	fs::path hostPath(module.GetBaseDir() / "dotnet/host/fxr/8.0.3/" NETLM_LIBRARY_PREFIX "hostfxr" NETLM_LIBRARY_SUFFIX);
 	if (!fs::exists(hostPath, ec)) {
-		return ErrorData{std::format("Host is missing: {}", hostPath.string())};
+		return ErrorData{std::format("Host '{}' has not been found", hostPath.string())};
 	}
 
 	if (!LoadHostFXR(hostPath)) {
-		return ErrorData{ std::format("Failed to load host assembly: {}", Assembly::GetError()) };
+		return ErrorData{ std::format("Failed to load host assembly: {}", Library::GetError()) };
 	}
 
 	fs::path configPath(module.GetBaseDir() / "api/Plugify.runtimeconfig.json");
 	if (!fs::exists(configPath, ec)) {
-		return ErrorData{std::format("Config is missing: {}", configPath.string())};
+		return ErrorData{std::format("Config '{}' has not been found", configPath.string())};
+	}
+
+	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
+	if (!fs::exists(assemblyPath, ec)) {
+		return ErrorData{std::format("Assembly '{}' has not been found", assemblyPath.string())};
 	}
 
 	auto error = InitializeRuntimeHost(configPath);
@@ -66,12 +73,7 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{ std::move(*error) };
 	}
 
-	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
-	if (!fs::exists(assemblyPath, ec)) {
-		return ErrorData{std::format("Assembly is missing: {}", assemblyPath.string())};
-	}
-
-	auto className = STRING("Plugify.NativeInterop, Plugify");
+	const char_t* className = STRING("Plugify.NativeInterop, Plugify");
 
 	std::vector<std::string_view> funcErrors;
 
@@ -167,44 +169,46 @@ void DotnetLanguageModule::Shutdown() {
 }
 
 bool DotnetLanguageModule::LoadHostFXR(const fs::path& hostPath) {
-	_hostFxr = Assembly::LoadFromPath(hostPath);
+	_hostFxr = Library::LoadFromPath(hostPath);
 	if (!_hostFxr) {
 		return false;
 	}
 
 	hostfxr_initialize_for_runtime_config = _hostFxr->GetFunction<hostfxr_initialize_for_runtime_config_fn>("hostfxr_initialize_for_runtime_config");
 	hostfxr_get_runtime_delegate = _hostFxr->GetFunction<hostfxr_get_runtime_delegate_fn>("hostfxr_get_runtime_delegate");
-	//hostfxr_set_runtime_property_value = _hostFxr->GetFunction<hostfxr_set_runtime_property_value_fn>("hostfxr_set_runtime_property_value");
+	hostfxr_set_runtime_property_value = _hostFxr->GetFunction<hostfxr_set_runtime_property_value_fn>("hostfxr_set_runtime_property_value");
 	hostfxr_close = _hostFxr->GetFunction<hostfxr_close_fn>("hostfxr_close");
 	hostfxr_set_error_writer = _hostFxr->GetFunction<hostfxr_set_error_writer_fn>("hostfxr_set_error_writer");
 
 	return hostfxr_initialize_for_runtime_config &&
 		   hostfxr_get_runtime_delegate &&
-		   //hostfxr_set_runtime_property_value &&
+		   hostfxr_set_runtime_property_value &&
 		   hostfxr_close &&
 		   hostfxr_set_error_writer;
 }
 
 ErrorString DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPath) {
-	hostfxr_handle ctx = nullptr;
-	int32_t result = hostfxr_initialize_for_runtime_config(configPath.c_str(), nullptr, &ctx);
-	std::deleted_unique_ptr<void> context(ctx, [](hostfxr_handle handle) {
+	hostfxr_handle cxt = nullptr;
+	int32_t result = hostfxr_initialize_for_runtime_config(configPath.c_str(), nullptr, &cxt);
+	std::deleted_unique_ptr<void> context(cxt, [](hostfxr_handle handle) {
 		hostfxr_close(handle);
 	});
 
-	if ((result < StatusCode::Success || result > StatusCode::Success_DifferentRuntimeProperties) || ctx == nullptr) {
+	if ((result < StatusCode::Success || result > StatusCode::Success_DifferentRuntimeProperties) || cxt == nullptr) {
 		return std::format("Failed to initialize hostfxr: {:x} ({})", uint32_t(result), String::GetError(result));
 	}
 
-	result = hostfxr_get_runtime_delegate(ctx, hdt_load_assembly_and_get_function_pointer, reinterpret_cast<void**>(&load_assembly_and_get_function_pointer));
+	//hostfxr_set_runtime_property_value(cxt, STRING("APP_CONTEXT_BASE_DIRECTORY"), basePath.c_str());
+
+	result = hostfxr_get_runtime_delegate(cxt, hdt_load_assembly_and_get_function_pointer, reinterpret_cast<void**>(&load_assembly_and_get_function_pointer));
 	if (result != StatusCode::Success || load_assembly_and_get_function_pointer == nullptr) {
 		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly_and_get_function_pointer failed: {:x} ({})", uint32_t(result), String::GetError(result));
 	}
-	/*result = hostfxr_get_runtime_delegate(ctx, hdt_get_function_pointer, reinterpret_cast<void**>(&get_function_pointer));
+	/*result = hostfxr_get_runtime_delegate(cxt, hdt_get_function_pointer, reinterpret_cast<void**>(&get_function_pointer));
 	if (result != StatusCode::Success || get_function_pointer == nullptr) {
 		return std::format("hostfxr_get_runtime_delegate::hdt_get_function_pointer failed: {:x} ({})", uint32_t(result), String::GetError(result));
 	}
-	result = hostfxr_get_runtime_delegate(ctx, hdt_load_assembly, reinterpret_cast<void**>(&load_assembly));
+	result = hostfxr_get_runtime_delegate(cxt, hdt_load_assembly, reinterpret_cast<void**>(&load_assembly));
 	if (result != StatusCode::Success || load_assembly == nullptr) {
 		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly failed: {:x} ({})", uint32_t(result), String::GetError(result));
 	}*/

@@ -17,7 +17,7 @@ namespace netlm {
 	using StartPluginFunc = void (*)();
 	using EndPluginFunc = void (*)();
 
-	class Assembly;
+	class Library;
 
 	struct PropertyRaw {
 		plugify::ValueType type;
@@ -62,7 +62,7 @@ namespace netlm {
 
 	private:
 		std::shared_ptr<plugify::IPlugifyProvider> _provider;
-		std::unique_ptr<Assembly> _hostFxr;
+		std::unique_ptr<Library> _hostFxr;
 		std::deleted_unique_ptr<void> _context;
 		std::unordered_map<std::string, void*> _nativesMap;
 
