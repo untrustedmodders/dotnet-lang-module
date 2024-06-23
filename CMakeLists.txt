@@ -23,6 +23,11 @@ if(UNIX AND NOT APPLE)
 endif()
 
 #
+# Dyncall
+#
+include(cmake/dyncall.cmake)
+
+#
 # Plugify
 #
 set(PLUGIFY_BUILD_SHARED_LIB ON CACHE INTERNAL "")
@@ -40,12 +45,13 @@ set(NETLM_PCH_FILE "src/pch.h")
 
 add_library(${PROJECT_NAME} SHARED ${NETLM_SOURCES})
 
-set(NETLM_LINK_LIBRARIES plugify::plugify)
+set(NETLM_LINK_LIBRARIES plugify::plugify plugify::plugify-function asmjit::asmjit dyncall_s)
 
 if(NOT COMPILER_SUPPORTS_FORMAT)
     set(NETLM_LINK_LIBRARIES ${NETLM_LINK_LIBRARIES} fmt::fmt-header-only)
 endif()
 
+include_directories(${CMAKE_BINARY_DIR}/_deps/dyncall-src/)
 include_directories(external/dotnet/include)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${NETLM_LINK_LIBRARIES})

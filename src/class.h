@@ -11,32 +11,23 @@ namespace netlm {
 	class Assembly;
 
 	struct ManagedClass {
-		int32_t type_hash;
-		Class* class_object;
-		ManagedGuid assembly_guid;
-		ManagedGuid new_object_guid;
-		ManagedGuid free_object_guid;
+		int32_t typeHash;
+		Class* classObject;
+		ManagedGuid assemblyGuid;
+		ManagedGuid newObjectGuid;
+		ManagedGuid freeObjectGuid;
 	};
-}
-
-namespace netlm {
-	namespace detail {
-		template<class T>
-		constexpr inline T* ToPointerType(T* value) { return value; }
-		template<class T>
-		constexpr inline T* ToPointerType(T** value) { return *value; }
-	}
 
 	class Class {
 	public:
-		// Function to create a new object of this class with the given arguments
-		using NewObjectFunction = ManagedObject (*)(void);
+		using NewObjectFunction = ManagedObject (*)();
 		using FreeObjectFunction = void (*)(ManagedObject);
 
-		Class(ClassHolder* parent, String name)
-			: m_parent(parent),
-			  m_name(std::move(name)),
-			  m_new_object_fptr(nullptr) {
+		Class(const ClassHolder& parent, std::string name)
+			: _parent(parent),
+			  _name(std::move(name)),
+			  _newObjectFunction(nullptr),
+			  _freeObjectFunction(nullptr) {
 		}
 
 		Class(const Class&) = delete;
@@ -45,107 +36,74 @@ namespace netlm {
 		Class& operator=(Class&&) noexcept = delete;
 		~Class() = default;
 
-		const String& GetName() const { return m_name; }
-		ClassHolder* GetParent() const { return m_parent; }
-		NewObjectFunction GetNewObjectFunction() const { return m_new_object_fptr; }
-		void SetNewObjectFunction(NewObjectFunction new_object_fptr) { m_new_object_fptr = new_object_fptr; }
+		[[nodiscard]] const std::string& GetName() const { return _name; }
+		[[nodiscard]] const ClassHolder& GetParent() const { return _parent; }
 
-		FreeObjectFunction GetFreeObjectFunction() const { return m_free_object_fptr; }
+		[[nodiscard]] NewObjectFunction GetNewObjectFunction() const { return _newObjectFunction; }
+		void SetNewObjectFunction(NewObjectFunction newObjectFptr) { _newObjectFunction = newObjectFptr; }
 
-		void SetFreeObjectFunction(FreeObjectFunction free_object_fptr) { m_free_object_fptr = free_object_fptr; }
+		[[nodiscard]] FreeObjectFunction GetFreeObjectFunction() const { return _freeObjectFunction; }
+		void SetFreeObjectFunction(FreeObjectFunction freeObjectFptr) { _freeObjectFunction = freeObjectFptr; }
 
-		/*! \brief Check if a method exists by name.
-		 *
-		 *  \param method_name The name of the method to check.
-		 *
-		 *  \return True if the method exists, otherwise false.
-		 */
-		bool HasMethod(const String& method_name) const { return m_methods.find(method_name) != m_methods.end(); }
+		[[nodiscard]] bool HasMethod(const std::string& methodName) const { return _methods.find(methodName) != _methods.end(); }
 
-		/*! \brief Get a method by name.
-		 *
-		 *  \param method_name The name of the method to get.
-		 *
-		 *  \return A pointer to the method object if it exists, otherwise nullptr.
-		 */
-		ManagedMethod* GetMethod(const String& method_name) {
-			auto it = m_methods.find(method_name);
-			if (it == m_methods.end()) {
+		[[nodiscard]] ManagedMethod* GetMethod(const std::string& methodName) {
+			auto it = _methods.find(methodName);
+			if (it == _methods.end()) {
 				return nullptr;
 			}
 
 			return &it->second;
 		}
 
-		/*! \brief Get a method by name.
-		 *
-		 *  \param method_name The name of the method to get.
-		 *
-		 *  \return A pointer to the method object if it exists, otherwise nullptr.
-		 */
-		const ManagedMethod* GetMethod(const String& method_name) const {
-			auto it = m_methods.find(method_name);
-			if (it == m_methods.end()) {
+		[[nodiscard]] const ManagedMethod* GetMethod(const std::string& methodName) const {
+			auto it = _methods.find(methodName);
+			if (it == _methods.end()) {
 				return nullptr;
 			}
 
 			return &it->second;
 		}
 
-		/*! \brief Add a method to this class.
-		 *
-		 *  \param method_name The name of the method to add.
-		 *  \param method_object The method object to add.
-		 */
-		void AddMethod(const String& method_name, ManagedMethod&& method_object) { m_methods[method_name] = std::move(method_object); }
+		[[nodiscard]] const std::unordered_map<std::string, ManagedMethod>& GetMethods() const { return _methods; }
 
-		/*! \brief Get all methods of this class.
-		 *
-		 *  \return A reference to the map of methods.
-		 */
-		const HashMap<String, ManagedMethod>& GetMethods() const { return m_methods; }
+		void AddMethod(const std::string& methodName, ManagedMethod&& methodObject) { _methods[methodName] = std::move(methodObject); }
 
 		void EnsureLoaded() const;
 
-		/*! \brief Create a new managed object of this class.
-		 *     The new object will be managed by the .NET runtime and will be freed when the unique pointer goes out of scope.
-		 *      The returned object will hold a reference to this class instance, so it will need to remain valid for the lifetime of the object.
-		 *
-		 *  \return A unique pointer to the new managed object.
-		 */
-		UniquePtr<Object> NewObject();
+		std::unique_ptr<Object> NewObject();
 
 		template<class ReturnType, class... Args>
-		ReturnType InvokeStaticMethod(const String& method_name, Args&&... args) {
+		ReturnType InvokeStaticMethod(const std::string& methodName, Args&&... args) {
 			static_assert(std::is_void_v<ReturnType> || std::is_trivial_v<ReturnType>, "Return type must be trivial to be used in interop");
 			static_assert(std::is_void_v<ReturnType> || std::is_object_v<ReturnType>, "Return type must be either a value type or a pointer type to be used in interop (no references)");
 
-			auto it = m_methods.find(method_name);
-			//AssertThrowMsg(it != m_methods.end(), "Method not found");
+			auto it = _methods.find(methodName);
+			assert(it != _methods.end() && "Method not found");
 
-			const ManagedMethod& method_object = it->second;
+			const ManagedMethod& methodObject = it->second;
 
-			void* args_vptr[] = {&args...};
+			void* argsVptr[] = { &args... };
 
 			if constexpr (std::is_void_v<ReturnType>) {
-				InvokeStaticMethod(&method_object, args_vptr, nullptr);
+				InvokeStaticMethod(&methodObject, argsVptr, nullptr);
 			} else {
-				ReturnType return_value_storage;
-				void* result_vptr = InvokeStaticMethod(&method_object, args_vptr, &return_value_storage);
-				return return_value_storage;
+				ReturnType returnValueStorage;
+				void* resultVptr = InvokeStaticMethod(&methodObject, argsVptr, &returnValueStorage);
+				return returnValueStorage;
 			}
 		}
 
 	private:
-		void* InvokeStaticMethod(const ManagedMethod* method_ptr, void** args_vptr, void* return_value_vptr);
+		void* InvokeStaticMethod(const ManagedMethod* methodPtr, void** argsVptr, void* returnValueVptr);
 
-		String m_name;
-		HashMap<String, ManagedMethod> m_methods;
+		std::string _name;
+		std::unordered_map<std::string, ManagedMethod> _methods;
 
-		ClassHolder* m_parent;
+		const ClassHolder& _parent;
 
-		NewObjectFunction m_new_object_fptr;
-		FreeObjectFunction m_free_object_fptr;
+		NewObjectFunction _newObjectFunction;
+		FreeObjectFunction _freeObjectFunction;
 	};
 
-}// namespace netlm
+}

@@ -26,7 +26,7 @@ internal class PluginLoadContext(string pluginPath) : AssemblyLoadContext(isColl
 	
 internal class AssemblyInstance(Guid guid, string path)
 {
-    private AssemblyLoadContext? _context;
+    private AssemblyLoadContext? _ctx;
     private Assembly? _assembly;
 
     public Assembly? Assembly => _assembly;
@@ -42,8 +42,8 @@ internal class AssemblyInstance(Guid guid, string path)
             return;
         }
 
-        _context = new PluginLoadContext(path);
-        _assembly = _context.LoadFromAssemblyPath(path);
+        _ctx = new PluginLoadContext(path);
+        _assembly = _ctx.LoadFromAssemblyPath(path);
 
 #if DEBUG // Load all referenced assemblies to ensure nothing will crash later
         Logger.Log(Severity.Info, "Loaded assembly: {0}, with {1} referenced assemblies.", _assembly.FullName ??  "<Unknown>", _assembly.GetReferencedAssemblies().Length);
@@ -54,7 +54,7 @@ internal class AssemblyInstance(Guid guid, string path)
 	            
             Logger.Log(Severity.Info, "Found referenced assembly: {0}", assembly.Name ?? "<Unknown>");
 
-            _context.LoadFromAssemblyName(assembly);
+            _ctx.LoadFromAssemblyName(assembly);
         }
 #endif
     }
@@ -66,12 +66,12 @@ internal class AssemblyInstance(Guid guid, string path)
             return;
         }
 
-        _context?.Unload();
+        _ctx?.Unload();
 
         Logger.Log(Severity.Info, $"Unloaded assembly {guid} from {path}.");
 
         _assembly = null;
-        _context = null;
+        _ctx = null;
     }
 }
 	

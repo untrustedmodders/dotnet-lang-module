@@ -1,236 +1,185 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Text;
 
 namespace Plugify;
 
+public delegate void InvokeMethodDelegate(Guid managedMethodGuid, Guid thisObjectGuid, nint paramsPtr, nint outPtr);
+
 public static class NativeInterop
 {
 	public static readonly int ApiVersion = 1;
-	
-	[UnmanagedCallersOnly]
-	public static void Initialize()
-	{
-	}
-	
-	[UnmanagedCallersOnly]
-	public static void Shutdown()
-	{
-	}
+    public static InvokeMethodDelegate InvokeMethodDelegate = InvokeMethod;
 
-	[UnmanagedCallersOnly]
-	public static void LoadPlugin(nint assemblyPathStringPtr, nint outErrorStringPtr, nint outAssemblyGuid, nint exportMethodsPtr, nint outExportMethodPtr, int methodCount)
-	{
+    [UnmanagedCallersOnly]
+    public static void InitializeAssembly(nint outErrorStringPtr, nint outAssemblyGuid, nint classHolderPtr, nint assemblyPathStringPtr)
+    {
+        // Create a managed string from the pointer
         string? assemblyPath = Marshal.PtrToStringAnsi(assemblyPathStringPtr);
         if (assemblyPath == null)
         {
-	        var message = "Assembly path is invalid";
-	        byte[] bytes = Encoding.ASCII.GetBytes(message);
-	        Marshal.Copy(bytes, 0, outErrorStringPtr, message.Length + 1);
-	        return;
+            OutError(outErrorStringPtr, "Assembly path is invalid");
+            return;
         }
         
+        AssemblyInstance? assemblyInstance = AssemblyCache.Instance.Get(assemblyPath);
+        if (assemblyInstance != null)
+        {
+            OutError(outErrorStringPtr, "Assembly already loaded: " + assemblyPath + " (" + assemblyInstance.Guid + ")");
+            return;
+        }
+
         Guid assemblyGuid = Guid.NewGuid();
         Marshal.StructureToPtr(assemblyGuid, outAssemblyGuid, false);
 
-        var assemblyInstance = AssemblyCache.Instance.Get(assemblyPath);
-        if (assemblyInstance != null)
-        {
-	        var message = $"Assembly already loaded: '{assemblyPath}' ({assemblyInstance.Guid})"; 
-	        byte[] bytes = Encoding.ASCII.GetBytes(message);
-	        Marshal.Copy(bytes, 0, outErrorStringPtr, message.Length + 1);
-	        return;
-        }
-
-        Logger.Log(Severity.Info, "Loading assembly: '{0}' ...", assemblyPath);
+        Logger.Log(Severity.Info, "Loading assembly: {0}...", assemblyPath);
 
         assemblyInstance = AssemblyCache.Instance.Add(assemblyGuid, assemblyPath);
-        
         Assembly? assembly = assemblyInstance.Assembly;
+
         if (assembly == null)
         {
-	        var message = $"Failed to load assembly: '{assemblyPath}'";
-	        byte[] bytes = Encoding.ASCII.GetBytes(message);
-	        Marshal.Copy(bytes, 0, outErrorStringPtr, bytes.Length);
-	        return;
+            OutError(outErrorStringPtr, "Failed to load assembly: " + assemblyPath);
+            return;
         }
-        
-        Type[] types = assembly.GetExportedTypes();
 
-        Type? pluginType = types.FirstOrDefault(t => t is { IsClass: true, IsAbstract: false } && t.IsSubclassOf(typeof(Plugin)));
-        if (pluginType == null)
+        foreach (Type type in assembly.GetExportedTypes())
         {
-	        var message = "Unable to find plugin in assembly";
-	        byte[] bytes = Encoding.ASCII.GetBytes(message);
-	        Marshal.Copy(bytes, 0, outErrorStringPtr, bytes.Length);
-	        return;
+            if (type is { IsClass: true, IsAbstract: false })
+            {
+                InitManagedClass(assemblyGuid, classHolderPtr, type);
+            }
         }
 
-        if (Attribute.GetCustomAttribute(pluginType, typeof(MinimumApiVersion)) is MinimumApiVersion versionAttribute && versionAttribute.Version > ApiVersion)
+        NativeInterop_SetInvokeMethodFunction(ref assemblyGuid, classHolderPtr, Marshal.GetFunctionPointerForDelegate<InvokeMethodDelegate>(InvokeMethod));
+    }
+    
+    [UnmanagedCallersOnly]
+    public static void UnloadAssembly(nint assemblyGuidPtr, nint outResult)
+    {
+        bool result = true;
+
+        try
         {
-	        var message = $"Requires a newer version of Plugify. The plugin expects version v{versionAttribute.Version} but the current version is v{ApiVersion}.";
-	        byte[] bytes = Encoding.ASCII.GetBytes(message);
-	        Marshal.Copy(bytes, 0, outErrorStringPtr, bytes.Length);
-	        return;
-        }
+            Guid assemblyGuid = Marshal.PtrToStructure<Guid>(assemblyGuidPtr);
 
-        // TODO: Export methods
-        unsafe
+            if (AssemblyCache.Instance.Get(assemblyGuid) == null)
+            {
+                Logger.Log(Severity.Warning, "Failed to unload assembly: {0} not found", assemblyGuid);
+
+                foreach (var kv in AssemblyCache.Instance.Assemblies)
+                {
+                    Logger.Log(Severity.Info, "Assembly: {0}", kv.Key);
+                }
+
+                result = false;
+            }
+            else
+            {
+                Logger.Log(Severity.Info, "Unloading assembly: {0}...", assemblyGuid);
+
+                AssemblyCache.Instance.Remove(assemblyGuid);
+            }
+        }
+        catch (Exception err)
         {
-	        Method* exportMethods = (Method*)exportMethodsPtr.ToPointer();
+            Logger.Log(Severity.Error, "Error unloading assembly: {0}", err);
 
-	        for (int i = 0; i < methodCount; i++)
-	        {
-		        Method exportMethod = exportMethods[i];
-		        string funcName = exportMethod.FunctionName;
-		        Property returnType = exportMethod.ReturnType;
-		        Property[] parameterTypes = exportMethod.ParameterTypes;
-		        
-		        string[] separated = funcName.Split('.');
-		        if (separated.Length != 3) {
-			        PrintError(outErrorStringPtr, $"Invalid function name: '{funcName}'. Please provide name in that format: 'Namespace.Class.Method'");
-			        return;
-		        }
-		        
-		        foreach (Type type in types.Where(t => t.IsClass && t.Namespace == separated[0] && t.Name == separated[1]))
-		        {
-			        BindingFlags bindingAttr = BindingFlags.Public;
-			        bindingAttr |= (type == pluginType) ? BindingFlags.Instance : BindingFlags.Static;
-			        
-			        foreach (MethodInfo method in type.GetMethods(bindingAttr).Where(m => m is { IsPublic: true, IsConstructor: false } && m.Name == separated[2]))
-			        {
-				        var parameters = method.GetParameters();
-				        
-						if (exportMethod.ParamCount != parameters.Length) {
-							PrintError(outErrorStringPtr, $"Invalid parameter count {parameters.Length} when it should have {exportMethod.ParamCount}");
-							return;
-						}
-						
-						ValueType retType = TypeMapper.MonoTypeToValueType(method.ReturnType.Name);
-
-						if (retType == ValueType.Invalid) {
-							if (method.ReturnType.IsClass) {
-								retType = ValueType.Function;
-							}
-						}
-
-						if (retType == ValueType.Invalid) {
-							PrintError(outErrorStringPtr, $"Return of method '{funcName}' not supported '{method.ReturnType.Name}'");
-							return;
-						}
-						
-						ValueType methodReturnType = returnType.Type;
-
-						if (methodReturnType == ValueType.Char8 && retType == ValueType.Char16) {
-							retType = ValueType.Char8;
-						}
-		
-						if (retType != methodReturnType) {
-							PrintError(outErrorStringPtr, $"Method '{funcName}' has invalid return type '{methodReturnType.ToString()}' when it should have '{retType.ToString()}'");
-							return;
-						}
-
-						for (int j = 0; j < parameters.Length; j++)
-						{
-							var param = parameters[j];
-							
-							ValueType paramType = TypeMapper.MonoTypeToValueType(param.ParameterType.Name);
-
-							if (paramType == ValueType.Invalid) {
-								if (param.ParameterType.IsClass) {
-									paramType = ValueType.Function;
-								}
-							}
-
-							if (paramType == ValueType.Invalid) {
-								PrintError(outErrorStringPtr, $"Parameter '{param.Name}' ({j}) of method '{funcName}' not supported '{paramType.ToString()}'");
-								return;
-							}
-
-							ValueType methodParamType = parameterTypes[j].Type;
-			
-							if (methodParamType == ValueType.Char8 && paramType == ValueType.Char16) {
-								paramType = ValueType.Char8;
-							}
-
-							if (paramType != methodParamType) {
-								PrintError(outErrorStringPtr, $"Method '{funcName}' has invalid param type '{methodParamType.ToString()}' at {param.Name} ({j}) when it should have '{paramType.ToString()}'");
-								return;
-							}
-						}
-						
-						
-						
-			        }
-		        }
-	        }
+            result = false;
         }
-	}
 
-	[UnmanagedCallersOnly]
-	public static void StartPlugin(Guid assemblyGuid)
-	{
-	}
-	
-	[UnmanagedCallersOnly]
-	public static void EndPlugin()
-	{
-		
-	}
+        Marshal.WriteInt32(outResult, result ? 1 : 0);
+    }
 
-	private static void PrintError(nint outErrorStringPtr, string message)
-	{
-		byte[] bytes = Encoding.ASCII.GetBytes(message);
-		Marshal.Copy(bytes, 0, outErrorStringPtr, bytes.Length);
-	}
+    [UnmanagedCallersOnly]
+    public static unsafe void AddMethodToCache(nint assemblyGuidPtr, nint methodGuidPtr, nint methodInfoPtr)
+    {
+        Guid assemblyGuid = Marshal.PtrToStructure<Guid>(assemblyGuidPtr);
+        Guid methodGuid = Marshal.PtrToStructure<Guid>(methodGuidPtr);
 
-	/*private static ManagedClass InitManagedClass(Guid assemblyGuid, IntPtr classHolderPtr, Type type)
+        ref MethodInfo methodInfo = ref Unsafe.AsRef<MethodInfo>(methodInfoPtr.ToPointer());
+
+        ManagedMethodCache.Instance.AddMethod(assemblyGuid, methodGuid, methodInfo);
+    }
+
+    [UnmanagedCallersOnly]
+    public static unsafe void AddObjectToCache(nint assemblyGuidPtr, nint objectGuidPtr, nint objectPtr, nint outManagedObjectPtr)
+    {
+        Guid assemblyGuid = Marshal.PtrToStructure<Guid>(assemblyGuidPtr);
+        Guid objectGuid = Marshal.PtrToStructure<Guid>(objectGuidPtr);
+
+        // read object as reference
+        ref object obj = ref Unsafe.AsRef<object>(objectPtr.ToPointer());
+
+        ManagedObject managedObject = ManagedObjectCache.Instance.AddObject(assemblyGuid, objectGuid, obj);
+
+        // write managedObject to outManagedObjectPtr
+        Marshal.StructureToPtr(managedObject, outManagedObjectPtr, false);
+    }
+
+    private static void CollectMethods(Type type, Dictionary<string, MethodInfo> methods)
+    {
+        MethodInfo[] methodInfos = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+
+        foreach (MethodInfo methodInfo in methodInfos)
+        {
+            // Skip duplicates in hierarchy
+            if (methods.ContainsKey(methodInfo.Name))
+            {
+                continue;
+            }
+
+            // Skip constructors
+            if (methodInfo.IsConstructor)
+            {
+                continue;
+            }
+
+            methods.Add(methodInfo.Name, methodInfo);
+        }
+
+        if (type.BaseType != null)
+        {
+            CollectMethods(type.BaseType, methods);
+        }
+    }
+
+    private static ManagedClass InitManagedClass(Guid assemblyGuid, nint classHolderPtr, Type type)
     {
         string typeName = type.Name;
+        nint typeNamePtr = Marshal.StringToHGlobalAnsi(typeName);
+        bool isPlugin = type.IsAssignableFrom(typeof(Plugin));
 
-        IntPtr typeNamePtr = Marshal.StringToHGlobalAnsi(typeName);
-
-        ManagedClass managedClass = new ManagedClass();
-        ManagedClass_Create(ref assemblyGuid, classHolderPtr, type.GetHashCode(), typeNamePtr, out managedClass);
+        ManagedClass_Create(ref assemblyGuid, classHolderPtr, type.GetHashCode(), typeNamePtr, isPlugin, out ManagedClass managedClass);
 
         Marshal.FreeHGlobal(typeNamePtr);
 
         Dictionary<string, MethodInfo> methods = new Dictionary<string, MethodInfo>();
         CollectMethods(type, methods);
 
-        foreach (var item in methods)
+        foreach (KeyValuePair<string, MethodInfo> item in methods)
         {
             MethodInfo methodInfo = item.Value;
-            
-            // Get all custom attributes for the method
-            object[] attributes = methodInfo.GetCustomAttributes(false);
-
-            List<string> attributeNames = new List<string>();
-
-            foreach (object attribute in attributes)
-            {
-                // Add full qualified name of the attribute
-                attributeNames.Add(attribute.GetType().FullName);
-            }
 
             // Add the objects being pointed to to the delegate cache so they don't get GC'd
             Guid methodGuid = Guid.NewGuid();
-            managedClass.AddMethod(item.Key, methodGuid, attributeNames.ToArray());
+            managedClass.AddMethod(item.Key, methodGuid, methodInfo);
 
             ManagedMethodCache.Instance.AddMethod(assemblyGuid, methodGuid, methodInfo);
         }
 
         // Add new object, free object delegates
-        managedClass.NewObjectFunction = new NewObjectDelegate(() =>
+        managedClass.NewObjectFunction = () =>
         {
             // Allocate the object
             object obj = RuntimeHelpers.GetUninitializedObject(type);
             // GCHandle objHandle = GCHandle.Alloc(obj);
 
             // Call the constructor
-            ConstructorInfo constructorInfo = type.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
+            ConstructorInfo? constructorInfo = type.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
 
             if (constructorInfo == null)
             {
@@ -244,44 +193,172 @@ public static class NativeInterop
             // @TODO: Reduce complexity - this is a bit of a mess between C# adn C++ interop
             // ManagedObject managedObject = new ManagedObject();
 
-            // NativeInterop_AddObjectToCache(ref assemblyGuid, ref objectGuid, GCHandle.ToIntPtr(objHandle), out managedObject);
+            // NativeInterop_AddObjectToCache(ref assemblyGuid, ref objectGuid, GCHandle.Tonint(objHandle), out managedObject);
 
             // objHandle.Free();
 
             // return managedObject;
             
             return ManagedObjectCache.Instance.AddObject(assemblyGuid, objectGuid, obj);
-        });
+        };
 
-        managedClass.FreeObjectFunction = new FreeObjectDelegate(FreeObject);
+        managedClass.FreeObjectFunction = FreeObject;
 
         return managedClass;
     }
-	
-	private static void CollectMethods(Type type, Dictionary<string, MethodInfo> methods)
-	{
-		MethodInfo[] methodInfos = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy);
 
-		foreach (MethodInfo methodInfo in methodInfos)
-		{
-			// Skip duplicates in hierarchy
-			if (methods.ContainsKey(methodInfo.Name))
-			{
-				continue;
-			}
+    private static void HandleParameters(nint paramsPtr, MethodInfo methodInfo, out object[] parameters)
+    {
+        int numParams = methodInfo.GetParameters().Length;
 
-			// Skip constructors
-			if (methodInfo.IsConstructor)
-			{
-				continue;
-			}
+        if (numParams == 0 || paramsPtr == nint.Zero)
+        {
+            parameters = [];
+            return;
+        }
 
-			methods.Add(methodInfo.Name, methodInfo);
-		}
+        parameters = new object[numParams];
 
-		if (type.BaseType != null)
-		{
-			CollectMethods(type.BaseType, methods);
-		}
-	}*/
+        int paramsOffset = 0;
+
+        for (int i = 0; i < numParams; i++)
+        {
+            Type paramType = methodInfo.GetParameters()[i].ParameterType;
+
+            // params is stored as void**
+            nint paramAddress = Marshal.ReadIntPtr(paramsPtr, paramsOffset);
+            paramsOffset += nint.Size;
+
+            // Helper for strings
+            if (paramType == typeof(string))
+            {
+                parameters[i] = Marshal.PtrToStringAnsi(Marshal.ReadIntPtr(paramAddress));
+
+                continue;
+            }
+
+            if (paramType == typeof(nint))
+            {
+                parameters[i] = Marshal.ReadIntPtr(paramAddress);
+
+                continue;
+            }
+
+            if (paramType.IsValueType)
+            {
+                parameters[i] = Marshal.PtrToStructure(paramAddress, paramType);
+
+                continue;
+            }
+
+            if (paramType.IsPointer)
+            {
+                throw new NotImplementedException("Pointer parameter type not implemented");
+            }
+
+            if (paramType.IsByRef)
+            {
+                throw new NotImplementedException("ByRef parameter type not implemented");
+            }
+
+            throw new NotImplementedException("Parameter type not implemented");
+        }
+    }
+
+    public static void InvokeMethod(Guid managedMethodGuid, Guid thisObjectGuid, nint paramsPtr, nint outPtr)
+    {
+        MethodInfo? methodInfo = ManagedMethodCache.Instance.GetMethod(managedMethodGuid);
+        if (methodInfo == null)
+        {
+            throw new Exception("Failed to get method from GUID: " + managedMethodGuid);
+        }
+        
+        Type returnType = methodInfo.ReturnType;
+        //Type thisType = methodInfo.DeclaringType;
+
+        HandleParameters(paramsPtr, methodInfo, out var parameters);
+
+        object? thisObject = null;
+
+        if (!methodInfo.IsStatic)
+        {
+            StoredManagedObject? storedObject = ManagedObjectCache.Instance.GetObject(thisObjectGuid);
+
+            if (storedObject == null)
+            {
+                throw new Exception("Failed to get target from GUID: " + thisObjectGuid);
+            }
+
+            thisObject = storedObject.obj;
+        }
+
+        object? returnValue = methodInfo.Invoke(thisObject, parameters);
+
+        // If returnType is an enum we need to get the underlying type and cast the value to it
+        if (returnType.IsEnum)
+        {
+            returnType = Enum.GetUnderlyingType(returnType);
+            returnValue = Convert.ChangeType(returnValue, returnType);
+        }
+
+        if (returnType == typeof(void))
+        {
+            // No need to fill out the outPtr
+            return;
+        }
+
+        if (returnType == typeof(string))
+        {
+            throw new NotImplementedException("String return type not implemented");
+        }
+
+        if (returnType == typeof(bool))
+        {
+            Marshal.WriteByte(outPtr, (byte)((bool)returnValue ? 1 : 0));
+
+            return;
+        }
+
+        // write the return value to the outPtr
+        // there MUST be enough space allocated at the outPtr,
+        // or else this will cause memory corruption
+        if (returnType.IsValueType)
+        {
+            Marshal.StructureToPtr(returnValue, outPtr, false);
+
+            return;
+        }
+
+        if (returnType == typeof(nint))
+        {
+            Marshal.WriteIntPtr(outPtr, (nint)returnValue);
+
+            return;
+        }
+
+        throw new NotImplementedException("Return type not implemented");
+    }
+
+    public static void FreeObject(ManagedObject obj)
+    {
+        if (!ManagedObjectCache.Instance.RemoveObject(obj.guid))
+        {
+            throw new Exception("Failed to remove object from cache: " + obj.guid);
+        }
+    }
+    
+    private static void OutError(nint outErrorStringPtr, string message)
+    {
+        if (outErrorStringPtr == nint.Zero)
+            return;
+        
+        byte[] bytes = Encoding.ASCII.GetBytes(message);
+        Marshal.Copy(bytes, 0, outErrorStringPtr, bytes.Length);
+    }
+
+    [DllImport(NativeMethods.DllName)]
+    private static extern void ManagedClass_Create(ref Guid assemblyGuid, nint classHolderPtr, int typeHash, nint typeNamePtr, bool isPlugin, [Out] out ManagedClass result);
+
+    [DllImport(NativeMethods.DllName)]
+    private static extern void NativeInterop_SetInvokeMethodFunction([In] ref Guid assemblyGuid, nint classHolderPtr, nint invokeMethodPtr);
 }

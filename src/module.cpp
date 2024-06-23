@@ -1,5 +1,7 @@
 #include "module.h"
 #include "library.h"
+#include "assembly.h"
+#include "class.h"
 #include "strings.h"
 
 #include "interop/managed_guid.h"
@@ -42,6 +44,8 @@ namespace {
 	//load_assembly_fn load_assembly;
 }
 
+extern const char* hostfxr_str_error(int32_t error);
+
 InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> provider, const IModule& module) {
 	if (!(_provider = provider.lock())) {
 		return ErrorData{ "Provider not exposed" };
@@ -60,12 +64,7 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 
 	fs::path configPath(module.GetBaseDir() / "api/Plugify.runtimeconfig.json");
 	if (!fs::exists(configPath, ec)) {
-		return ErrorData{std::format("Config '{}' has not been found", configPath.string())};
-	}
-
-	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
-	if (!fs::exists(assemblyPath, ec)) {
-		return ErrorData{std::format("Assembly '{}' has not been found", assemblyPath.string())};
+		return ErrorData{ std::format("Config '{}' has not been found", configPath.string()) };
 	}
 
 	auto error = InitializeRuntimeHost(configPath);
@@ -73,112 +72,100 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{ std::move(*error) };
 	}
 
+	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
+	if (!fs::exists(assemblyPath, ec)) {
+		return ErrorData{ std::format("Assembly '{}' has not been found", assemblyPath.string()) };
+	}
+
 	const char_t* className = STRING("Plugify.NativeInterop, Plugify");
 
-	std::vector<std::string_view> funcErrors;
-
-	_initialize = nullptr;
-	int32_t result = load_assembly_and_get_function_pointer(
+	_initializeAssembly = GetDelegate<InitializeAssemblyDelegate>(
 			assemblyPath.c_str(),
 			className,
-			STRING("Initialize"),
-			UNMANAGEDCALLERSONLY_METHOD,
-			nullptr,
-			reinterpret_cast<void**>(&_initialize)
+			STRING("InitializeAssembly"),
+			UNMANAGEDCALLERSONLY_METHOD
 	);
-	if (result != StatusCode::Success || _initialize == nullptr) {
-		funcErrors.emplace_back(std::format("Initialize: {:x} ({})", uint32_t(result), String::GetError(result)));
+	if (_initializeAssembly == nullptr) {
+		return ErrorData{ "InitializeAssembly could not be found in Plugify.dll! Ensure .NET libraries are properly compiled." };
 	}
 
-	_shutdown = nullptr;
-	result = load_assembly_and_get_function_pointer(
+	_unloadAssembly = GetDelegate<UnloadAssemblyDelegate>(
 			assemblyPath.c_str(),
 			className,
-			STRING("Shutdown"),
-			UNMANAGEDCALLERSONLY_METHOD,
-			nullptr,
-			reinterpret_cast<void**>(&_shutdown)
+			STRING("UnloadAssembly"),
+			UNMANAGEDCALLERSONLY_METHOD
 	);
-	if (result != StatusCode::Success || _shutdown == nullptr) {
-		funcErrors.emplace_back(std::format("Shutdown: {:x} ({})", uint32_t(result), String::GetError(result)));
+	if (_unloadAssembly == nullptr) {
+		return ErrorData{ "UnloadAssembly could not be found in Plugify.dll! Ensure .NET libraries are properly compiled." };
 	}
 
-	_loadPlugin = nullptr;
-	result = load_assembly_and_get_function_pointer(
-			assemblyPath.c_str(),
-			className,
-			STRING("LoadPlugin"),
-			UNMANAGEDCALLERSONLY_METHOD,
-			nullptr,
-			reinterpret_cast<void**>(&_loadPlugin)
-	);
-	if (result != StatusCode::Success || _loadPlugin == nullptr) {
-		funcErrors.emplace_back(std::format("LoadPlugin: {:x} ({})", uint32_t(result), String::GetError(result)));
+	// Call the Initialize method in the NativeInterop class directly,
+	// to load all the classes and methods into the class object holder
+
+	auto rootAssembly = std::make_unique<Assembly>();
+	auto absolutePath= fs::absolute(assemblyPath, ec).string();
+	if (ec) {
+		return ErrorData{ "Failed to get main assembly path" };
 	}
 
-	_startPlugin = nullptr;
-	result = load_assembly_and_get_function_pointer(
-			assemblyPath.c_str(),
-			className,
-			STRING("StartPlugin"),
-			UNMANAGEDCALLERSONLY_METHOD,
-			nullptr,
-			reinterpret_cast<void**>(&_startPlugin)
-	);
-	if (result != StatusCode::Success || _startPlugin == nullptr) {
-		funcErrors.emplace_back(std::format("StartPlugin: {:x} ({})", uint32_t(result), String::GetError(result)));
+	std::string errorStr;
+	errorStr.resize(256);
+	_initializeAssembly(
+			errorStr.data(),
+			&rootAssembly->GetGuid(),
+			&rootAssembly->GetClassObjectHolder(),
+			absolutePath.c_str());
+	if (errorStr.empty()) {
+		return ErrorData{std::move(errorStr)};
 	}
 
-	_endPlugin = nullptr;
-	result = load_assembly_and_get_function_pointer(
-			assemblyPath.c_str(),
-			className,
-			STRING("EndPlugin"),
-			UNMANAGEDCALLERSONLY_METHOD,
-			nullptr,
-			reinterpret_cast<void**>(&_endPlugin)
-	);
-	if (result != StatusCode::Success || _endPlugin == nullptr) {
-		funcErrors.emplace_back(std::format("EndPlugin: {:x} ({})", uint32_t(result), String::GetError(result)));
-	}
-
-	if (!funcErrors.empty()) {
-		std::string funcs(funcErrors[0]);
-		for (auto it = std::next(funcErrors.begin()); it != funcErrors.end(); ++it) {
-			std::format_to(std::back_inserter(funcs), ", {}", *it);
-		}
-		return ErrorData{ std::format("Not found {} function(s)", funcs) };
-	}
-
-	hostfxr_set_error_writer(ErrorWriter);
-
-	_initialize();
+	_rootAssembly = std::move(rootAssembly);
 
 	_provider->Log(LOG_PREFIX "Inited!", Severity::Debug);
+
+	_rt = std::make_shared<asmjit::JitRuntime>();
+
+	DCCallVM* vm = dcNewCallVM(4096);
+	dcMode(vm, DC_CALL_C_DEFAULT);
+	_callVirtMachine = std::deleted_unique_ptr<DCCallVM>(vm, dcFree);
 
 	return InitResultData{};
 }
 
 void DotnetLanguageModule::Shutdown() {
-	_shutdown();
+	_provider->Log(LOG_PREFIX "Shutting down .NET runtime", Severity::Debug);
 
+	for (auto it = _loadedAssemblies.rbegin(); it != _loadedAssemblies.rend(); ++it) {
+		it->reset();
+	}
+
+	_loadedAssemblies.clear();
 	_nativesMap.clear();
-	_context.reset();
-	_hostFxr.reset();
+	_functions.clear();
+	_rootAssembly.reset();
+	_ctx.reset();
+	_dll.reset();
+	_rt.reset();
 	_provider.reset();
+
+	_provider->Log(LOG_PREFIX "Shut down .NET runtime", Severity::Debug);
 }
 
 bool DotnetLanguageModule::LoadHostFXR(const fs::path& hostPath) {
-	_hostFxr = Library::LoadFromPath(hostPath);
-	if (!_hostFxr) {
+	_provider->Log(std::format("Loading hostfxr from: {}", hostPath.string()), Severity::Debug);
+
+	_dll = Library::LoadFromPath(hostPath);
+	if (!_dll) {
 		return false;
 	}
 
-	hostfxr_initialize_for_runtime_config = _hostFxr->GetFunction<hostfxr_initialize_for_runtime_config_fn>("hostfxr_initialize_for_runtime_config");
-	hostfxr_get_runtime_delegate = _hostFxr->GetFunction<hostfxr_get_runtime_delegate_fn>("hostfxr_get_runtime_delegate");
-	hostfxr_set_runtime_property_value = _hostFxr->GetFunction<hostfxr_set_runtime_property_value_fn>("hostfxr_set_runtime_property_value");
-	hostfxr_close = _hostFxr->GetFunction<hostfxr_close_fn>("hostfxr_close");
-	hostfxr_set_error_writer = _hostFxr->GetFunction<hostfxr_set_error_writer_fn>("hostfxr_set_error_writer");
+	hostfxr_initialize_for_runtime_config = _dll->GetFunction<hostfxr_initialize_for_runtime_config_fn>("hostfxr_initialize_for_runtime_config");
+	hostfxr_get_runtime_delegate = _dll->GetFunction<hostfxr_get_runtime_delegate_fn>("hostfxr_get_runtime_delegate");
+	hostfxr_set_runtime_property_value = _dll->GetFunction<hostfxr_set_runtime_property_value_fn>("hostfxr_set_runtime_property_value");
+	hostfxr_close = _dll->GetFunction<hostfxr_close_fn>("hostfxr_close");
+	hostfxr_set_error_writer = _dll->GetFunction<hostfxr_set_error_writer_fn>("hostfxr_set_error_writer");
+
+	_provider->Log("Loaded hostfxr functions", Severity::Debug);
 
 	return hostfxr_initialize_for_runtime_config &&
 		   hostfxr_get_runtime_delegate &&
@@ -190,35 +177,36 @@ bool DotnetLanguageModule::LoadHostFXR(const fs::path& hostPath) {
 ErrorString DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPath) {
 	hostfxr_handle cxt = nullptr;
 	int32_t result = hostfxr_initialize_for_runtime_config(configPath.c_str(), nullptr, &cxt);
-	std::deleted_unique_ptr<void> context(cxt, [](hostfxr_handle handle) {
-		hostfxr_close(handle);
-	});
+	std::deleted_unique_ptr<void> context(cxt, hostfxr_close);
 
-	if ((result < StatusCode::Success || result > StatusCode::Success_DifferentRuntimeProperties) || cxt == nullptr) {
-		return std::format("Failed to initialize hostfxr: {:x} ({})", uint32_t(result), String::GetError(result));
+	if ((result < Success || result > Success_DifferentRuntimeProperties) || cxt == nullptr) {
+		return std::format("Failed to initialize hostfxr: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
 	}
 
+	// @TODO Add all necessary properties here
 	//hostfxr_set_runtime_property_value(cxt, STRING("APP_CONTEXT_BASE_DIRECTORY"), basePath.c_str());
 
 	result = hostfxr_get_runtime_delegate(cxt, hdt_load_assembly_and_get_function_pointer, reinterpret_cast<void**>(&load_assembly_and_get_function_pointer));
-	if (result != StatusCode::Success || load_assembly_and_get_function_pointer == nullptr) {
-		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly_and_get_function_pointer failed: {:x} ({})", uint32_t(result), String::GetError(result));
+	if (result != Success || load_assembly_and_get_function_pointer == nullptr) {
+		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly_and_get_function_pointer failed: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
 	}
 	/*result = hostfxr_get_runtime_delegate(cxt, hdt_get_function_pointer, reinterpret_cast<void**>(&get_function_pointer));
-	if (result != StatusCode::Success || get_function_pointer == nullptr) {
-		return std::format("hostfxr_get_runtime_delegate::hdt_get_function_pointer failed: {:x} ({})", uint32_t(result), String::GetError(result));
+	if (result != Success || get_function_pointer == nullptr) {
+		return std::format("hostfxr_get_runtime_delegate::hdt_get_function_pointer failed: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
 	}
 	result = hostfxr_get_runtime_delegate(cxt, hdt_load_assembly, reinterpret_cast<void**>(&load_assembly));
-	if (result != StatusCode::Success || load_assembly == nullptr) {
-		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly failed: {:x} ({})", uint32_t(result), String::GetError(result));
+	if (result != Success || load_assembly == nullptr) {
+		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly failed: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
 	}*/
 
-	_context = std::move(context);
+	_ctx = std::move(context);
+
+	hostfxr_set_error_writer(ErrorWriter);
 
 	return std::nullopt;
 }
 
-MethodRaw MapToRawMethod(const Method& method, PropertyHolder& rawProperties, MethodHolder& rawPrototypes)  {
+/*MethodRaw MapToRawMethod(const Method& method, PropertyHolder& rawProperties, MethodHolder& rawPrototypes)  {
 	auto paramCount = method.paramTypes.size();
 	auto properties = std::make_unique<PropertyRaw[]>(paramCount + 1);
 
@@ -255,42 +243,84 @@ MethodRaw MapToRawMethod(const Method& method, PropertyHolder& rawProperties, Me
 	rawProperties.emplace_back(std::move(properties));
 
 	return methodRaw;
-}
+}*/
 
 LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 	fs::path assemblyPath(plugin.GetBaseDir() / plugin.GetDescriptor().entryPoint);
 
+	std::error_code ec;
+	auto absolutePath= fs::absolute(assemblyPath, ec).string();
+	if (ec) {
+		return ErrorData{ "Failed to get assembly path" };
+	}
+
+	auto assembly = std::make_unique<Assembly>();
+
+	std::string errorStr;
+	errorStr.resize(256);
+	_initializeAssembly(
+			errorStr.data(),
+			&assembly->GetGuid(),
+			&assembly->GetClassObjectHolder(),
+			absolutePath.c_str()
+			);
+	if (errorStr.empty()) {
+		return ErrorData{ std::move(errorStr) };
+	}
+
+	std::vector<std::string_view> funcErrors;
+
 	const auto& exportedMethods = plugin.GetDescriptor().exportedMethods;
-	auto methodCount = exportedMethods.size();
-
-	PropertyHolder rawProperties;
-	MethodHolder rawPrototypes;
-
-	auto rawMethods = std::make_unique<MethodRaw[]>(methodCount);
-	auto outMethods = std::make_unique<void*[]>(methodCount);
-
-	for (size_t i = 0; i < methodCount; ++i) {
-		rawMethods[i] = MapToRawMethod(exportedMethods[i], rawProperties, rawPrototypes);
-	}
-
-	char error[256] = {'\0'};
-	auto absolutePath= fs::absolute(assemblyPath).string();
-
-	ManagedGuid assemblyGuid{};
-	_loadPlugin(absolutePath.c_str(), error, &assemblyGuid, rawMethods.get(), outMethods.get(), static_cast<int>(methodCount));
-
-	if (error[0] != '\0') {
-		return ErrorData{ error };
-	}
-
 	std::vector<MethodData> methods;
-	methods.reserve(methodCount);
+	methods.reserve(exportedMethods.size());
 
-	for (size_t i = 0; i < methodCount; ++i) {
-		methods.emplace_back(exportedMethods[i].name, outMethods[i]);
+	for (const auto& method : exportedMethods) {
+		if () {
+			Function function(_rt);
+			void* addr = function.GetJitFunc(method, &InternalCall, func);
+			if (!addr) {
+				funcErrors.emplace_back(method.name);
+				continue;
+			}
+			_functions.emplace(addr, std::move(function));
+		} else {
+			funcErrors.emplace_back(method.name);
+		}
 	}
+
+	if (!funcErrors.empty()) {
+		std::string funcs(funcErrors[0]);
+		for (auto it = std::next(funcErrors.begin()); it != funcErrors.end(); ++it) {
+			std::format_to(std::back_inserter(funcs), ", {}", *it);
+		}
+		return ErrorData{ std::format("Not found {} method function(s)", funcs) };
+	}
+
+	_loadedAssemblies.emplace_back(std::move(assembly));
 
 	return LoadResultData{ std::move(methods) };
+}
+
+template<typename T>
+T DotnetLanguageModule::GetDelegate(const char_t* assemblyPath, const char_t* typeName, const char_t* methodName, const char_t* delegateTypeName) const {
+	_provider->Log(std::format("Loading .NET assembly: {}\tType Name: {}\tMethod Name: {}", STR(assemblyPath), STR(typeName), STR(methodName)), Severity::Info);
+
+	T delegatePtr = nullptr;
+
+	int32_t result = load_assembly_and_get_function_pointer(
+			assemblyPath,
+			typeName,
+			methodName,
+			delegateTypeName,
+			nullptr,
+			reinterpret_cast<void**>(&delegatePtr));
+
+	if (result != Success) {
+		_provider->Log(std::format("Failed to load assembly and get function pointer: {:x} ({})", uint32_t(result), hostfxr_str_error(result)), Severity::Error);
+		return nullptr;
+	}
+
+	return delegatePtr;
 }
 
 void DotnetLanguageModule::OnPluginStart(const IPlugin& ) {
@@ -316,12 +346,30 @@ void DotnetLanguageModule::OnMethodExport(const IPlugin& plugin) {
 	}
 }
 
-void DotnetLanguageModule::AddMethodToCache(ManagedGuid assembly_guid, ManagedGuid method_guid, void* method_info_ptr) const {
-	m_add_method_to_cache(&assembly_guid, &method_guid, method_info_ptr);
+std::unique_ptr<Assembly> DotnetLanguageModule::LoadAssembly(const fs::path& assemblyPath) const {
+	auto assembly = std::make_unique<Assembly>();
+
+	assert(_rootAssembly != nullptr);
+
+	_initializeAssembly(
+			nullptr,
+			&assembly->GetGuid(),
+			&assembly->GetClassObjectHolder(),
+			assemblyPath.string().c_str()
+	);
+
+	return assembly;
 }
 
-void DotnetLanguageModule::AddObjectToCache(ManagedGuid assembly_guid, ManagedGuid object_guid, void* object_ptr, ManagedObject* out_managed_object) const {
-	m_add_object_to_cache(&assembly_guid, &object_guid, object_ptr, out_managed_object);
+bool DotnetLanguageModule::UnloadAssembly(ManagedGuid assemblyGuid) const {
+	int32_t result;
+	_unloadAssembly(&assemblyGuid, &result);
+	return bool(result);
+}
+
+// C++ to C#
+void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* addr, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret) {
+
 }
 
 namespace netlm {
@@ -352,7 +400,7 @@ extern "C" {
 	}
 
 	NETLM_EXPORT void Log(Severity severity, const char* funcName, uint32_t line, const char* message) {
-		g_netlm.GetProvider()->Log(std::format("{}:{}: {}", funcName, line, message), severity);
+		g_netlm.GetProvider()->Log(std::format(LOG_PREFIX "{}:{}: {}", funcName, line, message), severity);
 	}
 
 	NETLM_EXPORT UniqueId GetPluginId(const plugify::IPlugin& plugin) {
@@ -1022,8 +1070,160 @@ extern "C" {
 
 void DotnetLanguageModule::ErrorWriter(const char_t* message) {
 #if NETLM_PLATFORM_WINDOWS
-	g_netlm._provider->Log(String::WideStringToUTF8String(message), Severity::Error);
+	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", String::WideStringToUTF8String(message)), Severity::Error);
 #else
-	g_netlm._provider->Log(message, Severity::Error);
+	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", message), Severity::Error);
 #endif
+}
+
+// https://github.com/dotnet/runtime/blob/main/docs/design/features/host-error-codes.md
+const char* hostfxr_str_error(int32_t error) {
+	switch (static_cast<StatusCode>(error)) {
+		case Success:
+			return "Operation was successful";
+		case Success_HostAlreadyInitialized:
+			return "Initialization was successful, but another host context is already initialized.";
+		case Success_DifferentRuntimeProperties:
+			return "Initialization was successful, but another host context is already initialized and the requested context specified some runtime properties which are not the same to the already initialized context";
+		case InvalidArgFailure:
+			return "One of the specified arguments for the operation is invalid";
+		case CoreHostLibLoadFailure:
+			return "There was a failure loading a dependent library";
+		case CoreHostLibMissingFailure:
+			return "One of the dependent libraries is missing";
+		case CoreHostEntryPointFailure:
+			return "One of the dependent libraries is missing a required entry point.";
+		case CoreHostCurHostFindFailure:
+			return "Either the location of the current module could not be determined or the location is not in the right place relative to other expected components";
+		case CoreClrResolveFailure:
+			return "Failed to resolve the coreclr library";
+		case CoreClrBindFailure:
+			return "The loaded coreclr library does not have one of the required entry points";
+		case CoreClrInitFailure:
+			return "The call to coreclr_initialize failed";
+		case CoreClrExeFailure:
+			return "The call to coreclr_execute_assembly failed";
+		case ResolverInitFailure:
+			return "Initialization of the hostpolicy dependency resolver failed";
+		case ResolverResolveFailure:
+			return "Resolution of dependencies in hostpolicy failed";
+		case LibHostCurExeFindFailure:
+			return "Failure to determine the location of the current executable";
+		case LibHostInitFailure:
+			return "Initialization of the hostpolicy library failed";
+		case LibHostExecModeFailure:
+			return "Execution of the hostpolicy mode failed";
+		case LibHostSdkFindFailure:
+			return "Failure to find the requested SDK";
+		case LibHostInvalidArgs:
+			return "Arguments to hostpolicy are invalid";
+		case InvalidConfigFile:
+			return "The .runtimeconfig.json file is invalid";
+		case AppArgNotRunnable:
+			return "Used internally when the command line for dotnet.exe does not contain path to the application to run";
+		case AppHostExeNotBoundFailure:
+			return "apphost failed to determine which application to run";
+		case FrameworkMissingFailure:
+			return "It was not possible to find a compatible framework version";
+		case HostApiFailed:
+			return "hostpolicy could not calculate NATIVE_DLL_SEARCH_DIRECTORIES";
+		case HostApiBufferTooSmall:
+			return "Buffer specified to an API is not big enough to fit the requested value";
+		case LibHostUnknownCommand:
+			return "Returned by hostpolicy if corehost_main_with_output_buffer is called with unsupported host commands";
+		case LibHostAppRootFindFailure:
+			return "Returned by apphost if the imprinted application path does not exist";
+		case SdkResolverResolveFailure:
+			return "Returned from hostfxr_resolve_sdk2 when it failed to find matching SDK";
+		case FrameworkCompatFailure:
+			return "During processing of .runtimeconfig.json there were two framework references to the same framework which were not compatible";
+		case FrameworkCompatRetry:
+			return "Error used internally if the processing of framework references from .runtimeconfig.json reached a point where it needs to reprocess another already processed framework reference";
+		//case AppHostExeNotBundle:
+		//	return "Error reading the bundle footer metadata from a single-file apphost";
+		case BundleExtractionFailure:
+			return "Error extracting single-file apphost bundle";
+		case BundleExtractionIOError:
+			return "Error reading or writing files during single-file apphost bundle extraction";
+		case LibHostDuplicateProperty:
+			return "The .runtimeconfig.json specified by the app contains a runtime property which is also produced by the hosting layer";
+		case HostApiUnsupportedVersion:
+			return "Feature which requires certain version of the hosting layer binaries was used on a version which does not support it";
+		case HostInvalidState:
+			return "Error code returned by the hosting APIs in hostfxr if the current state is incompatible with the requested operation";
+		case HostPropertyNotFound:
+			return "Property requested by hostfxr_get_runtime_property_value does not exist";
+		case CoreHostIncompatibleConfig:
+			return "Error returned by hostfxr_initialize_for_runtime_config if the component being initialized requires framework which is not available or incompatible with the frameworks loaded by the runtime already in the process";
+		case HostApiUnsupportedScenario:
+			return "Error returned by hostfxr_get_runtime_delegate when hostfxr does not currently support requesting the given delegate type using the given context";
+		case HostFeatureDisabled:
+			return "Error returned by hostfxr_get_runtime_delegate when managed feature support for native host is disabled";
+		default:
+			return "Unknown error";
+	}
+}
+
+extern "C" {
+	NETLM_EXPORT void NativeInterop_SetInvokeMethodFunction(ManagedGuid* /*assemblyGuid*/, ClassHolder* classHolder, ClassHolder::InvokeMethodFunction invokeMethodFptr) {
+		assert(classHolder != nullptr);
+
+		classHolder->SetInvokeMethodFunction(invokeMethodFptr);
+
+		// @TODO: Store the assembly guid somewhere
+	}
+
+	NETLM_EXPORT void ManagedClass_Create(ManagedGuid* assemblyGuid, ClassHolder* classHolder, int32_t typeHash, const char* typeName, bool isPlugin, ManagedClass* outManagedClass) {
+		assert(assemblyGuid != nullptr);
+		assert(classHolder != nullptr);
+
+		Class* classObject = classHolder->GetOrCreateClassObject(typeHash, typeName);
+
+		*outManagedClass = ManagedClass{typeHash, classObject, *assemblyGuid};
+	}
+
+	NETLM_EXPORT void ManagedClass_AddMethod(ManagedClass managedClass, const char* methodName, ManagedGuid guid, plugify::ValueType returnType, uint32_t numParameters, const plugify::ValueType* parameterTypes, uint32_t numAttributes, const char** attributeNames) {
+		if (!managedClass.classObject || !methodName) {
+			return;
+		}
+
+		ManagedMethod methodObject;
+		methodObject.guid = guid;
+		methodObject.returnType = returnType;
+
+		if (numParameters != 0) {
+			methodObject.parameterTypes.assign(parameterTypes, parameterTypes + numParameters);
+		}
+
+		if (numAttributes != 0) {
+			methodObject.attributeNames.reserve(numAttributes);
+
+			for (uint32_t i = 0; i < numAttributes; ++i) {
+				methodObject.attributeNames.emplace_back(attributeNames[i]);
+			}
+		}
+
+		if (managedClass.classObject->HasMethod(methodName)) {
+			g_netlm.GetProvider()->Log(std::format("Class '{}' already has a method named '{}'!", managedClass.classObject->GetName(), methodName), Severity::Error);
+			return;
+		}
+
+		managedClass.classObject->AddMethod(methodName, std::move(methodObject));
+	}
+
+	NETLM_EXPORT void ManagedClass_SetNewObjectFunction(ManagedClass managedClass, Class::NewObjectFunction newObjectFptr) {
+		if (managedClass.classObject) {
+			return;
+		}
+
+		managedClass.classObject->SetNewObjectFunction(newObjectFptr);
+	}
+
+	NETLM_EXPORT void ManagedClass_SetFreeObjectFunction(ManagedClass managedClass, Class::FreeObjectFunction freeObjectFptr) {
+		if (!managedClass.classObject) {
+			return;
+		}
+
+		managedClass.classObject->SetFreeObjectFunction(freeObjectFptr);
+	}
 }

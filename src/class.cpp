@@ -5,27 +5,29 @@
 namespace netlm {
 
 	void Class::EnsureLoaded() const {
-		if (!m_parent || !m_parent->CheckAssemblyLoaded()) {
-			//HYP_THROW("Cannot use managed class: assembly has been unloaded");
+		if (!_parent.CheckAssemblyLoaded()) {
+			assert("Cannot use managed class: assembly has been unloaded");
 		}
 	}
 
-	UniquePtr<Object> Class::NewObject() {
+	std::unique_ptr<Object> Class::NewObject() {
 		EnsureLoaded();
 
-		//AssertThrowMsg(m_new_object_fptr != nullptr, "New object function pointer not set for managed class %s", m_name.data());
+		assert(_newObjectFunction != nullptr && "New object function pointer not set for managed class");
 
-		ManagedObject managed_object = m_new_object_fptr();
+		ManagedObject managedObject = _newObjectFunction();
 
-		return std::make_unique<Object>(this, managed_object);
+		return std::make_unique<Object>(*this, managedObject);
 	}
 
-	void* Class::InvokeStaticMethod(const ManagedMethod* method_ptr, void** args_vptr, void* return_value_vptr) {
+	void* Class::InvokeStaticMethod(const ManagedMethod* methodPtr, void** argsVptr, void* returnValueVptr) {
 		EnsureLoaded();
 
-		//AssertThrowMsg(m_parent->GetInvokeMethodFunction() != nullptr, "Invoke method function pointer not set");
+		auto invokeMethod = _parent.GetInvokeMethodFunction();
 
-		return m_parent->GetInvokeMethodFunction()(method_ptr->guid, {}, args_vptr, return_value_vptr);
+		assert(invokeMethod != nullptr && "Invoke method function pointer not set");
+
+		return invokeMethod(methodPtr->guid, {}, argsVptr, returnValueVptr);
 	}
 
 }// namespace netln

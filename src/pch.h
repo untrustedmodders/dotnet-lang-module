@@ -13,6 +13,7 @@
 #include <optional>
 #include <span>
 #include <mutex>
+#include <cassert>
 
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -21,18 +22,5 @@ namespace fs = std::filesystem;
 
 namespace std {
 	template<typename T>
-	using deleted_unique_ptr = std::unique_ptr<T,std::function<void(T*)>>;
-}
-
-namespace netlm {
-	template <class K, class V>
-	using HashMap = std::unordered_map<K, V>;
-
-	template <class T>
-	using UniquePtr = std::unique_ptr<T>;
-
-	template <class T>
-	using SharedPtr = std::shared_ptr<T>;
-
-	using String = std::string;
+	using deleted_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
 }

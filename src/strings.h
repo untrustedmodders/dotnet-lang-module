@@ -4,7 +4,7 @@
 
 #if NETLM_PLATFORM_WINDOWS
 #define STRING(str) L##str
-#define STR(str) String::UTF8StringToWideString(str)
+#define STR(str) String::WideStringToUTF8String(str)
 #else
 #define STRING(str) str
 #define STR(str) str
@@ -32,9 +32,5 @@ namespace netlm {
 		static std::string WideStringToUTF8String(std::wstring_view str);
 		static bool WideStringToUTF8String(std::string& dest, std::wstring_view str);
 #endif
-
-		static std::vector<std::string_view> Split(std::string_view strv, std::string_view delims = " ");
-
-		static std::string_view GetError(int32_t error);
 	};
 }

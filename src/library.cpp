@@ -13,17 +13,17 @@
 namespace netlm {
 	thread_local static std::string lastError;
 
-	std::unique_ptr<Library> Library::LoadFromPath(const std::filesystem::path& LibraryPath) {
+	std::unique_ptr<Library> Library::LoadFromPath(const std::filesystem::path& assemblyPath) {
 #if NETLM_PLATFORM_WINDOWS
-		void* handle = static_cast<void*>(LoadLibraryW(LibraryPath.c_str()));
+		void* handle = static_cast<void*>(LoadLibraryW(assemblyPath.c_str()));
 #elif NETLM_PLATFORM_LINUX || NETLM_PLATFORM_APPLE
-		void* handle = dlopen(LibraryPath.string().c_str(), RTLD_LAZY | RTLD_NODELETE);
+		void* handle = dlopen(assemblyPath.string().c_str(), RTLD_LAZY | RTLD_NODELETE);
 #else
 		void* handle = nullptr;
 #endif
 		if (handle) {
 #if NETLM_PLATFORM_WINDOWS
-			GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, LibraryPath.filename().c_str(), reinterpret_cast<HMODULE*>(&handle));
+			GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, assemblyPath.filename().c_str(), reinterpret_cast<HMODULE*>(&handle));
 #endif
 			return std::unique_ptr<Library>(new Library(handle));
 		}
@@ -46,7 +46,9 @@ namespace netlm {
 		return lastError;
 	}
 
-	Library::Library(void* handle) : _handle{handle} {
+	Library::Library(void* handle) : _handle(
+
+											 ) {
 	}
 
 	Library::~Library() {

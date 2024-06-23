@@ -109,7 +109,7 @@ internal struct Method
 
 internal static class TypeMapper
 {
-    internal static ValueType MonoTypeToValueType(string typeName)
+    internal static ValueType NameToValueType(string? typeName)
     {
         switch (typeName)
         {
