@@ -14,7 +14,7 @@ namespace netlm {
 
 		using InvokeMethodFunction = void* (*) (ManagedGuid, ManagedGuid, void**, void*);
 
-		explicit ClassHolder(const Assembly& ownerAssembly);
+		explicit ClassHolder(Assembly* ownerAssembly);
 		ClassHolder(const ClassHolder&) = delete;
 		ClassHolder& operator=(const ClassHolder&) = delete;
 		ClassHolder(ClassHolder&&) noexcept = delete;
@@ -22,15 +22,16 @@ namespace netlm {
 		~ClassHolder() = default;
 
 		[[nodiscard]] bool CheckAssemblyLoaded() const;
-		[[nodiscard]] const Assembly& GetOwnerAssembly() const { return _ownerAssembly; }
+		[[nodiscard]] Assembly* GetOwnerAssembly() const { return _ownerAssembly; }
 		[[nodiscard]] Class* GetOrCreateClassObject(int32_t typeHash, const char* typeName);
 		[[nodiscard]] Class* FindClassByName(const char* typeName);
+		[[nodiscard]] Class* FindClassByName(std::string_view typeName);
 		[[nodiscard]] InvokeMethodFunction GetInvokeMethodFunction() const { return _invokeMethodFunction; }
 
 		void SetInvokeMethodFunction(InvokeMethodFunction invokeMethodFptr) { _invokeMethodFunction = invokeMethodFptr; }
 
 	private:
-		const Assembly& _ownerAssembly;
+		Assembly* _ownerAssembly;
 
 		std::unordered_map<int32_t, std::unique_ptr<Class>> _classObjects;
 

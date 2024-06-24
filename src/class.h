@@ -23,11 +23,12 @@ namespace netlm {
 		using NewObjectFunction = ManagedObject (*)();
 		using FreeObjectFunction = void (*)(ManagedObject);
 
-		Class(const ClassHolder& parent, std::string name)
-			: _parent(parent),
-			  _name(std::move(name)),
-			  _newObjectFunction(nullptr),
-			  _freeObjectFunction(nullptr) {
+		Class(ClassHolder* parent, std::string name)
+			: _parent{parent},
+			  _name{std::move(name)},
+			  _plugin{false},
+			  _newObjectFunction{nullptr},
+			  _freeObjectFunction{nullptr} {
 		}
 
 		Class(const Class&) = delete;
@@ -37,7 +38,7 @@ namespace netlm {
 		~Class() = default;
 
 		[[nodiscard]] const std::string& GetName() const { return _name; }
-		[[nodiscard]] const ClassHolder& GetParent() const { return _parent; }
+		[[nodiscard]] ClassHolder* GetParent() const { return _parent; }
 
 		[[nodiscard]] NewObjectFunction GetNewObjectFunction() const { return _newObjectFunction; }
 		void SetNewObjectFunction(NewObjectFunction newObjectFptr) { _newObjectFunction = newObjectFptr; }
@@ -47,23 +48,11 @@ namespace netlm {
 
 		[[nodiscard]] bool HasMethod(const std::string& methodName) const { return _methods.find(methodName) != _methods.end(); }
 
-		[[nodiscard]] ManagedMethod* GetMethod(const std::string& methodName) {
-			auto it = _methods.find(methodName);
-			if (it == _methods.end()) {
-				return nullptr;
-			}
+		[[nodiscard]] ManagedMethod* GetMethod(const std::string& methodName);
+		[[nodiscard]] const ManagedMethod* GetMethod(const std::string& methodName) const;
 
-			return &it->second;
-		}
-
-		[[nodiscard]] const ManagedMethod* GetMethod(const std::string& methodName) const {
-			auto it = _methods.find(methodName);
-			if (it == _methods.end()) {
-				return nullptr;
-			}
-
-			return &it->second;
-		}
+		[[nodiscard]] bool IsPlugin() const { return _plugin; }
+		void SetPlugin(bool plugin) { _plugin = plugin; }
 
 		[[nodiscard]] const std::unordered_map<std::string, ManagedMethod>& GetMethods() const { return _methods; }
 
@@ -74,7 +63,7 @@ namespace netlm {
 		std::unique_ptr<Object> NewObject();
 
 		template<class ReturnType, class... Args>
-		ReturnType InvokeStaticMethod(const std::string& methodName, Args&&... args) {
+		ReturnType InvokeStaticMethod(const std::string& methodName, Args&&... args) const {
 			static_assert(std::is_void_v<ReturnType> || std::is_trivial_v<ReturnType>, "Return type must be trivial to be used in interop");
 			static_assert(std::is_void_v<ReturnType> || std::is_object_v<ReturnType>, "Return type must be either a value type or a pointer type to be used in interop (no references)");
 
@@ -94,13 +83,14 @@ namespace netlm {
 			}
 		}
 
-	private:
-		void* InvokeStaticMethod(const ManagedMethod* methodPtr, void** argsVptr, void* returnValueVptr);
+		void* InvokeStaticMethod(const ManagedMethod* methodPtr, void** argsVptr, void* returnValueVptr) const;
 
+	private:
 		std::string _name;
 		std::unordered_map<std::string, ManagedMethod> _methods;
+		bool _plugin;
 
-		const ClassHolder& _parent;
+		ClassHolder* _parent;
 
 		NewObjectFunction _newObjectFunction;
 		FreeObjectFunction _freeObjectFunction;

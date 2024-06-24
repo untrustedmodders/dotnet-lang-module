@@ -12,14 +12,21 @@ namespace netlm {
 	constexpr int kApiVersion = 1;
 
 	class ClassHolder;
+	class Class;
 	struct ManagedGuid;
 	struct ManagedObject;
+	struct ManagedMethod;
 
 	using InitializeAssemblyDelegate = void(*)(char*, ManagedGuid *, ClassHolder *, const char *);
 	using UnloadAssemblyDelegate = void(*)(ManagedGuid *, int32_t *);
 
 	class Assembly;
 	class Library;
+
+	struct ExportMethod {
+		Class* classPtr;
+		ManagedMethod* methodPtr;
+	};
 
 	using ErrorString = std::optional<std::string>;
 
@@ -50,7 +57,7 @@ namespace netlm {
 
 		static void ErrorWriter(const char_t* message);
 
-		static void InternalCall(const plugify::Method* method, void* addr, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret);
+		static void InternalCall(const plugify::Method* method, void* data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret);
 
 	private:
 		std::shared_ptr<asmjit::JitRuntime> _rt;
@@ -60,6 +67,7 @@ namespace netlm {
 		std::deleted_unique_ptr<void> _ctx;
 		std::unique_ptr<Assembly> _rootAssembly;
 		std::vector<std::unique_ptr<Assembly>> _loadedAssemblies;
+		std::vector<std::unique_ptr<ExportMethod>> _exportMethods;
 		std::unordered_map<std::string, void*> _nativesMap;
 		std::unordered_map<void*, plugify::Function> _functions;
 

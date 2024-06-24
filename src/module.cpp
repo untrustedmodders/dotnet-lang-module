@@ -141,6 +141,7 @@ void DotnetLanguageModule::Shutdown() {
 
 	_loadedAssemblies.clear();
 	_nativesMap.clear();
+	_exportMethods.clear();
 	_functions.clear();
 	_rootAssembly.reset();
 	_ctx.reset();
@@ -268,30 +269,72 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		return ErrorData{ std::move(errorStr) };
 	}
 
-	std::vector<std::string_view> funcErrors;
+	std::vector<std::string> methodErrors;
 
 	const auto& exportedMethods = plugin.GetDescriptor().exportedMethods;
 	std::vector<MethodData> methods;
 	methods.reserve(exportedMethods.size());
 
 	for (const auto& method : exportedMethods) {
-		if () {
-			Function function(_rt);
-			void* addr = function.GetJitFunc(method, &InternalCall, func);
-			if (!addr) {
-				funcErrors.emplace_back(method.name);
+		auto separated = String::Split(method.funcName, ".");
+		if (separated.size() != 3) {
+			methodErrors.emplace_back(std::format("Invalid function name: '{}'. Please provide name in that format: 'Namespace.Class.Method'", method.funcName));
+			continue;
+		}
+
+		Class* classPtr = assembly->GetClassObjectHolder().FindClassByName(separated[1]);
+		ManagedMethod* methodPtr = classPtr->GetMethod(std::string(separated[2].data(), separated[2].size()));
+
+		size_t paramCount = methodPtr->parameterTypes.size();
+		if (paramCount != method.paramTypes.size()) {
+			methodErrors.emplace_back(std::format("Method '{}' has invalid parameter count {} when it should have {}", method.funcName, method.paramTypes.size(), paramCount));
+			continue;
+		}
+
+		bool methodFail = false;
+
+		for (size_t i = 0; i < paramCount; ++i) {
+			ValueType& paramType = methodPtr->parameterTypes[i];
+			if (paramType == ValueType::Invalid) {
+				methodFail = true;
+				methodErrors.emplace_back(std::format("Parameter at index '{}' of method '{}' not supported", i, method.funcName));
 				continue;
 			}
-			_functions.emplace(addr, std::move(function));
-		} else {
-			funcErrors.emplace_back(method.name);
+
+			ValueType methodParamType = method.paramTypes[i].type;
+
+			if (methodParamType == ValueType::Char8 && paramType == ValueType::Char16) {
+				paramType = ValueType::Char8;
+			}
+
+			if (paramType != methodParamType) {
+				methodFail = true;
+				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.funcName, ValueTypeToString(methodParamType), i, ValueTypeToString(paramType)));
+				continue;
+			}
 		}
+
+		if (methodFail)
+			continue;
+
+		auto exportMethod = std::make_unique<ExportMethod>(classPtr, methodPtr);
+
+		Function function(_rt);
+		void* methodAddr = function.GetJitFunc(method, &InternalCall, exportMethod.get());
+		if (!methodAddr) {
+			methodErrors.emplace_back(std::format("Method JIT generation error: ", function.GetError()));
+			continue;
+		}
+		_functions.emplace(exportMethod.get(), std::move(function));
+		_exportMethods.emplace_back(std::move(exportMethod));
+
+		methods.emplace_back(method.name, methodAddr);
 	}
 
-	if (!funcErrors.empty()) {
-		std::string funcs(funcErrors[0]);
-		for (auto it = std::next(funcErrors.begin()); it != funcErrors.end(); ++it) {
-			std::format_to(std::back_inserter(funcs), ", {}", *it);
+	if (!methodErrors.empty()) {
+		std::string funcs(methodErrors[0]);
+		for (auto it = std::next(methodErrors.begin()); it != methodErrors.end(); ++it) {
+			std::format_to(std::back_inserter(funcs), "\n{}", *it);
 		}
 		return ErrorData{ std::format("Not found {} method function(s)", funcs) };
 	}
@@ -368,8 +411,76 @@ bool DotnetLanguageModule::UnloadAssembly(ManagedGuid assemblyGuid) const {
 }
 
 // C++ to C#
-void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* addr, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret) {
+void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret) {
+	/*const auto& [classPtr, methodPtr] = *reinterpret_cast<ExportMethod*>(data);
 
+	bool hasRet = ValueTypeIsHiddenObjectParam(method->retType.type);
+
+	std::vector<void*> args;
+	args.reserve(hasRet ? count - 1 : count);
+
+	for (uint8_t i = hasRet; i < count; ++i) {
+		args.push_back(p->GetArgumentPtr(i));
+	}
+
+	void* retPtr = hasRet ? p->GetArgument<void*>(0) : ret->GetReturnPtr();
+
+	if (hasRet) {
+		switch (method->retType.type) {
+			case ValueType::String:
+				std::construct_at(reinterpret_cast<std::string*>(retPtr), std::string());
+				break;
+			case ValueType::ArrayBool:
+				std::construct_at(reinterpret_cast<std::vector<bool>*>(retPtr), std::vector<bool>());
+				break;
+			case ValueType::ArrayChar8:
+				std::construct_at(reinterpret_cast<std::vector<char>*>(retPtr), std::vector<char>());
+				break;
+			case ValueType::ArrayChar16:
+				std::construct_at(reinterpret_cast<std::vector<char16_t>*>(retPtr), std::vector<char16_t>());
+				break;
+			case ValueType::ArrayInt8:
+				std::construct_at(reinterpret_cast<std::vector<int8_t>*>(retPtr), std::vector<int8_t>());
+				break;
+			case ValueType::ArrayInt16:
+				std::construct_at(reinterpret_cast<std::vector<int16_t>*>(retPtr), std::vector<int16_t>());
+				break;
+			case ValueType::ArrayInt32:
+				std::construct_at(reinterpret_cast<std::vector<int32_t>*>(retPtr), std::vector<int32_t>());
+				break;
+			case ValueType::ArrayInt64:
+				std::construct_at(reinterpret_cast<std::vector<int64_t>*>(retPtr), std::vector<int64_t>());
+				break;
+			case ValueType::ArrayUInt8:
+				std::construct_at(reinterpret_cast<std::vector<uint8_t>*>(retPtr), std::vector<uint8_t>());
+				break;
+			case ValueType::ArrayUInt16:
+				std::construct_at(reinterpret_cast<std::vector<uint16_t>*>(retPtr), std::vector<uint16_t>());
+				break;
+			case ValueType::ArrayUInt32:
+				std::construct_at(reinterpret_cast<std::vector<uint32_t>*>(retPtr), std::vector<uint32_t>());
+				break;
+			case ValueType::ArrayUInt64:
+				std::construct_at(reinterpret_cast<std::vector<uint64_t>*>(retPtr), std::vector<uint64_t>());
+				break;
+			case ValueType::ArrayPointer:
+				std::construct_at(reinterpret_cast<std::vector<uintptr_t>*>(retPtr), std::vector<uintptr_t>());
+				break;
+			case ValueType::ArrayFloat:
+				std::construct_at(reinterpret_cast<std::vector<float>*>(retPtr), std::vector<float>());
+				break;
+			case ValueType::ArrayDouble:
+				std::construct_at(reinterpret_cast<std::vector<double>*>(retPtr), std::vector<double>());
+				break;
+			case ValueType::ArrayString:
+				std::construct_at(reinterpret_cast<std::vector<std::string>*>(retPtr), std::vector<std::string>());
+				break;
+			default:
+				break;
+		}
+	}
+
+	classPtr->InvokeStaticMethod(methodPtr, args.data(), retPtr);*/
 }
 
 namespace netlm {
@@ -568,7 +679,7 @@ extern "C" {
 		return len == 0 ? new std::vector<uint64_t>() : new std::vector<uint64_t>(arr, arr + len);
 	}
 
-	NETLM_EXPORT std::vector<uintptr_t>* CreateVectorUIntPtr(uintptr_t* arr, int len) {
+	NETLM_EXPORT std::vector<uintptr_t>* CreateVectorIntPtr(uintptr_t* arr, int len) {
 		return len == 0 ? new std::vector<uintptr_t>() : new std::vector<uintptr_t>(arr, arr + len);
 	}
 
@@ -637,7 +748,7 @@ extern "C" {
 		return static_cast<std::vector<uint64_t>*>(malloc(sizeof(std::vector<uint64_t>)));
 	}
 
-	NETLM_EXPORT std::vector<uintptr_t>* AllocateVectorUIntPtr() {
+	NETLM_EXPORT std::vector<uintptr_t>* AllocateVectorIntPtr() {
 		return static_cast<std::vector<uintptr_t>*>(malloc(sizeof(std::vector<uintptr_t>)));
 	}
 
@@ -699,7 +810,7 @@ extern "C" {
 		return static_cast<int>(vector->size());
 	}
 
-	NETLM_EXPORT int GetVectorSizeUIntPtr(std::vector<uintptr_t>* vector) {
+	NETLM_EXPORT int GetVectorSizeIntPtr(std::vector<uintptr_t>* vector) {
 		return static_cast<int>(vector->size());
 	}
 
@@ -783,7 +894,7 @@ extern "C" {
 		}
 	}
 
-	NETLM_EXPORT void GetVectorDataUIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr) {
+	NETLM_EXPORT void GetVectorDataIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr) {
 		for (size_t i = 0; i < vector->size(); ++i) {
 			arr[i] = (*vector)[i];
 		}
@@ -891,7 +1002,7 @@ extern "C" {
 			vector->assign(arr, arr + len);
 	}
 
-	NETLM_EXPORT void AssignVectorUIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr, int len) {
+	NETLM_EXPORT void AssignVectorIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr, int len) {
 		if (arr == nullptr || len == 0)
 			vector->clear();
 		else
@@ -970,7 +1081,7 @@ extern "C" {
 		delete vector;
 	}
 
-	NETLM_EXPORT void DeleteVectorUIntPtr(std::vector<uintptr_t>* vector) {
+	NETLM_EXPORT void DeleteVectorIntPtr(std::vector<uintptr_t>* vector) {
 		delete vector;
 	}
 
@@ -1043,7 +1154,7 @@ extern "C" {
 		free(vector);
 	}
 
-	NETLM_EXPORT void FreeVectorUIntPtr(std::vector<uintptr_t>* vector) {
+	NETLM_EXPORT void FreeVectorIntPtr(std::vector<uintptr_t>* vector) {
 		vector->~vector();
 		free(vector);
 	}
@@ -1178,6 +1289,7 @@ extern "C" {
 		assert(classHolder != nullptr);
 
 		Class* classObject = classHolder->GetOrCreateClassObject(typeHash, typeName);
+		classObject->SetPlugin(isPlugin); // true only if delivered from base plugin class
 
 		*outManagedClass = ManagedClass{typeHash, classObject, *assemblyGuid};
 	}

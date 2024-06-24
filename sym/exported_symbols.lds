@@ -37,7 +37,7 @@ CreateVectorUInt8
 CreateVectorUInt16
 CreateVectorUInt32
 CreateVectorUInt64
-CreateVectorUIntPtr
+CreateVectorIntPtr
 CreateVectorFloat
 CreateVectorDouble
 CreateVectorString
@@ -53,7 +53,7 @@ AllocateVectorUInt8
 AllocateVectorUInt16
 AllocateVectorUInt32
 AllocateVectorUInt64
-AllocateVectorUIntPtr
+AllocateVectorIntPtr
 AllocateVectorFloat
 AllocateVectorDouble
 AllocateVectorString
@@ -69,7 +69,7 @@ GetVectorSizeUInt8
 GetVectorSizeUInt16
 GetVectorSizeUInt32
 GetVectorSizeUInt64
-GetVectorSizeUIntPtr
+GetVectorSizeIntPtr
 GetVectorSizeFloat
 GetVectorSizeDouble
 GetVectorSizeString
@@ -85,7 +85,7 @@ GetVectorDataUInt8
 GetVectorDataUInt16
 GetVectorDataUInt32
 GetVectorDataUInt64
-GetVectorDataUIntPtr
+GetVectorDataIntPtr
 GetVectorDataFloat
 GetVectorDataDouble
 GetVectorDataString
@@ -101,7 +101,7 @@ AssignVectorUInt8
 AssignVectorUInt16
 AssignVectorUInt32
 AssignVectorUInt64
-AssignVectorUIntPtr
+AssignVectorIntPtr
 AssignVectorFloat
 AssignVectorDouble
 AssignVectorString
@@ -117,7 +117,7 @@ DeleteVectorUInt8
 DeleteVectorUInt16
 DeleteVectorUInt32
 DeleteVectorUInt64
-DeleteVectorUIntPtr
+DeleteVectorIntPtr
 DeleteVectorFloat
 DeleteVectorDouble
 DeleteVectorString

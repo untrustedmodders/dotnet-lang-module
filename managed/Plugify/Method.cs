@@ -58,57 +58,28 @@ internal enum ValueType : byte {
 	//Matrix3x4,
 	//Matrix4x2,
 	//Matrix4x3,
-};
+	
+	// Helpers
+	
+	FirstPrimitive = Void,
+	LastPrimitive = Function,
 
-[StructLayout(LayoutKind.Sequential, Size = 16)]
-internal struct Property 
-{
-	private byte type;
-	private bool reference;
-	private nint prototype;
-	
-	public ValueType Type => (ValueType) type;
-	public bool Reference => reference;
-	public Method? Prototype => prototype != nint.Zero ? Marshal.PtrToStructure<Method>(prototype) : null;
+	FirstObject = String,
+	LastObject = ArrayString,
+
+	FirstPod = Vector2,
+	LastPod = Matrix4x4
 };
-	
-[StructLayout(LayoutKind.Sequential, Size = 48)]
-internal struct Method
-{
-	private nint nameStringPtr;
-	private nint funcNameStringPtr;
-	private nint callConvStringPtr;
-	private nint paramTypesArrayPtr;
-	private nint retType;
-	private byte varIndex; 
-	private int paramCount;
-	
-	public string Name => Marshal.PtrToStringAnsi(nameStringPtr);
-	public string FunctionName => Marshal.PtrToStringAnsi(funcNameStringPtr);
-	public string CallingConvention => Marshal.PtrToStringAnsi(callConvStringPtr);
-	public Property[] ParameterTypes
-	{
-		get
-		{
-			var paramTypes = new Property[paramCount];
-			unsafe
-			{
-				var paramPropertyPtr = (Property*) paramTypesArrayPtr.ToPointer();
-				for (int i = 0; i < paramCount; i++)
-				{
-					paramTypes[i] = paramPropertyPtr[i];
-				}
-			}
-			return paramTypes;
-		}
-	}
-	public int ParamCount => paramCount;
-	public Property ReturnType => Marshal.PtrToStructure<Property>(retType);
-	public int VarIndex => varIndex;
-}
 
 internal static class TypeMapper
 {
+	internal static bool IsHiddenObjectParam(this ValueType type) {
+		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			return type is > ValueType.LastPrimitive and < ValueType.FirstPod or >= ValueType.Vector3;
+		else
+			return type is > ValueType.LastPrimitive and < ValueType.FirstPod or >= ValueType.Matrix4x4;
+	}
+	
     internal static ValueType NameToValueType(string? typeName)
     {
         switch (typeName)
@@ -212,15 +183,15 @@ internal static class TypeMapper
             case "System.Action`15": return ValueType.Function;
             case "System.Action`16": return ValueType.Function;
 
-            case "Plugify.Vector2": return ValueType.Vector2;
-            case "Plugify.Vector3": return ValueType.Vector3;
-            case "Plugify.Vector4": return ValueType.Vector4;
-            case "Plugify.Matrix4x4": return ValueType.Matrix4x4;
+            case "System.Numerics.Vector2": return ValueType.Vector2;
+            case "System.Numerics.Vector3": return ValueType.Vector3;
+            case "System.Numerics.Vector4": return ValueType.Vector4;
+            case "System.Numerics.Matrix4x4": return ValueType.Matrix4x4;
 
-            case "Plugify.Vector2&": return ValueType.Vector2;
-            case "Plugify.Vector3&": return ValueType.Vector3;
-            case "Plugify.Vector4&": return ValueType.Vector4;
-            case "Plugify.Matrix4x4&": return ValueType.Matrix4x4;
+            case "System.Numerics.Vector2&": return ValueType.Vector2;
+            case "System.Numerics.Vector3&": return ValueType.Vector3;
+            case "System.Numerics.Vector4&": return ValueType.Vector4;
+            case "System.Numerics.Matrix4x4&": return ValueType.Matrix4x4;
 
             default: return ValueType.Invalid;
         }

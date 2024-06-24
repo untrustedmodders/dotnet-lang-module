@@ -32,5 +32,7 @@ namespace netlm {
 		static std::string WideStringToUTF8String(std::wstring_view str);
 		static bool WideStringToUTF8String(std::string& dest, std::wstring_view str);
 #endif
+
+		static std::vector<std::string_view> Split(std::string_view strv, std::string_view delims = " ");
 	};
 }

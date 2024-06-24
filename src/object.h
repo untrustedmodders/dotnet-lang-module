@@ -8,7 +8,7 @@ namespace netlm {
 
 	class Object {
 	public:
-		Object(const Class& classPtr, ManagedObject managedObject);
+		Object(Class* classPtr, ManagedObject managedObject);
 
 		Object(const Object&) = delete;
 		Object& operator=(const Object&) = delete;
@@ -18,10 +18,10 @@ namespace netlm {
 		// Destructor frees the managed object
 		~Object();
 
-		[[nodiscard]] const Class& GetClass() const { return _classPtr; }
+		[[nodiscard]] Class* GetClass() const { return _classPtr; }
 
 		template<class ReturnType, class... Args>
-		ReturnType InvokeMethod(const ManagedMethod* methodPtr, Args&&... args) {
+		ReturnType InvokeMethod(const ManagedMethod* methodPtr, Args&&... args) const {
 			static_assert(std::is_void_v<ReturnType> || std::is_trivial_v<ReturnType>, "Return type must be trivial to be used in interop");
 			static_assert(std::is_void_v<ReturnType> || std::is_object_v<ReturnType>, "Return type must be either a value type or a pointer type to be used in interop (no references)");
 
@@ -47,7 +47,7 @@ namespace netlm {
 		}
 
 		template<class ReturnType, class... Args>
-		 ReturnType InvokeMethodByName(const std::string& methodName, Args&&... args) {
+		 ReturnType InvokeMethodByName(const std::string& methodName, Args&&... args) const {
 			const ManagedMethod* methodPtr = GetMethod(methodName);
 			assert(methodPtr != nullptr && "Method not found");
 			return InvokeMethod<ReturnType>(methodPtr, std::forward<Args>(args)...);
@@ -55,9 +55,9 @@ namespace netlm {
 
 	private:
 		[[nodiscard]] const ManagedMethod* GetMethod(const std::string& methodName) const;
-		void* InvokeMethod(const ManagedMethod* methodPtr, void** argsVptr, void* returnValueVptr);
+		void* InvokeMethod(const ManagedMethod* methodPtr, void** argsVptr, void* returnValueVptr) const;
 
-		const Class& _classPtr;
+		Class* _classPtr;
 		ManagedObject _managedObject;
 	};
 }

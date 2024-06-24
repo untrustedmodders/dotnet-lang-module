@@ -86,7 +86,7 @@ public static class NativeMethods
 	public static extern nint CreateVectorChar8([In] char[] arr, int len);
 
 	[DllImport(DllName)]
-	public static extern nint CreateVectorChar16([In] ushort[] arr, int len);
+	public static extern nint CreateVectorChar16([In] char[] arr, int len);
 
 	[DllImport(DllName)]
 	public static extern nint CreateVectorInt8([In] sbyte[] arr, int len);
@@ -113,7 +113,7 @@ public static class NativeMethods
 	public static extern nint CreateVectorUInt64([In] ulong[] arr, int len);
 
 	[DllImport(DllName)]
-	public static extern nint CreateVectorUIntPtr([In] nuint[] arr, int len);
+	public static extern nint CreateVectorIntPtr([In] nint[] arr, int len);
 
 	[DllImport(DllName)]
 	public static extern nint CreateVectorFloat([In] float[] arr, int len);
@@ -162,7 +162,7 @@ public static class NativeMethods
 	public static extern nint AllocateVectorUInt64();
 
 	[DllImport(DllName)]
-	public static extern nint AllocateVectorUIntPtr();
+	public static extern nint AllocateVectorIntPtr();
 
 	[DllImport(DllName)]
 	public static extern nint AllocateVectorFloat();
@@ -211,7 +211,7 @@ public static class NativeMethods
 	public static extern int GetVectorSizeUInt64(nint ptr);
 
 	[DllImport(DllName)]
-	public static extern int GetVectorSizeUIntPtr(nint ptr);
+	public static extern int GetVectorSizeIntPtr(nint ptr);
 
 	[DllImport(DllName)]
 	public static extern int GetVectorSizeFloat(nint ptr);
@@ -260,7 +260,7 @@ public static class NativeMethods
 	public static extern void GetVectorDataUInt64(nint ptr, [In, Out] ulong[] arr);
 
 	[DllImport(DllName)]
-	public static extern void GetVectorDataUIntPtr(nint ptr, [In, Out] nuint[] arr);
+	public static extern void GetVectorDataIntPtr(nint ptr, [In, Out] nint[] arr);
 
 	[DllImport(DllName)]
 	public static extern void GetVectorDataFloat(nint ptr, [In, Out] float[] arr);
@@ -282,7 +282,7 @@ public static class NativeMethods
 	public static extern void AssignVectorChar8(nint ptr, [In] char[] arr, int len);
 
 	[DllImport(DllName)]
-	public static extern void AssignVectorChar16(nint ptr, [In] ushort[] arr, int len);
+	public static extern void AssignVectorChar16(nint ptr, [In] char[] arr, int len);
 
 	[DllImport(DllName)]
 	public static extern void AssignVectorInt8(nint ptr, [In] sbyte[] arr, int len);
@@ -309,7 +309,7 @@ public static class NativeMethods
 	public static extern void AssignVectorUInt64(nint ptr, [In] ulong[] arr, int len);
 
 	[DllImport(DllName)]
-	public static extern void AssignVectorUIntPtr(nint ptr, [In] nuint[] arr, int len);
+	public static extern void AssignVectorIntPtr(nint ptr, [In] nint[] arr, int len);
 
 	[DllImport(DllName)]
 	public static extern void AssignVectorFloat(nint ptr, [In] float[] arr, int len);
@@ -358,7 +358,7 @@ public static class NativeMethods
 	public static extern void DeleteVectorUInt64(nint ptr);
 
 	[DllImport(DllName)]
-	public static extern void DeleteVectorUIntPtr(nint ptr);
+	public static extern void DeleteVectorIntPtr(nint ptr);
 
 	[DllImport(DllName)]
 	public static extern void DeleteVectorFloat(nint ptr);
@@ -407,7 +407,7 @@ public static class NativeMethods
 	public static extern void FreeVectorUInt64(nint ptr);
 
 	[DllImport(DllName)]
-	public static extern void FreeVectorUIntPtr(nint ptr);
+	public static extern void FreeVectorIntPtr(nint ptr);
 
 	[DllImport(DllName)]
 	public static extern void FreeVectorFloat(nint ptr);

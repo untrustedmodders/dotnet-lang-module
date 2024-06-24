@@ -46,9 +46,7 @@ namespace netlm {
 		return lastError;
 	}
 
-	Library::Library(void* handle) : _handle(
-
-											 ) {
+	Library::Library(void* handle) : _handle{handle} {
 	}
 
 	Library::~Library() {
