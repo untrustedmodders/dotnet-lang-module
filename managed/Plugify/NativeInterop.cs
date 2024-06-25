@@ -231,20 +231,20 @@ public static class NativeInterop
 
             ParameterInfo parameterInfo = parameterInfos[i];
             Type paramType = parameterInfo.ParameterType;
-            //bool useAnsiChar = IsUseAnsi(parameterInfo);
+            object[] paramAttributes = parameterInfo.GetCustomAttributes(typeof(MarshalAsAttribute), false);
             
             if (paramType.IsEnum)
             {
                 Type underlyingType = Enum.GetUnderlyingType(paramType);
-                parameters[i] = Enum.ToObject(paramType, ExtractValue(underlyingType, paramAddress));
+                parameters[i] = Enum.ToObject(paramType, ExtractValue(underlyingType, paramAttributes, paramAddress));
             } 
             else if (paramType.IsArray || paramType.IsArrayRef())
             {
-                parameters[i] = ExtractArray(paramType, paramAddress);
+                parameters[i] = ExtractArray(paramType, paramAttributes, paramAddress);
             }
             else
             {
-                parameters[i] = ExtractValue(paramType, paramAddress);
+                parameters[i] = ExtractValue(paramType, paramAttributes, paramAddress);
             }
         }
     }
@@ -276,9 +276,10 @@ public static class NativeInterop
             }
 
             paramType = paramType.GetUnrefType();
-
+            
             object? paramValue = parameters[i];
             nint paramPtr = *(nint*)paramAddress;
+            object[] paramAttributes = parameterInfo.GetCustomAttributes(typeof(MarshalAsAttribute), false);
 
             if (paramType.IsEnum)
             {
@@ -289,11 +290,11 @@ public static class NativeInterop
 
             if (paramType.IsArray)
             {
-                AssignArray(paramType, paramValue, paramPtr);
+                AssignArray(paramType, paramValue, paramAttributes, paramPtr);
             }
             else
             {
-                AssignValue(paramType, paramValue, paramPtr);
+                AssignValue(paramType, paramValue, paramAttributes, paramPtr);
             }
         }
     }
@@ -341,26 +342,38 @@ public static class NativeInterop
             return;
         }
 
+        object[] returnAttributes = methodInfo.ReturnTypeCustomAttributes.GetCustomAttributes(typeof(MarshalAsAttribute), false);
+        
         if (returnType.IsArray)
         {
-            AssignArray(returnType, returnValue, outPtr);
+            AssignArray(returnType, returnValue, returnAttributes, outPtr);
         }
         else
         {
-            AssignValue(returnType, returnValue, outPtr);
+            AssignValue(returnType, returnValue, returnAttributes, outPtr);
         }
     }
 
-    private static void AssignArray(Type paramType, object? paramValue, nint paramPtr)
+    private static void AssignArray(Type paramType, object? paramValue, object[] paramAttributes, nint paramPtr)
     {
         Type? elementType = paramType.GetElementType();
         switch (Type.GetTypeCode(elementType))
         {
+            case TypeCode.Char:
+                if (paramValue is char[] arrChar)
+                {
+                    if (TypeMapper.IsUseAnsi(paramAttributes))
+                    {
+                        NativeMethods.AssignVectorChar8(paramPtr, arrChar, arrChar.Length);
+                    }
+                    else
+                    {
+                        NativeMethods.AssignVectorChar16(paramPtr, arrChar, arrChar.Length);
+                    }
+                }
+                break;
             case TypeCode.Boolean:
                 if (paramValue is bool[] arrBoolean) NativeMethods.AssignVectorBool(paramPtr, arrBoolean, arrBoolean.Length);
-                break;
-            case TypeCode.Char:
-                if (paramValue is char[] arrChar) NativeMethods.AssignVectorChar16(paramPtr, arrChar, arrChar.Length);
                 break;
             case TypeCode.SByte:
                 if (paramValue is sbyte[] arrInt8) NativeMethods.AssignVectorInt8(paramPtr, arrInt8, arrInt8.Length);
@@ -406,15 +419,22 @@ public static class NativeInterop
         }
     }
 
-    private static unsafe void AssignValue(Type paramType, object? paramValue, nint paramPtr)
+    private static unsafe void AssignValue(Type paramType, object? paramValue, object[] paramAttributes, nint paramPtr)
     {
         switch (Type.GetTypeCode(paramType))
         {
+            case TypeCode.Char:
+                if (TypeMapper.IsUseAnsi(paramAttributes))
+                {
+                    *((byte*)paramPtr) = (byte)((char)paramValue!);
+                }
+                else
+                {
+                    *((short*)paramPtr) = (short)((char)paramValue!);
+                }
+                return;
             case TypeCode.Boolean:
                 *((byte*)paramPtr) = (byte)((bool)paramValue! ? 1 : 0);
-                return;
-            case TypeCode.Char:
-                *((short*)paramPtr) =  (short)((char)paramValue!);
                 return;
             case TypeCode.SByte:
                 *((sbyte*)paramPtr) = (sbyte)paramValue!;
@@ -466,7 +486,7 @@ public static class NativeInterop
         throw new NotImplementedException($"Parameter type {paramType.Name} not implemented");
     }
 
-    private static unsafe object ExtractArray(Type paramType, nint paramAddress)
+    private static unsafe object ExtractArray(Type paramType, object[] paramAttributes, nint paramAddress)
     {
         if (paramType.IsByRef)
         {
@@ -478,14 +498,23 @@ public static class NativeInterop
         Type? elementType = paramType.GetElementType();
         switch (Type.GetTypeCode(elementType))
         {
+            case TypeCode.Char:
+                if (TypeMapper.IsUseAnsi(paramAttributes))
+                {
+                    var arrChar = new char[NativeMethods.GetVectorSizeChar8(paramPtr)];
+                    NativeMethods.GetVectorDataChar8(paramPtr, arrChar);
+                    return arrChar;
+                }
+                else
+                {
+                    var arrChar = new char[NativeMethods.GetVectorSizeChar16(paramPtr)];
+                    NativeMethods.GetVectorDataChar16(paramPtr, arrChar);
+                    return arrChar;
+                }
             case TypeCode.Boolean:
                 var arrBoolean = new bool[NativeMethods.GetVectorSizeBool(paramPtr)];
                 NativeMethods.GetVectorDataBool(paramPtr, arrBoolean);
                 return arrBoolean;
-            case TypeCode.Char:
-                var arrChar = new char[NativeMethods.GetVectorSizeChar16(paramPtr)];
-                NativeMethods.GetVectorDataChar16(paramPtr, arrChar);
-                return arrChar;
             case TypeCode.SByte:
                 var arrInt8 = new sbyte[NativeMethods.GetVectorSizeInt8(paramPtr)];
                 NativeMethods.GetVectorDataInt8(paramPtr, arrInt8);
@@ -542,7 +571,7 @@ public static class NativeInterop
         }
     }
 
-    private static unsafe object ExtractValue(Type paramType, nint paramAddress)
+    private static unsafe object ExtractValue(Type paramType, object[] paramAttributes, nint paramAddress)
     {
         if (paramType.IsByRef)
         {
@@ -553,10 +582,17 @@ public static class NativeInterop
 
             switch (Type.GetTypeCode(paramType))
             {
+                case TypeCode.Char:
+                    if (TypeMapper.IsUseAnsi(paramAttributes))
+                    {
+                        return (char)(*(byte*)paramPtr);
+                    }
+                    else
+                    {
+                        return (char)(*(short*)paramPtr);
+                    }
                 case TypeCode.Boolean:
                     return *(byte*)paramPtr == 1;
-                case TypeCode.Char:
-                    return (char)(*(short*)paramPtr);
                 case TypeCode.SByte:
                     return *(sbyte*)paramPtr;
                 case TypeCode.Int16:
@@ -590,10 +626,17 @@ public static class NativeInterop
         {
             switch (Type.GetTypeCode(paramType))
             {
+                case TypeCode.Char:
+                    if (TypeMapper.IsUseAnsi(paramAttributes))
+                    {
+                        return (char)(*(byte*)paramAddress);
+                    }
+                    else
+                    {
+                        return (char)(*(short*)paramAddress);
+                    }
                 case TypeCode.Boolean:
                     return *(byte*)paramAddress == 1;
-                case TypeCode.Char:
-                    return (char)(*(short*)paramAddress);
                 case TypeCode.SByte:
                     return *(sbyte*)paramAddress;
                 case TypeCode.Int16:
@@ -635,18 +678,6 @@ public static class NativeInterop
         {
             throw new Exception("Failed to remove object from cache: " + obj.guid);
         }
-    }
-
-    private static bool IsUseAnsi(ParameterInfo parameterInfo)
-    {
-        return parameterInfo.GetCustomAttributes(typeof(CharSetAttribute), false).Any(a =>
-        {
-            if (a is CharSetAttribute attribute)
-            {
-                return attribute.CharSet is CharSet.None or CharSet.Ansi;
-            }
-            return false;
-        });
     }
 
     private static void OutError(nint outErrorStringPtr, string message)

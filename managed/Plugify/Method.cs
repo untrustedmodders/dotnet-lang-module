@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Plugify;
 
@@ -190,6 +191,19 @@ internal static class TypeMapper
         }
     }
     
+    internal static bool IsUseAnsi(object[] customAttributes)
+    {
+	    foreach (var a in customAttributes)
+	    {
+		    if (a is MarshalAsAttribute attribute)
+		    {
+			    return attribute.Value is UnmanagedType.I1 or UnmanagedType.U1;
+		    }
+	    }
+
+	    return false;
+    }
+
     internal static Type GetUnrefType(this Type paramType)
     {
 	    string? paramName = paramType.FullName;

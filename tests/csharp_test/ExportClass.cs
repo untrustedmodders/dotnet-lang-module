@@ -3,15 +3,6 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Plugify;
 
-namespace Plugify
-{
-    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
-    public sealed class CharSetAttribute(CharSet charSet) : Attribute
-    {
-        public CharSet CharSet = charSet;
-    }
-}
-
 namespace CSharpTest
 {
     public class ExportClass
@@ -27,7 +18,7 @@ namespace CSharpTest
             return true;
         }
 
-        [return: CharSet(CharSet.Ansi)]
+        [return: MarshalAs(UnmanagedType.I1)]
         public static char NoParamReturnChar8()
         {
             Console.WriteLine("NoParamReturnChar8");
@@ -124,7 +115,7 @@ namespace CSharpTest
             return new bool[] { true, false };
         }
 
-        [return: CharSet(CharSet.Ansi)]
+        [return: MarshalAs(UnmanagedType.I1)]
         public static char[] NoParamReturnArrayChar8()
         {
             Console.WriteLine("NoParamReturnArrayChar8");

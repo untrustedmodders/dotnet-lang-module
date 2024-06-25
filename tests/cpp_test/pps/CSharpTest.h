@@ -16,6 +16,11 @@ namespace CSharpTest {
 		static auto func = reinterpret_cast<NoParamReturnBoolFn>(plugify::GetMethodPtr("CSharpTest.NoParamReturnBool"));
 		return func();
 	}
+	inline char NoParamReturnChar8() {
+		using NoParamReturnChar8Fn = char (*)();
+		static auto func = reinterpret_cast<NoParamReturnChar8Fn>(plugify::GetMethodPtr("CSharpTest.NoParamReturnChar8"));
+		return func();
+	}
 	inline char16_t NoParamReturnChar16() {
 		using NoParamReturnChar16Fn = char16_t (*)();
 		static auto func = reinterpret_cast<NoParamReturnChar16Fn>(plugify::GetMethodPtr("CSharpTest.NoParamReturnChar16"));
@@ -89,6 +94,11 @@ namespace CSharpTest {
 	inline std::vector<bool> NoParamReturnArrayBool() {
 		using NoParamReturnArrayBoolFn = std::vector<bool> (*)();
 		static auto func = reinterpret_cast<NoParamReturnArrayBoolFn>(plugify::GetMethodPtr("CSharpTest.NoParamReturnArrayBool"));
+		return func();
+	}
+	inline std::vector<char> NoParamReturnArrayChar8() {
+		using NoParamReturnArrayChar8Fn = std::vector<char> (*)();
+		static auto func = reinterpret_cast<NoParamReturnArrayChar8Fn>(plugify::GetMethodPtr("CSharpTest.NoParamReturnArrayChar8"));
 		return func();
 	}
 	inline std::vector<char16_t> NoParamReturnArrayChar16() {

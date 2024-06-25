@@ -13,6 +13,7 @@ public:
 
             CSharpTest::NoParamReturnVoid();
             assert(CSharpTest::NoParamReturnBool() == true);
+            assert(CSharpTest::NoParamReturnChar8() == std::numeric_limits<char>::max());
             assert(CSharpTest::NoParamReturnChar16() == std::numeric_limits<char16_t>::max());
             assert(CSharpTest::NoParamReturnInt8() == std::numeric_limits<int8_t>::max());
             assert(CSharpTest::NoParamReturnInt16() == std::numeric_limits<int16_t>::max());
@@ -28,6 +29,7 @@ public:
             assert(CSharpTest::NoParamReturnFunction() == nullptr);
             assert(CSharpTest::NoParamReturnString() == "Hello World");
             assert((CSharpTest::NoParamReturnArrayBool() == std::vector<bool>{true, false}));
+            assert((CSharpTest::NoParamReturnArrayChar8() == std::vector<char>{'a', 'b', 'c', 'd'}));
             assert((CSharpTest::NoParamReturnArrayChar16() == std::vector<char16_t>{u'a', u'b', u'c', u'd'}));
             assert((CSharpTest::NoParamReturnArrayInt8() == std::vector<int8_t>{-3, -2, -1, 0, 1}));
             assert((CSharpTest::NoParamReturnArrayInt16() == std::vector<int16_t>{-4, -3, -2, -1, 0, 1}));

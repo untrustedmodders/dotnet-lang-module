@@ -31,7 +31,7 @@ public class Logger
 			// Do nothing, just log as is
 		}
 
-		string? funcName = frame.GetMethod()?.Name ?? "<Unknown>";
+		string funcName = frame.GetMethod()?.Name ?? "<Unknown>";
 
 		uint line = (uint)frame.GetFileLineNumber();
 
