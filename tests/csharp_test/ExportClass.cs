@@ -1,6 +1,16 @@
 ﻿using System;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Plugify;
+
+namespace Plugify
+{
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
+    public sealed class CharSetAttribute(CharSet charSet) : Attribute
+    {
+        public CharSet CharSet = charSet;
+    }
+}
 
 namespace CSharpTest
 {
@@ -17,12 +27,19 @@ namespace CSharpTest
             return true;
         }
 
+        [return: CharSet(CharSet.Ansi)]
+        public static char NoParamReturnChar8()
+        {
+            Console.WriteLine("NoParamReturnChar8");
+            return (char)127;
+        }
+        
         public static char NoParamReturnChar16()
         {
             Console.WriteLine("NoParamReturnChar16");
             return char.MaxValue;
         }
-
+        
         public static sbyte NoParamReturnInt8()
         {
             Console.WriteLine("NoParamReturnInt8");
@@ -105,6 +122,13 @@ namespace CSharpTest
         {
             Console.WriteLine("NoParamReturnArrayBool");
             return new bool[] { true, false };
+        }
+
+        [return: CharSet(CharSet.Ansi)]
+        public static char[] NoParamReturnArrayChar8()
+        {
+            Console.WriteLine("NoParamReturnArrayChar8");
+            return new char[] { 'a', 'b', 'c', 'd' };
         }
 
         public static char[] NoParamReturnArrayChar16()
@@ -211,10 +235,10 @@ namespace CSharpTest
         {
             Console.WriteLine("NoParamReturnMatrix4x4");
             return new Matrix4x4(
-                1, 2, 3, 4,
-                5, 6, 7, 8,
-                9, 10, 11, 12,
-                13, 14, 15, 16);
+                1, 5, 9, 13,
+                2, 6, 10, 14,
+                3, 7, 11, 15,
+                4, 8, 12, 16);
         }
         
         // Params (no refs)

@@ -73,13 +73,6 @@ internal enum ValueType : byte {
 
 internal static class TypeMapper
 {
-	internal static bool IsHiddenObjectParam(this ValueType type) {
-		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			return type is > ValueType.LastPrimitive and < ValueType.FirstPod or >= ValueType.Vector3;
-		else
-			return type is > ValueType.LastPrimitive and < ValueType.FirstPod or >= ValueType.Matrix4x4;
-	}
-	
     internal static ValueType NameToValueType(string? typeName)
     {
         switch (typeName)
@@ -195,5 +188,21 @@ internal static class TypeMapper
 
             default: return ValueType.Invalid;
         }
+    }
+    
+    internal static Type GetUnrefType(this Type paramType)
+    {
+	    string? paramName = paramType.FullName;
+	    var type = paramName is { Length: > 0 } ? Type.GetType(paramName[..^1]) : null;
+	    if (type == null)
+	    {
+		    throw new NullReferenceException("Reference type not exist");
+	    }
+	    return type;
+    }
+
+    internal static bool IsArrayRef(this Type paramType)
+    {
+	    return paramType.IsByRef && paramType.Name.EndsWith("[]&");
     }
 }

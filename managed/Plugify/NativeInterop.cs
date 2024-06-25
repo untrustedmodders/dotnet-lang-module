@@ -208,203 +208,93 @@ public static class NativeInterop
         return managedClass;
     }
 
-    private static void HandleParameters(nint paramsPtr, MethodInfo methodInfo, out object[] parameters)
+    private static unsafe void HandleParameters(nint paramsPtr, MethodInfo methodInfo, out object?[]? parameters)
     {
-        int numParams = methodInfo.GetParameters().Length;
+        ParameterInfo[] parameterInfos = methodInfo.GetParameters();
+        int numParams = parameterInfos.Length;
 
         if (numParams == 0 || paramsPtr == nint.Zero)
         {
-            parameters = [];
+            parameters = null;
             return;
         }
 
-        parameters = new object[numParams];
+        parameters = new object?[numParams];
 
         int paramsOffset = 0;
 
         for (int i = 0; i < numParams; i++)
         {
-            Type paramType = methodInfo.GetParameters()[i].ParameterType;
-
             // params is stored as void**
-            nint paramAddress = Marshal.ReadIntPtr(paramsPtr, paramsOffset);
+            nint paramAddress = *(nint*)((byte*)paramsPtr + paramsOffset);
             paramsOffset += nint.Size;
 
-            if (paramType.IsPrimitive)
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                
-                if (paramType == typeof(bool))
-                {
-                    parameters[i] = Marshal.ReadByte(ptr); 
-                    continue;
-                }
-                
-                if (paramType == typeof(char))
-                {
-                    parameters[i] = Marshal.ReadInt16(ptr); 
-                    continue;
-                }
-
-                switch (Marshal.SizeOf(paramType))
-                {
-                    case 2: 
-                        parameters[i] = Marshal.ReadInt16(ptr); 
-                        break;
-                    case 4: 
-                        parameters[i] = Marshal.ReadInt32(ptr); 
-                        break;
-                    case 8: 
-                        parameters[i] = Marshal.ReadInt64(ptr); 
-                        break;
-                    default:
-                        throw new NotImplementedException("Parameter type not implemented");
-                }
-                
-                continue;
-            }
+            ParameterInfo parameterInfo = parameterInfos[i];
+            Type paramType = parameterInfo.ParameterType;
+            //bool useAnsiChar = IsUseAnsi(parameterInfo);
             
-            if (paramType == typeof(string))
+            if (paramType.IsEnum)
             {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                parameters[i] = NativeMethods.GetStringData(ptr);
+                Type underlyingType = Enum.GetUnderlyingType(paramType);
+                parameters[i] = Enum.ToObject(paramType, ExtractValue(underlyingType, paramAddress));
+            } 
+            else if (paramType.IsArray || paramType.IsArrayRef())
+            {
+                parameters[i] = ExtractArray(paramType, paramAddress);
+            }
+            else
+            {
+                parameters[i] = ExtractValue(paramType, paramAddress);
+            }
+        }
+    }
 
-                continue;
-            }
+    public static unsafe void PullReferences(nint paramsPtr, MethodInfo methodInfo, object?[]? parameters)
+    {
+        if (parameters == null)
+        {
+            return;
+        }
 
-            if (paramType == typeof(bool[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new bool[NativeMethods.GetVectorSizeBool(ptr)];
-                NativeMethods.GetVectorDataBool(ptr, array);
-                
-                parameters[i] = array;
-                
-                continue;
-            }
-            if (paramType == typeof(char[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new char[NativeMethods.GetVectorSizeChar16(ptr)];
-                NativeMethods.GetVectorDataChar16(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(sbyte[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new sbyte[NativeMethods.GetVectorSizeInt8(ptr)];
-                NativeMethods.GetVectorDataInt8(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(short[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new short[NativeMethods.GetVectorSizeInt16(ptr)];
-                NativeMethods.GetVectorDataInt16(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(int[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new int[NativeMethods.GetVectorSizeInt32(ptr)];
-                NativeMethods.GetVectorDataInt32(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(long[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new long[NativeMethods.GetVectorSizeInt64(ptr)];
-                NativeMethods.GetVectorDataInt64(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(byte[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new byte[NativeMethods.GetVectorSizeUInt8(ptr)];
-                NativeMethods.GetVectorDataUInt8(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(ushort[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new ushort[NativeMethods.GetVectorSizeUInt16(ptr)];
-                NativeMethods.GetVectorDataUInt16(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(uint[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new uint[NativeMethods.GetVectorSizeUInt32(ptr)];
-                NativeMethods.GetVectorDataUInt32(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(ulong[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new ulong[NativeMethods.GetVectorSizeUInt64(ptr)];
-                NativeMethods.GetVectorDataUInt64(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(nint[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new nint[NativeMethods.GetVectorSizeIntPtr(ptr)];
-                NativeMethods.GetVectorDataIntPtr(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(float[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new float[NativeMethods.GetVectorSizeFloat(ptr)];
-                NativeMethods.GetVectorDataFloat(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(double[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new double[NativeMethods.GetVectorSizeDouble(ptr)];
-                NativeMethods.GetVectorDataDouble(ptr, array);
-                
-                parameters[i] = array;
-            }
-            if (paramType == typeof(string[]))
-            {
-                nint ptr = Marshal.ReadIntPtr(paramAddress);
-                var array = new string[NativeMethods.GetVectorSizeString(ptr)];
-                NativeMethods.GetVectorDataString(ptr, array);
-                
-                parameters[i] = array;
-            }
+        ParameterInfo[] parameterInfos = methodInfo.GetParameters();
+        int numParams = parameterInfos.Length;
+
+        int paramsOffset = 0;
+
+        for (int i = 0; i < numParams; i++)
+        {
+            // params is stored as void**
+            nint paramAddress = *(nint*)((byte*)paramsPtr + paramsOffset);
+            paramsOffset += nint.Size;
+
+            ParameterInfo parameterInfo = parameterInfos[i];
+            Type paramType = parameterInfo.ParameterType;
             
-            if (paramType.IsValueType)
+            if (!paramType.IsByRef)
             {
-                parameters[i] = Marshal.PtrToStructure(paramAddress, paramType);
-
                 continue;
             }
-            
-            if (paramType.IsPointer)
+
+            paramType = paramType.GetUnrefType();
+
+            object? paramValue = parameters[i];
+            nint paramPtr = *(nint*)paramAddress;
+
+            if (paramType.IsEnum)
             {
-                throw new NotImplementedException("Pointer parameter type not implemented");
+                // If paramType is an enum we need to get the underlying type
+                paramType = Enum.GetUnderlyingType(paramType);
+                paramValue = Convert.ChangeType(paramValue, paramType);
             }
 
-            if (paramType.IsByRef)
+            if (paramType.IsArray)
             {
-                throw new NotImplementedException("ByRef parameter type not implemented");
+                AssignArray(paramType, paramValue, paramPtr);
             }
-
-            throw new NotImplementedException("Parameter type not implemented");
+            else
+            {
+                AssignValue(paramType, paramValue, paramPtr);
+            }
         }
     }
 
@@ -415,9 +305,6 @@ public static class NativeInterop
         {
             throw new Exception("Failed to get method from GUID: " + managedMethodGuid);
         }
-        
-        Type returnType = methodInfo.ReturnType;
-        //Type thisType = methodInfo.DeclaringType;
 
         HandleParameters(paramsPtr, methodInfo, out var parameters);
 
@@ -437,11 +324,13 @@ public static class NativeInterop
 
         object? returnValue = methodInfo.Invoke(thisObject, parameters);
 
-        
-        
-        // If returnType is an enum we need to get the underlying type and cast the value to it
+        PullReferences(paramsPtr, methodInfo, parameters);
+
+        Type returnType = methodInfo.ReturnType;
+
         if (returnType.IsEnum)
         {
+            // If returnType is an enum we need to get the underlying type and cast the value to it
             returnType = Enum.GetUnderlyingType(returnType);
             returnValue = Convert.ChangeType(returnValue, returnType);
         }
@@ -454,119 +343,290 @@ public static class NativeInterop
 
         if (returnType.IsArray)
         {
-            var elementType = returnType.GetElementType();
-            switch (Type.GetTypeCode(elementType))
+            AssignArray(returnType, returnValue, outPtr);
+        }
+        else
+        {
+            AssignValue(returnType, returnValue, outPtr);
+        }
+    }
+
+    private static void AssignArray(Type paramType, object? paramValue, nint paramPtr)
+    {
+        Type? elementType = paramType.GetElementType();
+        switch (Type.GetTypeCode(elementType))
+        {
+            case TypeCode.Boolean:
+                if (paramValue is bool[] arrBoolean) NativeMethods.AssignVectorBool(paramPtr, arrBoolean, arrBoolean.Length);
+                break;
+            case TypeCode.Char:
+                if (paramValue is char[] arrChar) NativeMethods.AssignVectorChar16(paramPtr, arrChar, arrChar.Length);
+                break;
+            case TypeCode.SByte:
+                if (paramValue is sbyte[] arrInt8) NativeMethods.AssignVectorInt8(paramPtr, arrInt8, arrInt8.Length);
+                break;
+            case TypeCode.Int16:
+                if (paramValue is short[] arrInt16) NativeMethods.AssignVectorInt16(paramPtr, arrInt16, arrInt16.Length);
+                break;
+            case TypeCode.Int32:
+                if (paramValue is int[] arrInt32) NativeMethods.AssignVectorInt32(paramPtr, arrInt32, arrInt32.Length);
+                break;
+            case TypeCode.Int64:
+                if (paramValue is long[] arrInt64) NativeMethods.AssignVectorInt64(paramPtr, arrInt64, arrInt64.Length);
+                break;
+            case TypeCode.Byte:
+                if (paramValue is byte[] arrUInt8) NativeMethods.AssignVectorUInt8(paramPtr, arrUInt8, arrUInt8.Length);
+                break;
+            case TypeCode.UInt16:
+                if (paramValue is ushort[] arrUInt16) NativeMethods.AssignVectorUInt16(paramPtr, arrUInt16, arrUInt16.Length);
+                break;
+            case TypeCode.UInt32:
+                if (paramValue is uint[] arrUInt32) NativeMethods.AssignVectorUInt32(paramPtr, arrUInt32, arrUInt32.Length);
+                break;
+            case TypeCode.UInt64:
+                if (paramValue is ulong[] arrUInt64) NativeMethods.AssignVectorUInt64(paramPtr, arrUInt64, arrUInt64.Length);
+                break;
+            case TypeCode.Single:
+                if (paramValue is float[] arrFloat) NativeMethods.AssignVectorFloat(paramPtr, arrFloat, arrFloat.Length);
+                break;
+            case TypeCode.Double:
+                if (paramValue is double[] arrDouble) NativeMethods.AssignVectorDouble(paramPtr, arrDouble, arrDouble.Length);
+                break;
+            case TypeCode.String:
+                if (paramValue is string[] arrString) NativeMethods.AssignVectorString(paramPtr, arrString, arrString.Length);
+                break;
+            default:
+                if (elementType == typeof(nint))
+                {
+                    if (paramValue is nint[] arrIntPtr) NativeMethods.AssignVectorIntPtr(paramPtr, arrIntPtr, arrIntPtr.Length);
+                }
+                else
+                    throw new NotImplementedException($"Unknown array type {elementType?.Name ?? ""}");
+                break;
+        }
+    }
+
+    private static unsafe void AssignValue(Type paramType, object? paramValue, nint paramPtr)
+    {
+        switch (Type.GetTypeCode(paramType))
+        {
+            case TypeCode.Boolean:
+                *((byte*)paramPtr) = (byte)((bool)paramValue! ? 1 : 0);
+                return;
+            case TypeCode.Char:
+                *((short*)paramPtr) =  (short)((char)paramValue!);
+                return;
+            case TypeCode.SByte:
+                *((sbyte*)paramPtr) = (sbyte)paramValue!;
+                return;
+            case TypeCode.Int16:
+                *((short*)paramPtr) = (short)paramValue!;
+                return;
+            case TypeCode.Int32:
+                *((int*)paramPtr) = (int)paramValue!;
+                return;
+            case TypeCode.Int64:
+                *((long*)paramPtr) = (long)paramValue!;
+                return;
+            case TypeCode.Byte:
+                *((byte*)paramPtr) = (byte)paramValue!;
+                return;
+            case TypeCode.UInt16:
+                *((ushort*)paramPtr) = (ushort)paramValue!;
+                return;
+            case TypeCode.UInt32:
+                *((uint*)paramPtr) = (uint)paramValue!;
+                return;
+            case TypeCode.UInt64:
+                *((ulong*)paramPtr) = (ulong)paramValue!;
+                return;
+            case TypeCode.Single:
+                *((float*)paramPtr) = (float)paramValue!;
+                return;
+            case TypeCode.Double:
+                *((double*)paramPtr) = (double)paramValue!;
+                return;
+            case TypeCode.String:
+                if (paramValue is string str) NativeMethods.AssignString(paramPtr, str);
+                return;
+        }
+
+        if (paramType == typeof(nint))
+        {
+            *((nint*)paramPtr) = (nint)paramValue!;
+            return;
+        }
+
+        if (paramType.IsValueType)
+        {
+            Marshal.StructureToPtr(paramValue!, paramPtr, false);
+            return;
+        }
+
+        throw new NotImplementedException($"Parameter type {paramType.Name} not implemented");
+    }
+
+    private static unsafe object ExtractArray(Type paramType, nint paramAddress)
+    {
+        if (paramType.IsByRef)
+        {
+            paramType = paramType.GetUnrefType();
+        }
+
+        nint paramPtr = *(nint*)paramAddress;
+
+        Type? elementType = paramType.GetElementType();
+        switch (Type.GetTypeCode(elementType))
+        {
+            case TypeCode.Boolean:
+                var arrBoolean = new bool[NativeMethods.GetVectorSizeBool(paramPtr)];
+                NativeMethods.GetVectorDataBool(paramPtr, arrBoolean);
+                return arrBoolean;
+            case TypeCode.Char:
+                var arrChar = new char[NativeMethods.GetVectorSizeChar16(paramPtr)];
+                NativeMethods.GetVectorDataChar16(paramPtr, arrChar);
+                return arrChar;
+            case TypeCode.SByte:
+                var arrInt8 = new sbyte[NativeMethods.GetVectorSizeInt8(paramPtr)];
+                NativeMethods.GetVectorDataInt8(paramPtr, arrInt8);
+                return arrInt8;
+            case TypeCode.Int16:
+                var arrInt16 = new short[NativeMethods.GetVectorSizeInt16(paramPtr)];
+                NativeMethods.GetVectorDataInt16(paramPtr, arrInt16);
+                return arrInt16;
+            case TypeCode.Int32:
+                var arrInt32 = new int[NativeMethods.GetVectorSizeInt32(paramPtr)];
+                NativeMethods.GetVectorDataInt32(paramPtr, arrInt32);
+                return arrInt32;
+            case TypeCode.Int64:
+                var arrInt64 = new long[NativeMethods.GetVectorSizeInt64(paramPtr)];
+                NativeMethods.GetVectorDataInt64(paramPtr, arrInt64);
+                return arrInt64;
+            case TypeCode.Byte:
+                var arrUInt8 = new byte[NativeMethods.GetVectorSizeUInt8(paramPtr)];
+                NativeMethods.GetVectorDataUInt8(paramPtr, arrUInt8);
+                return arrUInt8;
+            case TypeCode.UInt16:
+                var arrUInt16 = new ushort[NativeMethods.GetVectorSizeUInt16(paramPtr)];
+                NativeMethods.GetVectorDataUInt16(paramPtr, arrUInt16);
+                return arrUInt16;
+            case TypeCode.UInt32:
+                var arrUInt32 = new uint[NativeMethods.GetVectorSizeUInt32(paramPtr)];
+                NativeMethods.GetVectorDataUInt32(paramPtr, arrUInt32);
+                return arrUInt32;
+            case TypeCode.UInt64:
+                var arrUInt64 = new ulong[NativeMethods.GetVectorSizeUInt64(paramPtr)];
+                NativeMethods.GetVectorDataUInt64(paramPtr, arrUInt64);
+                return arrUInt64;
+            case TypeCode.Single:
+                var arrFloat = new float[NativeMethods.GetVectorSizeFloat(paramPtr)];
+                NativeMethods.GetVectorDataFloat(paramPtr, arrFloat);
+                return arrFloat;
+            case TypeCode.Double:
+                var arrDouble = new double[NativeMethods.GetVectorSizeDouble(paramPtr)];
+                NativeMethods.GetVectorDataDouble(paramPtr, arrDouble);
+                return arrDouble;
+            case TypeCode.String:
+                var arrString = new string[NativeMethods.GetVectorSizeString(paramPtr)];
+                NativeMethods.GetVectorDataString(paramPtr, arrString);
+                return arrString;
+            default:
+                if (elementType == typeof(nint))
+                {
+                    var arrIntPtr = new nint[NativeMethods.GetVectorSizeIntPtr(paramPtr)];
+                    NativeMethods.GetVectorDataIntPtr(paramPtr, arrIntPtr);
+                    return arrIntPtr;
+                }
+                
+                throw new NotImplementedException($"Array type {elementType?.Name ?? ""} not implemented");
+        }
+    }
+
+    private static unsafe object ExtractValue(Type paramType, nint paramAddress)
+    {
+        if (paramType.IsByRef)
+        {
+            paramType = paramType.GetUnrefType();
+
+            // Should be pass by pointers in unmanaged
+            nint paramPtr = *(nint*)paramAddress;
+
+            switch (Type.GetTypeCode(paramType))
             {
                 case TypeCode.Boolean:
-                    if (returnValue is bool[] arrBoolean) NativeMethods.AssignVectorBool(outPtr, arrBoolean, arrBoolean.Length);
-                    return;
+                    return *(byte*)paramPtr == 1;
                 case TypeCode.Char:
-                    if (returnValue is char[] arrChar) NativeMethods.AssignVectorChar16(outPtr, arrChar, arrChar.Length);
-                    return;
+                    return (char)(*(short*)paramPtr);
                 case TypeCode.SByte:
-                    if (returnValue is sbyte[] arrSByte) NativeMethods.AssignVectorInt8(outPtr, arrSByte, arrSByte.Length);
-                    return;
+                    return *(sbyte*)paramPtr;
                 case TypeCode.Int16:
-                    if (returnValue is short[] arrInt16) NativeMethods.AssignVectorInt16(outPtr, arrInt16, arrInt16.Length);
-                    return;
+                    return *(short*)paramPtr;
                 case TypeCode.Int32:
-                    if (returnValue is int[] arrInt32) NativeMethods.AssignVectorInt32(outPtr, arrInt32, arrInt32.Length);
-                    return;
+                    return *(int*)paramPtr;
                 case TypeCode.Int64:
-                    if (returnValue is long[] arrInt64) NativeMethods.AssignVectorInt64(outPtr, arrInt64, arrInt64.Length);
-                    return;
+                    return *(long*)paramPtr;
                 case TypeCode.Byte:
-                    if (returnValue is byte[] arrByte) NativeMethods.AssignVectorUInt8(outPtr, arrByte, arrByte.Length);
-                    return;
+                    return *(byte*)paramPtr;
                 case TypeCode.UInt16:
-                    if (returnValue is ushort[] arrUInt16) NativeMethods.AssignVectorUInt16(outPtr, arrUInt16, arrUInt16.Length);
-                    return;
+                    return *(ushort*)paramPtr;
                 case TypeCode.UInt32:
-                    if (returnValue is uint[] arrUInt32) NativeMethods.AssignVectorUInt32(outPtr, arrUInt32, arrUInt32.Length);
-                    return;
+                    return *(uint*)paramPtr;
                 case TypeCode.UInt64:
-                    if (returnValue is ulong[] arrUInt64) NativeMethods.AssignVectorUInt64(outPtr, arrUInt64, arrUInt64.Length);
-                    return;
+                    return *(ulong*)paramPtr;
                 case TypeCode.Single:
-                    if (returnValue is float[] arrFloat) NativeMethods.AssignVectorFloat(outPtr, arrFloat, arrFloat.Length);
-                    return;
+                    return *(float*)paramPtr;
                 case TypeCode.Double:
-                    if (returnValue is double[] arrDouble) NativeMethods.AssignVectorDouble(outPtr, arrDouble, arrDouble.Length);
-                    return;
-                default:
-                    if (elementType == typeof(nint))
-                    {
-                        if (returnValue is IntPtr[] arrIntPtr) NativeMethods.AssignVectorIntPtr(outPtr, arrIntPtr, arrIntPtr.Length);
-                    }
-                    else
-                        throw new NotImplementedException($"Unknown array type {returnType.Name}");
-                    return;
+                    return *(double*)paramPtr;
+                case TypeCode.String:
+                    return NativeMethods.GetStringData(paramPtr);
+            }
+            
+            if (paramType.IsValueType)
+            {
+                return Marshal.PtrToStructure(paramPtr, paramType);
+            }
+        }
+        else
+        {
+            switch (Type.GetTypeCode(paramType))
+            {
+                case TypeCode.Boolean:
+                    return *(byte*)paramAddress == 1;
+                case TypeCode.Char:
+                    return (char)(*(short*)paramAddress);
+                case TypeCode.SByte:
+                    return *(sbyte*)paramAddress;
+                case TypeCode.Int16:
+                    return *(short*)paramAddress;
+                case TypeCode.Int32:
+                    return *(int*)paramAddress;
+                case TypeCode.Int64:
+                    return *(long*)paramAddress;
+                case TypeCode.Byte:
+                    return *(byte*)paramAddress;
+                case TypeCode.UInt16:
+                    return *(ushort*)paramAddress;
+                case TypeCode.UInt32:
+                    return *(uint*)paramAddress;
+                case TypeCode.UInt64:
+                    return *(ulong*)paramAddress;
+                case TypeCode.Single:
+                    return *(float*)paramAddress;
+                case TypeCode.Double:
+                    return *(double*)paramAddress;
+                case TypeCode.String:
+                    nint paramPtr = *(nint*)paramAddress;
+                    return NativeMethods.GetStringData(paramPtr);
+            }
+            
+            if (paramType.IsValueType)
+            {
+                nint paramPtr = *(nint*)paramAddress;
+                return Marshal.PtrToStructure(paramPtr, paramType);
             }
         }
 
-        switch (Type.GetTypeCode(returnType))
-        {
-            case TypeCode.Boolean:
-                Marshal.WriteByte(outPtr, (byte)((bool)returnValue ? 1 : 0));
-                return;
-            case TypeCode.Char:
-                Marshal.WriteInt16(outPtr, (short)((char)returnValue));
-                return;
-            case TypeCode.SByte:
-                Marshal.WriteByte(outPtr, (byte)((sbyte)returnValue));
-                return;
-            case TypeCode.Int16:
-                Marshal.WriteInt16(outPtr, (short)returnValue);
-                return;
-            case TypeCode.Int32:
-                Marshal.WriteInt32(outPtr, (int)returnValue);
-                return;
-            case TypeCode.Int64:
-                Marshal.WriteInt64(outPtr, (long)returnValue);
-                return;
-            case TypeCode.Byte:
-                Marshal.WriteByte(outPtr, (byte)returnValue);
-                return;
-            case TypeCode.UInt16:
-                Marshal.WriteInt16(outPtr, (short)((ushort)returnValue));
-                return;
-            case TypeCode.UInt32:
-                Marshal.WriteInt32(outPtr, (int)((uint)returnValue));
-                return;
-            case TypeCode.UInt64:
-                Marshal.WriteInt64(outPtr, (long)((ulong)returnValue));
-                return;
-            case TypeCode.Single:
-                unsafe
-                {
-                    *((float*)outPtr) = (float)returnValue;
-                }
-                return;
-            case TypeCode.Double:
-                unsafe
-                {
-                    *((double*)outPtr) = (double)returnValue;
-                }
-                return;
-            case TypeCode.String:
-                if (returnValue is string str) NativeMethods.AssignString(outPtr, str);
-                return;
-        }
-        
-        if (returnType == typeof(nint))
-        {
-            Marshal.WriteIntPtr(outPtr, (nint)returnValue);
-            return;
-        }
-        
-        if (returnType.IsValueType)
-        {
-            Marshal.StructureToPtr(returnValue, outPtr, false);
-
-            return;
-        }
-
-        throw new NotImplementedException($"Return type {returnType.Name} not implemented");
+        throw new NotImplementedException($"Parameter type {paramType.Name} not implemented");
     }
 
     public static void FreeObject(ManagedObject obj)
@@ -576,7 +636,19 @@ public static class NativeInterop
             throw new Exception("Failed to remove object from cache: " + obj.guid);
         }
     }
-    
+
+    private static bool IsUseAnsi(ParameterInfo parameterInfo)
+    {
+        return parameterInfo.GetCustomAttributes(typeof(CharSetAttribute), false).Any(a =>
+        {
+            if (a is CharSetAttribute attribute)
+            {
+                return attribute.CharSet is CharSet.None or CharSet.Ansi;
+            }
+            return false;
+        });
+    }
+
     private static void OutError(nint outErrorStringPtr, string message)
     {
         if (outErrorStringPtr == nint.Zero)

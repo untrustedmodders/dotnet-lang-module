@@ -412,7 +412,7 @@ bool DotnetLanguageModule::UnloadAssembly(ManagedGuid assemblyGuid) const {
 
 // C++ to C#
 void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret) {
-	/*const auto& [classPtr, methodPtr] = *reinterpret_cast<ExportMethod*>(data);
+	const auto& [classPtr, methodPtr] = *reinterpret_cast<ExportMethod*>(data);
 
 	bool hasRet = ValueTypeIsHiddenObjectParam(method->retType.type);
 
@@ -480,7 +480,11 @@ void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* dat
 		}
 	}
 
-	classPtr->InvokeStaticMethod(methodPtr, args.data(), retPtr);*/
+	classPtr->InvokeStaticMethod(methodPtr, args.data(), retPtr);
+
+	if (hasRet) {
+		ret->SetReturnPtr(retPtr);
+	}
 }
 
 namespace netlm {
