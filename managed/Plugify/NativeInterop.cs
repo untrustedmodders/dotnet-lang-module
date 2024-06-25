@@ -362,7 +362,7 @@ public static class NativeInterop
             case TypeCode.Char:
                 if (paramValue is char[] arrChar)
                 {
-                    if (TypeMapper.IsUseAnsi(paramAttributes))
+                    if (TypeUtils.IsUseAnsi(paramAttributes))
                     {
                         NativeMethods.AssignVectorChar8(paramPtr, arrChar, arrChar.Length);
                     }
@@ -424,7 +424,7 @@ public static class NativeInterop
         switch (Type.GetTypeCode(paramType))
         {
             case TypeCode.Char:
-                if (TypeMapper.IsUseAnsi(paramAttributes))
+                if (TypeUtils.IsUseAnsi(paramAttributes))
                 {
                     *((byte*)paramPtr) = (byte)((char)paramValue!);
                 }
@@ -499,7 +499,7 @@ public static class NativeInterop
         switch (Type.GetTypeCode(elementType))
         {
             case TypeCode.Char:
-                if (TypeMapper.IsUseAnsi(paramAttributes))
+                if (TypeUtils.IsUseAnsi(paramAttributes))
                 {
                     var arrChar = new char[NativeMethods.GetVectorSizeChar8(paramPtr)];
                     NativeMethods.GetVectorDataChar8(paramPtr, arrChar);
@@ -583,7 +583,7 @@ public static class NativeInterop
             switch (Type.GetTypeCode(paramType))
             {
                 case TypeCode.Char:
-                    if (TypeMapper.IsUseAnsi(paramAttributes))
+                    if (TypeUtils.IsUseAnsi(paramAttributes))
                     {
                         return (char)(*(byte*)paramPtr);
                     }
@@ -617,9 +617,14 @@ public static class NativeInterop
                     return NativeMethods.GetStringData(paramPtr);
             }
             
+            if (paramType == typeof(nint))
+            {
+                return *(nint*)paramPtr;
+            }
+            
             if (paramType.IsValueType)
             {
-                return Marshal.PtrToStructure(paramPtr, paramType);
+                return Marshal.PtrToStructure(paramPtr, paramType) ?? throw new InvalidOperationException("Invalid structure!");
             }
         }
         else
@@ -627,7 +632,7 @@ public static class NativeInterop
             switch (Type.GetTypeCode(paramType))
             {
                 case TypeCode.Char:
-                    if (TypeMapper.IsUseAnsi(paramAttributes))
+                    if (TypeUtils.IsUseAnsi(paramAttributes))
                     {
                         return (char)(*(byte*)paramAddress);
                     }
@@ -662,10 +667,15 @@ public static class NativeInterop
                     return NativeMethods.GetStringData(paramPtr);
             }
             
+            if (paramType == typeof(nint))
+            {
+                return *(nint*)paramAddress;
+            }
+            
             if (paramType.IsValueType)
             {
                 nint paramPtr = *(nint*)paramAddress;
-                return Marshal.PtrToStructure(paramPtr, paramType);
+                return Marshal.PtrToStructure(paramPtr, paramType) ?? throw new InvalidOperationException("Invalid structure!");
             }
         }
 

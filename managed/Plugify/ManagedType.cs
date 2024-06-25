@@ -3,6 +3,71 @@ using System.Runtime.InteropServices;
 
 namespace Plugify;
 
+[StructLayout(LayoutKind.Sequential, Size = 16)]
+public struct ManagedType
+{
+    public byte valueType;
+    public byte reference;
+    /** Delegate info **/
+    public int paramCount;
+    public ushort[] paramTypes;
+
+    public ManagedType(Type type, object[] attributes)
+    {
+        if (type.IsDelegate())
+        {
+            MethodInfo? methodInfo = type.GetMethod("Invoke");
+            if (methodInfo != null)
+            {
+	            valueType = (byte) ValueType.Function;
+                reference = type.IsByRef ? (byte)1 : (byte)0;
+                
+                ParameterInfo[] parameterInfos = methodInfo.GetParameters();
+            
+                paramCount = parameterInfos.Length;
+                paramTypes = new ushort[paramCount + 1];
+                
+                for (int i = 0; i < paramCount; i++)
+                {
+	                Type paramType = parameterInfos[i].ParameterType;
+	                paramTypes[i] = BitConverter.ToUInt16([(byte) paramType.ToValueType(), paramType.IsByRef ? (byte)1 : (byte)0], 0);
+                }
+
+                Type returnType = methodInfo.ReturnType;
+                paramTypes[paramCount] = BitConverter.ToUInt16([(byte) returnType.ToValueType(), returnType.IsByRef ? (byte)1 : (byte)0], 0);
+            }
+            else
+            {
+	            valueType = (byte) ValueType.Invalid;
+                reference = 0;
+                
+                paramCount = 0;
+                paramTypes = [];
+            }
+        }
+        else
+        {
+	        var vt = type.ToValueType();
+
+            switch (vt)
+            {
+	            case ValueType.Char16 when TypeUtils.IsUseAnsi(attributes):
+		            vt = ValueType.Char8;
+		            break;
+	            case ValueType.ArrayChar16 when TypeUtils.IsUseAnsi(attributes):
+		            vt = ValueType.ArrayChar8;
+		            break;
+            }
+            
+            valueType = (byte) vt;
+            reference = type.IsByRef ? (byte)1 : (byte)0;
+
+            paramCount = 0;
+            paramTypes = [];
+        }
+    }
+}
+
 internal enum ValueType : byte {
 	Invalid,
 
@@ -59,20 +124,9 @@ internal enum ValueType : byte {
 	//Matrix3x4,
 	//Matrix4x2,
 	//Matrix4x3,
-	
-	// Helpers
-	
-	FirstPrimitive = Void,
-	LastPrimitive = Function,
-
-	FirstObject = String,
-	LastObject = ArrayString,
-
-	FirstPod = Vector2,
-	LastPod = Matrix4x4
 };
 
-internal static class TypeMapper
+internal static class TypeUtils
 {
     internal static ValueType NameToValueType(string? typeName)
     {
@@ -140,7 +194,7 @@ internal static class TypeMapper
             case "System.Single[]&": return ValueType.ArrayFloat;
             case "System.Double[]&": return ValueType.ArrayDouble;
             case "System.String[]&": return ValueType.ArrayString;
-
+/*
             case "System.Delegate": return ValueType.Function;
             case "System.Func`1": return ValueType.Function;
             case "System.Func`2": return ValueType.Function;
@@ -176,7 +230,7 @@ internal static class TypeMapper
             case "System.Action`14": return ValueType.Function;
             case "System.Action`15": return ValueType.Function;
             case "System.Action`16": return ValueType.Function;
-
+*/
             case "System.Numerics.Vector2": return ValueType.Vector2;
             case "System.Numerics.Vector3": return ValueType.Vector3;
             case "System.Numerics.Vector4": return ValueType.Vector4;
@@ -191,19 +245,11 @@ internal static class TypeMapper
         }
     }
     
-    internal static bool IsUseAnsi(object[] customAttributes)
+    internal static ValueType ToValueType(this Type paramType)
     {
-	    foreach (var a in customAttributes)
-	    {
-		    if (a is MarshalAsAttribute attribute)
-		    {
-			    return attribute.Value is UnmanagedType.I1 or UnmanagedType.U1;
-		    }
-	    }
-
-	    return false;
+	    return paramType.IsDelegate() ? ValueType.Function : NameToValueType(paramType.FullName);
     }
-
+    
     internal static Type GetUnrefType(this Type paramType)
     {
 	    string? paramName = paramType.FullName;
@@ -218,5 +264,23 @@ internal static class TypeMapper
     internal static bool IsArrayRef(this Type paramType)
     {
 	    return paramType.IsByRef && paramType.Name.EndsWith("[]&");
+    }   
+    
+    internal static bool IsDelegate(this Type paramType)
+    {
+	    return typeof(Delegate).IsAssignableFrom(paramType);
+    }   
+    
+    internal static bool IsUseAnsi(object[] customAttributes)
+    {
+	    foreach (var a in customAttributes)
+	    {
+		    if (a is MarshalAsAttribute attribute)
+		    {
+			    return attribute.Value is UnmanagedType.I1 or UnmanagedType.U1;
+		    }
+	    }
+
+	    return false;
     }
 }

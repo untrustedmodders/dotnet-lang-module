@@ -58,7 +58,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${NETLM_LINK_LIBRARIES})
 target_precompile_headers(${PROJECT_NAME} PRIVATE ${NETLM_PCH_FILE})
 
 if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+    target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX /Wv:18)
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wextra -Wconversion -Werror) # -Wshadow -Wpedantic
 endif()

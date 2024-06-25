@@ -20,8 +20,7 @@ public class Logger
 	{
 		var frame = new System.Diagnostics.StackFrame(1, true);
 
-		string formattedMessage = message;
-
+		string formattedMessage;
 		try
 		{
 			formattedMessage = string.Format(message, args);
@@ -29,6 +28,7 @@ public class Logger
 		catch (FormatException)
 		{
 			// Do nothing, just log as is
+			formattedMessage = message;
 		}
 
 		string funcName = frame.GetMethod()?.Name ?? "<Unknown>";

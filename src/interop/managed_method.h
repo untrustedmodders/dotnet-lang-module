@@ -2,12 +2,13 @@
 
 #include <plugify/method.h>
 #include "managed_guid.h"
+#include "managed_type.h"
 
 namespace netlm {
 	struct ManagedMethod {
 		ManagedGuid guid;
-		plugify::ValueType returnType;
-		std::vector<plugify::ValueType> parameterTypes;
+		ManagedTypeHolder returnType;
+		std::vector<ManagedTypeHolder> parameterTypes;
 		std::vector<std::string> attributeNames;
 
 		[[nodiscard]] bool HasAttribute(std::string_view attributeName) const {

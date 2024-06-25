@@ -5,6 +5,7 @@
 #include "strings.h"
 
 #include "interop/managed_guid.h"
+#include "interop/managed_type.h"
 
 #include <module_export.h>
 
@@ -147,9 +148,10 @@ void DotnetLanguageModule::Shutdown() {
 	_ctx.reset();
 	_dll.reset();
 	_rt.reset();
-	_provider.reset();
 
 	_provider->Log(LOG_PREFIX "Shut down .NET runtime", Severity::Debug);
+
+	_provider.reset();
 }
 
 bool DotnetLanguageModule::LoadHostFXR(const fs::path& hostPath) {
@@ -207,45 +209,6 @@ ErrorString DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPa
 	return std::nullopt;
 }
 
-/*MethodRaw MapToRawMethod(const Method& method, PropertyHolder& rawProperties, MethodHolder& rawPrototypes)  {
-	auto paramCount = method.paramTypes.size();
-	auto properties = std::make_unique<PropertyRaw[]>(paramCount + 1);
-
-	for (size_t i = 0; i < paramCount; ++i) {
-		const auto& param = method.paramTypes[i];
-
-		MethodRaw* prototype = param.prototype ? rawPrototypes.emplace_back(std::make_unique<MethodRaw>(MapToRawMethod(*param.prototype, rawProperties, rawPrototypes))).get() : nullptr;
-
-		properties[i] = PropertyRaw{
-				param.type,
-				param.ref,
-				prototype
-		};
-	}
-
-	MethodRaw* prototype = method.retType.prototype ? rawPrototypes.emplace_back(std::make_unique<MethodRaw>(MapToRawMethod(*method.retType.prototype, rawProperties, rawPrototypes))).get() : nullptr;
-
-	properties[paramCount] = {
-			method.retType.type,
-			method.retType.ref,
-			prototype
-	};
-
-	MethodRaw methodRaw{
-		method.name.c_str(),
-		method.funcName.c_str(),
-		method.callConv.c_str(),
-		properties.get(),
-		&properties[paramCount],
-		method.varIndex,
-		static_cast<int32_t>(paramCount)
-	};
-
-	rawProperties.emplace_back(std::move(properties));
-
-	return methodRaw;
-}*/
-
 LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 	fs::path assemblyPath(plugin.GetBaseDir() / plugin.GetDescriptor().entryPoint);
 
@@ -264,7 +227,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 			&assembly->GetGuid(),
 			&assembly->GetClassObjectHolder(),
 			absolutePath.c_str()
-			);
+	);
 	if (errorStr.empty()) {
 		return ErrorData{ std::move(errorStr) };
 	}
@@ -285,6 +248,13 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		Class* classPtr = assembly->GetClassObjectHolder().FindClassByName(separated[1]);
 		ManagedMethod* methodPtr = classPtr->GetMethod(std::string(separated[2].data(), separated[2].size()));
 
+		const ManagedTypeHolder& returnType = methodPtr->returnType;
+		const Property& methodReturnType = method.retType;
+		if (returnType != methodReturnType) {
+			methodErrors.emplace_back(std::format("Method '{}' has invalid return type '{}' when it should have '{}'", method.funcName, ValueTypeToString(methodReturnType.type), ValueTypeToString(returnType.type)));
+			continue;
+		}
+
 		size_t paramCount = methodPtr->parameterTypes.size();
 		if (paramCount != method.paramTypes.size()) {
 			methodErrors.emplace_back(std::format("Method '{}' has invalid parameter count {} when it should have {}", method.funcName, method.paramTypes.size(), paramCount));
@@ -294,22 +264,11 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		bool methodFail = false;
 
 		for (size_t i = 0; i < paramCount; ++i) {
-			ValueType& paramType = methodPtr->parameterTypes[i];
-			if (paramType == ValueType::Invalid) {
-				methodFail = true;
-				methodErrors.emplace_back(std::format("Parameter at index '{}' of method '{}' not supported", i, method.funcName));
-				continue;
-			}
-
-			ValueType methodParamType = method.paramTypes[i].type;
-
-			if (methodParamType == ValueType::Char8 && paramType == ValueType::Char16) {
-				paramType = ValueType::Char8;
-			}
-
+			const ManagedTypeHolder& paramType = methodPtr->parameterTypes[i];
+			const Property& methodParamType = method.paramTypes[i];
 			if (paramType != methodParamType) {
 				methodFail = true;
-				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.funcName, ValueTypeToString(methodParamType), i, ValueTypeToString(paramType)));
+				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.funcName, ValueTypeToString(methodParamType.type), i, ValueTypeToString(paramType.type)));
 				continue;
 			}
 		}
@@ -642,7 +601,7 @@ extern "C" {
 	NETLM_EXPORT std::vector<bool>* CreateVectorBool(bool* arr, int len) {
 		return len == 0 ? new std::vector<bool>() : new std::vector<bool>(arr, arr + len);
 	}
-	
+
 	NETLM_EXPORT std::vector<char>* CreateVectorChar8(char* arr, int len) {
 		return len == 0 ? new std::vector<char>() : new std::vector<char>(arr, arr + len);
 	}
@@ -698,7 +657,7 @@ extern "C" {
 	NETLM_EXPORT std::vector<std::string>* CreateVectorString(char* arr[], int len) {
 		auto* vector = new std::vector<std::string>();
 		if (len != 0) {
-			vector->reserve(len);
+			vector->reserve(static_cast<size_t>(len));
 			for (int i = 0; i < len; ++i) {
 				vector->emplace_back(arr[i]);
 			}
@@ -1280,66 +1239,70 @@ const char* hostfxr_str_error(int32_t error) {
 }
 
 extern "C" {
-	NETLM_EXPORT void NativeInterop_SetInvokeMethodFunction(ManagedGuid* /*assemblyGuid*/, ClassHolder* classHolder, ClassHolder::InvokeMethodFunction invokeMethodFptr) {
-		assert(classHolder != nullptr);
+NETLM_EXPORT void NativeInterop_SetInvokeMethodFunction(ManagedGuid* /*assemblyGuid*/, ClassHolder* classHolder, ClassHolder::InvokeMethodFunction invokeMethodFptr) {
+	assert(classHolder != nullptr);
 
-		classHolder->SetInvokeMethodFunction(invokeMethodFptr);
+	classHolder->SetInvokeMethodFunction(invokeMethodFptr);
 
-		// @TODO: Store the assembly guid somewhere
+	// @TODO: Store the assembly guid somewhere
+}
+
+NETLM_EXPORT void ManagedClass_Create(ManagedGuid* assemblyGuid, ClassHolder* classHolder, int32_t typeHash, const char* typeName, bool isPlugin, ManagedClass* outManagedClass) {
+	assert(assemblyGuid != nullptr);
+	assert(classHolder != nullptr);
+
+	Class* classObject = classHolder->GetOrCreateClassObject(typeHash, typeName);
+	classObject->SetPlugin(isPlugin); // true only if delivered from base plugin class
+
+	*outManagedClass = ManagedClass{typeHash, classObject, *assemblyGuid};
+}
+
+NETLM_EXPORT void ManagedClass_AddMethod(ManagedClass managedClass, const char* methodName, ManagedGuid guid, ManagedType returnType, uint32_t numParameters, const ManagedType* parameterTypes, uint32_t numAttributes, const char** attributeNames) {
+	if (!managedClass.classObject || !methodName) {
+		return;
 	}
 
-	NETLM_EXPORT void ManagedClass_Create(ManagedGuid* assemblyGuid, ClassHolder* classHolder, int32_t typeHash, const char* typeName, bool isPlugin, ManagedClass* outManagedClass) {
-		assert(assemblyGuid != nullptr);
-		assert(classHolder != nullptr);
+	ManagedMethod methodObject;
+	methodObject.guid = guid;
+	methodObject.returnType = ManagedTypeHolder(returnType);
 
-		Class* classObject = classHolder->GetOrCreateClassObject(typeHash, typeName);
-		classObject->SetPlugin(isPlugin); // true only if delivered from base plugin class
+	if (numParameters != 0) {
+		methodObject.parameterTypes.reserve(numParameters);
 
-		*outManagedClass = ManagedClass{typeHash, classObject, *assemblyGuid};
+		for (uint32_t i = 0; i < numParameters; ++i) {
+			methodObject.parameterTypes.emplace_back(parameterTypes[i]);
+		}
 	}
 
-	NETLM_EXPORT void ManagedClass_AddMethod(ManagedClass managedClass, const char* methodName, ManagedGuid guid, plugify::ValueType returnType, uint32_t numParameters, const plugify::ValueType* parameterTypes, uint32_t numAttributes, const char** attributeNames) {
-		if (!managedClass.classObject || !methodName) {
-			return;
+	if (numAttributes != 0) {
+		methodObject.attributeNames.reserve(numAttributes);
+
+		for (uint32_t i = 0; i < numAttributes; ++i) {
+			methodObject.attributeNames.emplace_back(attributeNames[i]);
 		}
-
-		ManagedMethod methodObject;
-		methodObject.guid = guid;
-		methodObject.returnType = returnType;
-
-		if (numParameters != 0) {
-			methodObject.parameterTypes.assign(parameterTypes, parameterTypes + numParameters);
-		}
-
-		if (numAttributes != 0) {
-			methodObject.attributeNames.reserve(numAttributes);
-
-			for (uint32_t i = 0; i < numAttributes; ++i) {
-				methodObject.attributeNames.emplace_back(attributeNames[i]);
-			}
-		}
-
-		if (managedClass.classObject->HasMethod(methodName)) {
-			g_netlm.GetProvider()->Log(std::format("Class '{}' already has a method named '{}'!", managedClass.classObject->GetName(), methodName), Severity::Error);
-			return;
-		}
-
-		managedClass.classObject->AddMethod(methodName, std::move(methodObject));
 	}
 
-	NETLM_EXPORT void ManagedClass_SetNewObjectFunction(ManagedClass managedClass, Class::NewObjectFunction newObjectFptr) {
-		if (managedClass.classObject) {
-			return;
-		}
-
-		managedClass.classObject->SetNewObjectFunction(newObjectFptr);
+	if (managedClass.classObject->HasMethod(methodName)) {
+		g_netlm.GetProvider()->Log(std::format("Class '{}' already has a method named '{}'!", managedClass.classObject->GetName(), methodName), Severity::Error);
+		return;
 	}
 
-	NETLM_EXPORT void ManagedClass_SetFreeObjectFunction(ManagedClass managedClass, Class::FreeObjectFunction freeObjectFptr) {
-		if (!managedClass.classObject) {
-			return;
-		}
+	managedClass.classObject->AddMethod(methodName, std::move(methodObject));
+}
 
-		managedClass.classObject->SetFreeObjectFunction(freeObjectFptr);
+NETLM_EXPORT void ManagedClass_SetNewObjectFunction(ManagedClass managedClass, Class::NewObjectFunction newObjectFptr) {
+	if (managedClass.classObject) {
+		return;
 	}
+
+	managedClass.classObject->SetNewObjectFunction(newObjectFptr);
+}
+
+NETLM_EXPORT void ManagedClass_SetFreeObjectFunction(ManagedClass managedClass, Class::FreeObjectFunction freeObjectFptr) {
+	if (!managedClass.classObject) {
+		return;
+	}
+
+	managedClass.classObject->SetFreeObjectFunction(freeObjectFptr);
+}
 }

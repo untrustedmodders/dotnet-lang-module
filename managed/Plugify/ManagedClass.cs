@@ -47,14 +47,17 @@ public struct ManagedClass
 
     public void AddMethod(string methodName, Guid guid, MethodInfo methodInfo)
     {
-        byte returnType =  (byte) TypeMapper.NameToValueType(methodInfo.ReturnType.FullName);
+        object[] returnAttributes = methodInfo.ReturnTypeCustomAttributes.GetCustomAttributes(typeof(MarshalAsAttribute), false);
+        ManagedType returnType = new ManagedType(methodInfo.ReturnType, returnAttributes);
 
-        ParameterInfo[] parameters = methodInfo.GetParameters();
-        byte[] parameterTypesPtrs = new byte[parameters.Length];
+        ParameterInfo[] parameterInfos = methodInfo.GetParameters();
+        ManagedType[] parameterTypesPtrs = new ManagedType[parameterInfos.Length];
         
-        for (int i = 0; i < parameters.Length; i++)
+        for (int i = 0; i < parameterInfos.Length; i++)
         {
-            parameterTypesPtrs[i] = (byte) TypeMapper.NameToValueType(parameters[i].ParameterType.FullName);
+            ParameterInfo parameterInfo = parameterInfos[i];
+            object[] paramAttributes = parameterInfo.GetCustomAttributes(typeof(MarshalAsAttribute), false);
+            parameterTypesPtrs[i] = new ManagedType(parameterInfo.ParameterType, paramAttributes);
         }
         
         object[] attributes = methodInfo.GetCustomAttributes(false);
@@ -115,7 +118,7 @@ public struct ManagedClass
 
     // Add a function pointer to the managed class
     [DllImport(NativeMethods.DllName)]
-    private static extern void ManagedClass_AddMethod(ManagedClass managedClass, nint methodNamePtr, Guid guid, byte returnType, uint numParameters, byte[] parameterTypes, uint numAttributes, nint[] attributeNames);
+    private static extern void ManagedClass_AddMethod(ManagedClass managedClass, nint methodNamePtr, Guid guid, ManagedType returnType, uint numParameters, ManagedType[] parameterTypes, uint numAttributes, nint[] attributeNames);
 
     [DllImport(NativeMethods.DllName)]
     private static extern void ManagedClass_SetNewObjectFunction(ManagedClass managedClass, nint newObjectFunctionPtr);
