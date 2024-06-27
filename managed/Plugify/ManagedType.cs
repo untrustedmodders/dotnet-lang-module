@@ -15,6 +15,16 @@ public struct ManagedType
 
 	public ManagedType(Type type, object[] attributes)
 	{
+		if (type.IsByRef)
+		{
+			type = TypeUtils.ConvertToUnrefType(type);
+			reference = 1;
+		}
+		else
+		{
+			reference = 0;
+		}
+
 		var vt = TypeUtils.ConvertToValueType(type);
 		switch (vt)
 		{
@@ -26,7 +36,6 @@ public struct ManagedType
 				break;
 		}
 		valueType = (byte) vt;
-		reference = type.IsByRef ? (byte) 1 : (byte) 0;
 	}
 }
 
@@ -158,7 +167,18 @@ internal static class TypeUtils
 
 	    return false;
     }
-
+    
+    internal static Type ConvertToUnrefType(Type paramType)
+    {
+	    string? paramName = paramType.FullName;
+	    var type = paramName is { Length: > 0 } ? Type.GetType(paramName[..^1]) : null;
+	    if (type == null)
+	    {
+		    throw new NullReferenceException("Reference type not exist");
+	    }
+	    return type;
+    }
+    
     internal static bool IsDelegate(this Type paramType)
     {
 	    return typeof(Delegate).IsAssignableFrom(paramType);

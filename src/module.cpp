@@ -1239,71 +1239,71 @@ const char* hostfxr_str_error(int32_t error) {
 }
 
 extern "C" {
-NETLM_EXPORT void NativeInterop_SetInvokeMethodFunction(ManagedGuid* /*assemblyGuid*/, ClassHolder* classHolder, ClassHolder::InvokeMethodFunction invokeMethodFptr) {
-	assert(classHolder != nullptr);
+	NETLM_EXPORT void NativeInterop_SetInvokeMethodFunction(ManagedGuid* /*assemblyGuid*/, ClassHolder* classHolder, ClassHolder::InvokeMethodFunction invokeMethodFptr) {
+		assert(classHolder != nullptr);
 
-	classHolder->SetInvokeMethodFunction(invokeMethodFptr);
+		classHolder->SetInvokeMethodFunction(invokeMethodFptr);
 
-	// @TODO: Store the assembly guid somewhere
-}
-
-NETLM_EXPORT void ManagedClass_Create(ManagedGuid* assemblyGuid, ClassHolder* classHolder, int32_t typeHash, const char* typeName, bool isPlugin, ManagedClass* outManagedClass) {
-	assert(assemblyGuid != nullptr);
-	assert(classHolder != nullptr);
-
-	Class* classObject = classHolder->GetOrCreateClassObject(typeHash, typeName);
-	classObject->SetPlugin(isPlugin); // true only if delivered from base plugin class
-
-	*outManagedClass = ManagedClass{typeHash, classObject, *assemblyGuid};
-}
-
-NETLM_EXPORT void ManagedClass_AddMethod(ManagedClass managedClass, const char* methodName, ManagedGuid guid, ManagedType returnType, uint32_t numParameters, const ManagedType* parameterTypes, uint32_t numAttributes, const char** attributeNames) {
-	if (!managedClass.classObject || !methodName) {
-		return;
+		// @TODO: Store the assembly guid somewhere
 	}
 
-	ManagedMethod methodObject;
-	methodObject.guid = guid;
-	methodObject.returnType = returnType;
+	NETLM_EXPORT void ManagedClass_Create(ManagedGuid* assemblyGuid, ClassHolder* classHolder, int32_t typeHash, const char* typeName, bool isPlugin, ManagedClass* outManagedClass) {
+		assert(assemblyGuid != nullptr);
+		assert(classHolder != nullptr);
 
-	if (numParameters != 0) {
-		/*methodObject.parameterTypes.reserve(numParameters);
+		Class* classObject = classHolder->GetOrCreateClassObject(typeHash, typeName);
+		classObject->SetPlugin(isPlugin); // true only if delivered from base plugin class
 
-		for (uint32_t i = 0; i < numParameters; ++i) {
-			methodObject.parameterTypes.emplace_back(parameterTypes[i]);
-		}*/
-		methodObject.parameterTypes.assign(parameterTypes, parameterTypes + numParameters);
+		*outManagedClass = ManagedClass{typeHash, classObject, *assemblyGuid};
 	}
 
-	if (numAttributes != 0) {
-		methodObject.attributeNames.reserve(numAttributes);
-
-		for (uint32_t i = 0; i < numAttributes; ++i) {
-			methodObject.attributeNames.emplace_back(attributeNames[i]);
+	NETLM_EXPORT void ManagedClass_AddMethod(ManagedClass managedClass, const char* methodName, ManagedGuid guid, ManagedType returnType, uint32_t numParameters, const ManagedType* parameterTypes, uint32_t numAttributes, const char** attributeNames) {
+		if (!managedClass.classObject || !methodName) {
+			return;
 		}
+
+		ManagedMethod methodObject;
+		methodObject.guid = guid;
+		methodObject.returnType = returnType;
+
+		if (numParameters != 0) {
+			/*methodObject.parameterTypes.reserve(numParameters);
+
+			for (uint32_t i = 0; i < numParameters; ++i) {
+				methodObject.parameterTypes.emplace_back(parameterTypes[i]);
+			}*/
+			methodObject.parameterTypes.assign(parameterTypes, parameterTypes + numParameters);
+		}
+
+		if (numAttributes != 0) {
+			methodObject.attributeNames.reserve(numAttributes);
+
+			for (uint32_t i = 0; i < numAttributes; ++i) {
+				methodObject.attributeNames.emplace_back(attributeNames[i]);
+			}
+		}
+
+		if (managedClass.classObject->HasMethod(methodName)) {
+			g_netlm.GetProvider()->Log(std::format("Class '{}' already has a method named '{}'!", managedClass.classObject->GetName(), methodName), Severity::Error);
+			return;
+		}
+
+		managedClass.classObject->AddMethod(methodName, std::move(methodObject));
 	}
 
-	if (managedClass.classObject->HasMethod(methodName)) {
-		g_netlm.GetProvider()->Log(std::format("Class '{}' already has a method named '{}'!", managedClass.classObject->GetName(), methodName), Severity::Error);
-		return;
+	NETLM_EXPORT void ManagedClass_SetNewObjectFunction(ManagedClass managedClass, Class::NewObjectFunction newObjectFptr) {
+		if (managedClass.classObject) {
+			return;
+		}
+
+		managedClass.classObject->SetNewObjectFunction(newObjectFptr);
 	}
 
-	managedClass.classObject->AddMethod(methodName, std::move(methodObject));
-}
+	NETLM_EXPORT void ManagedClass_SetFreeObjectFunction(ManagedClass managedClass, Class::FreeObjectFunction freeObjectFptr) {
+		if (!managedClass.classObject) {
+			return;
+		}
 
-NETLM_EXPORT void ManagedClass_SetNewObjectFunction(ManagedClass managedClass, Class::NewObjectFunction newObjectFptr) {
-	if (managedClass.classObject) {
-		return;
+		managedClass.classObject->SetFreeObjectFunction(freeObjectFptr);
 	}
-
-	managedClass.classObject->SetNewObjectFunction(newObjectFptr);
-}
-
-NETLM_EXPORT void ManagedClass_SetFreeObjectFunction(ManagedClass managedClass, Class::FreeObjectFunction freeObjectFptr) {
-	if (!managedClass.classObject) {
-		return;
-	}
-
-	managedClass.classObject->SetFreeObjectFunction(freeObjectFptr);
-}
 }

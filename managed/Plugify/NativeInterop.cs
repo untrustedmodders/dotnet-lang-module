@@ -273,6 +273,8 @@ public static class NativeInterop
             {
                 continue;
             }
+            
+            paramType = TypeUtils.ConvertToUnrefType(paramType);
 
             object? paramValue = parameters[i];
             nint paramPtr = *(nint*)paramAddress;
@@ -463,9 +465,7 @@ public static class NativeInterop
 
     private static unsafe object Extract(Type paramType, object[] paramAttributes, nint paramAddress)
     {
-	    ValueType valueType = TypeUtils.ConvertToValueType(paramType);
-
-	    object? LoadFromAddress(IntPtr paramPtr)
+	    object? LoadFromAddress(nint paramPtr, ValueType valueType)
 	    {
 		    switch (valueType)
 		    {
@@ -551,6 +551,9 @@ public static class NativeInterop
 
 	    if (paramType.IsByRef)
 	    {
+		    paramType = TypeUtils.ConvertToUnrefType(paramType);
+		    ValueType valueType = TypeUtils.ConvertToValueType(paramType);
+		    
 		    nint paramPtr = *(nint*)paramAddress;
 		    
 		    switch (valueType)
@@ -590,7 +593,7 @@ public static class NativeInterop
 			    case ValueType.Double:
 				    return *(double*)paramPtr;
 			    default:
-				    var result = LoadFromAddress(paramPtr);
+				    var result = LoadFromAddress(paramPtr, valueType);
 				    if (result != null)
 					    return result;
 				    break;
@@ -603,6 +606,7 @@ public static class NativeInterop
 	    }
 	    else
 	    {
+		    ValueType valueType = TypeUtils.ConvertToValueType(paramType);
 		    switch (valueType)
 		    {
 			    case ValueType.Bool:
@@ -641,7 +645,7 @@ public static class NativeInterop
 				    return *(double*)paramAddress;
 			    default:
 				    nint paramPtr = *(nint*)paramAddress;
-				    var result = LoadFromAddress(paramPtr);
+				    var result = LoadFromAddress(paramPtr, valueType);
 				    if (result != null)
 					    return result;
 				    break;
@@ -660,8 +664,17 @@ public static class NativeInterop
     public static Delegate GetDelegateForFunctionPointer(nint funcAddress, Type delegateType)
     {
 	    MethodInfo methodInfo = delegateType.GetMethod("Invoke") ?? throw new InvalidOperationException("Invalid delegate!");
-	    bool NeedMarshal(ValueType type) => type is >= ValueType.String and <= ValueType.ArrayString;
-	    if (methodInfo.GetParameters().Any(p => NeedMarshal(TypeUtils.ConvertToValueType(p.GetType()))) || NeedMarshal(TypeUtils.ConvertToValueType(methodInfo.ReturnType)))
+	    bool NeedMarshal(Type paramType)
+	    {
+		    if (paramType.IsByRef)
+		    {
+			    paramType = TypeUtils.ConvertToUnrefType(paramType);
+		    }
+		    ValueType valueType = TypeUtils.ConvertToValueType(paramType);
+		    return valueType is >= ValueType.String and <= ValueType.ArrayString;
+	    }
+
+	    if (NeedMarshal(methodInfo.ReturnType) || methodInfo.GetParameters().Any(p => NeedMarshal(p.ParameterType)))
 	    {
 		    return MethodUtils.CreateObjectArrayDelegate(delegateType, ExternalInvoke(funcAddress, methodInfo));
 	    }
@@ -1464,8 +1477,6 @@ public static class NativeInterop
 			        throw new ArgumentOutOfRangeException();
 	        }
 
-            // @TODO Implement pulling refs back
-            // PullReferences(pointers);
 			if (hasRefs) {
 				int j = hasRet ? 1 : 0; // skip first param if has return
 
@@ -1692,7 +1703,8 @@ public static class NativeInterop
     
     private static void DeleteParams(List<(nint, ValueType)> handlers, bool hasRet)
     {
-        for (int i = hasRet ? 1 : 0; i < handlers.Count; i++)
+	    int j = hasRet ? 1 : 0;
+        for (int i = j; i < handlers.Count; i++)
         {
             var (ptr, type) = handlers[i];
             switch (type)
