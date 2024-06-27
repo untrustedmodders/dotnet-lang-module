@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Numerics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace Plugify;
@@ -6,69 +7,30 @@ namespace Plugify;
 [StructLayout(LayoutKind.Sequential, Size = 2)]
 public struct ManagedType
 {
-    public byte valueType;
-    public byte reference;
-    /** Delegate info **/
-    //public int paramCount;
-    //public short[] paramTypes;
+    private byte valueType;
+    private byte reference;
 
-    public ManagedType(Type type, object[] attributes)
-    {
-        if (type.IsDelegate())
-        {
-            MethodInfo? methodInfo = type.GetMethod("Invoke");
-            if (methodInfo != null)
-            {
-	            valueType = (byte) ValueType.Function;
-                reference = type.IsByRef ? (byte)1 : (byte)0;
-                
-                /*ParameterInfo[] parameterInfos = methodInfo.GetParameters();
-            
-                paramCount = parameterInfos.Length;
-                paramTypes = new short[paramCount + 1];
-                
-                for (int i = 0; i < paramCount; i++)
-                {
-	                Type paramType = parameterInfos[i].ParameterType;
-	                paramTypes[i] = BitConverter.ToInt16([(byte) TypeUtils.ConvertToValueType(paramType), paramType.IsByRef ? (byte)1 : (byte)0], 0);
-                }
+	public ValueType ValueType => (ValueType) valueType;
+	public bool IsByRef => reference == 1;
 
-                Type returnType = methodInfo.ReturnType;
-                paramTypes[paramCount] = BitConverter.ToInt16([(byte) TypeUtils.ConvertToValueType(returnType), returnType.IsByRef ? (byte)1 : (byte)0], 0);*/
-            }
-            else
-            {
-	            valueType = (byte) ValueType.Invalid;
-                reference = 0;
-                
-                //paramCount = 0;
-                //paramTypes = [];
-            }
-        }
-        else
-        {
-	        var vt = TypeUtils.ConvertToValueType(type);
-
-            switch (vt)
-            {
-	            case ValueType.Char16 when TypeUtils.IsUseAnsi(attributes):
-		            vt = ValueType.Char8;
-		            break;
-	            case ValueType.ArrayChar16 when TypeUtils.IsUseAnsi(attributes):
-		            vt = ValueType.ArrayChar8;
-		            break;
-            }
-            
-            valueType = (byte) vt;
-            reference = type.IsByRef ? (byte)1 : (byte)0;
-
-            //paramCount = 0;
-           // paramTypes = [];
-        }
-    }
+	public ManagedType(Type type, object[] attributes)
+	{
+		var vt = TypeUtils.ConvertToValueType(type);
+		switch (vt)
+		{
+			case ValueType.Char16 when TypeUtils.IsUseAnsi(attributes):
+				vt = ValueType.Char8;
+				break;
+			case ValueType.ArrayChar16 when TypeUtils.IsUseAnsi(attributes):
+				vt = ValueType.ArrayChar8;
+				break;
+		}
+		valueType = (byte) vt;
+		reference = type.IsByRef ? (byte) 1 : (byte) 0;
+	}
 }
 
-internal enum ValueType : byte {
+public enum ValueType : byte {
 	Invalid,
 
 	// C types
@@ -124,154 +86,66 @@ internal enum ValueType : byte {
 	//Matrix3x4,
 	//Matrix4x2,
 	//Matrix4x3,
-	
-	//! Helpers
-
-	FirstPrimitive = Void,
-	LastPrimitive = Function,
-
-	FirstObject = String,
-	LastObject = ArrayString,
-
-	FirstPOD = Vector2,
-	LastPOD = Matrix4x4,
 };
 
 internal static class TypeUtils
 {
-    private static ValueType NameToValueType(string? typeName)
+    private static readonly Dictionary<Type, ValueType> TypeSwitcher = new()
     {
-        switch (typeName)
-        {
-            case "System.Void": return ValueType.Void;
-            case "System.Boolean": return ValueType.Bool;
-            case "System.Char": return ValueType.Char16;
-            case "System.SByte": return ValueType.Int8;
-            case "System.Int16": return ValueType.Int16;
-            case "System.Int32": return ValueType.Int32;
-            case "System.Int64": return ValueType.Int64;
-            case "System.Byte": return ValueType.UInt8;
-            case "System.UInt16": return ValueType.UInt16;
-            case "System.UInt32": return ValueType.UInt32;
-            case "System.UInt64": return ValueType.UInt64;
-            case "System.IntPtr": return ValueType.Pointer;
-            case "System.UIntPtr": return ValueType.Pointer;
-            case "System.Single": return ValueType.Float;
-            case "System.Double": return ValueType.Double;
-            case "System.String": return ValueType.String;
-            case "System.Boolean[]": return ValueType.ArrayBool;
-            case "System.Char[]": return ValueType.ArrayChar16;
-            case "System.SByte[]": return ValueType.ArrayInt8;
-            case "System.Int16[]": return ValueType.ArrayInt16;
-            case "System.Int32[]": return ValueType.ArrayInt32;
-            case "System.Int64[]": return ValueType.ArrayInt64;
-            case "System.Byte[]": return ValueType.ArrayUInt8;
-            case "System.UInt16[]": return ValueType.ArrayUInt16;
-            case "System.UInt32[]": return ValueType.ArrayUInt32;
-            case "System.UInt64[]": return ValueType.ArrayUInt64;
-            case "System.IntPtr[]": return ValueType.ArrayPointer;
-            case "System.UIntPtr[]": return ValueType.ArrayPointer;
-            case "System.Single[]": return ValueType.ArrayFloat;
-            case "System.Double[]": return ValueType.ArrayDouble;
-            case "System.String[]": return ValueType.ArrayString;
+	    [typeof(void)] = ValueType.Void,
+	    [typeof(bool)] = ValueType.Bool,
+	    //[typeof(char)] = ValueType.Char8,
+	    [typeof(char)] = ValueType.Char16,
+	    [typeof(sbyte)] = ValueType.Int8,
+	    [typeof(short)] = ValueType.Int16,
+	    [typeof(int)] = ValueType.Int32,
+	    [typeof(long)] = ValueType.Int64,
+	    [typeof(byte)] = ValueType.UInt8,
+	    [typeof(ushort)] = ValueType.UInt16,
+	    [typeof(uint)] = ValueType.UInt32,
+	    [typeof(ulong)] = ValueType.UInt64,
+	    [typeof(nuint)] = ValueType.Pointer,
+	    [typeof(nint)] = ValueType.Pointer,
+	    [typeof(float)] = ValueType.Float,
+	    [typeof(double)] = ValueType.Double,
+	    [typeof(Delegate)] = ValueType.Function,
+	    // std::string
+	    [typeof(string)] = ValueType.String,
+	    // std::vector
+	    [typeof(bool[])] = ValueType.ArrayBool,
+	    //[typeof(char[])] = ValueType.ArrayChar8,
+	    [typeof(char[])] = ValueType.ArrayChar16,
+	    [typeof(sbyte[])] = ValueType.ArrayInt8,
+	    [typeof(short[])] = ValueType.ArrayInt16,
+	    [typeof(int[])] = ValueType.ArrayInt32,
+	    [typeof(long[])] = ValueType.ArrayInt64,
+	    [typeof(byte[])] = ValueType.ArrayUInt8,
+	    [typeof(ushort[])] = ValueType.ArrayUInt16,
+	    [typeof(uint[])] = ValueType.ArrayUInt32,
+	    [typeof(ulong[])] = ValueType.ArrayUInt64,
+	    [typeof(nuint[])] = ValueType.ArrayPointer,
+	    [typeof(nint[])] = ValueType.ArrayPointer,
+	    [typeof(float[])] = ValueType.ArrayFloat,
+	    [typeof(double[])] = ValueType.ArrayDouble,
+	    [typeof(string[])] = ValueType.ArrayString,
+	    // glm:vec
+	    [typeof(Vector2)] = ValueType.Vector2,
+	    [typeof(Vector3)] = ValueType.Vector3,
+	    [typeof(Vector4)] = ValueType.Vector4,
+	    // glm:mat
+	    [typeof(Matrix4x4)] = ValueType.Matrix4x4
+    };
 
-            case "System.Boolean&": return ValueType.Bool;
-            case "System.Char&": return ValueType.Char16;
-            case "System.SByte&": return ValueType.Int8;
-            case "System.Int16&": return ValueType.Int16;
-            case "System.Int32&": return ValueType.Int32;
-            case "System.Int64&": return ValueType.Int64;
-            case "System.Byte&": return ValueType.UInt8;
-            case "System.UInt16&": return ValueType.UInt16;
-            case "System.UInt32&": return ValueType.UInt32;
-            case "System.UInt64&": return ValueType.UInt64;
-            case "System.IntPtr&": return ValueType.Pointer;
-            case "System.UIntPtr&": return ValueType.Pointer;
-            case "System.Single&": return ValueType.Float;
-            case "System.Double&": return ValueType.Double;
-            case "System.String&": return ValueType.String;
-            case "System.Boolean[]&": return ValueType.ArrayBool;
-            case "System.Char[]&": return ValueType.ArrayChar16;
-            case "System.SByte[]&": return ValueType.ArrayInt8;
-            case "System.Int16[]&": return ValueType.ArrayInt16;
-            case "System.Int32[]&": return ValueType.ArrayInt32;
-            case "System.Int64[]&": return ValueType.ArrayInt64;
-            case "System.Byte[]&": return ValueType.ArrayUInt8;
-            case "System.UInt16[]&": return ValueType.ArrayUInt16;
-            case "System.UInt32[]&": return ValueType.ArrayUInt32;
-            case "System.UInt64[]&": return ValueType.ArrayUInt64;
-            case "System.IntPtr[]&": return ValueType.ArrayPointer;
-            case "System.UIntPtr[]&": return ValueType.ArrayPointer;
-            case "System.Single[]&": return ValueType.ArrayFloat;
-            case "System.Double[]&": return ValueType.ArrayDouble;
-            case "System.String[]&": return ValueType.ArrayString;
-/*
-            case "System.Delegate": return ValueType.Function;
-            case "System.Func`1": return ValueType.Function;
-            case "System.Func`2": return ValueType.Function;
-            case "System.Func`3": return ValueType.Function;
-            case "System.Func`4": return ValueType.Function;
-            case "System.Func`5": return ValueType.Function;
-            case "System.Func`6": return ValueType.Function;
-            case "System.Func`7": return ValueType.Function;
-            case "System.Func`8": return ValueType.Function;
-            case "System.Func`9": return ValueType.Function;
-            case "System.Func`10": return ValueType.Function;
-            case "System.Func`11": return ValueType.Function;
-            case "System.Func`12": return ValueType.Function;
-            case "System.Func`13": return ValueType.Function;
-            case "System.Func`14": return ValueType.Function;
-            case "System.Func`15": return ValueType.Function;
-            case "System.Func`16": return ValueType.Function;
-            case "System.Func`17": return ValueType.Function;
-            case "System.Action": return ValueType.Function;
-            case "System.Action`1": return ValueType.Function;
-            case "System.Action`2": return ValueType.Function;
-            case "System.Action`3": return ValueType.Function;
-            case "System.Action`4": return ValueType.Function;
-            case "System.Action`5": return ValueType.Function;
-            case "System.Action`6": return ValueType.Function;
-            case "System.Action`7": return ValueType.Function;
-            case "System.Action`8": return ValueType.Function;
-            case "System.Action`9": return ValueType.Function;
-            case "System.Action`10": return ValueType.Function;
-            case "System.Action`11": return ValueType.Function;
-            case "System.Action`12": return ValueType.Function;
-            case "System.Action`13": return ValueType.Function;
-            case "System.Action`14": return ValueType.Function;
-            case "System.Action`15": return ValueType.Function;
-            case "System.Action`16": return ValueType.Function;
-*/
-            case "System.Numerics.Vector2": return ValueType.Vector2;
-            case "System.Numerics.Vector3": return ValueType.Vector3;
-            case "System.Numerics.Vector4": return ValueType.Vector4;
-            case "System.Numerics.Matrix4x4": return ValueType.Matrix4x4;
-
-            case "System.Numerics.Vector2&": return ValueType.Vector2;
-            case "System.Numerics.Vector3&": return ValueType.Vector3;
-            case "System.Numerics.Vector4&": return ValueType.Vector4;
-            case "System.Numerics.Matrix4x4&": return ValueType.Matrix4x4;
-
-            default: return ValueType.Invalid;
-        }
-    }
-    
-    internal static ValueType ConvertToValueType(Type paramType)
+    internal static ValueType ConvertToValueType(Type type)
     {
-	    return paramType.IsDelegate() ? ValueType.Function : NameToValueType(paramType.FullName);
-    }
-    
-    internal static Type ConvertToUnrefType(Type paramType)
-    {
-	    string? paramName = paramType.FullName;
-	    var type = paramName is { Length: > 0 } ? Type.GetType(paramName[..^1]) : null;
-	    if (type == null)
+	    if (TypeSwitcher.TryGetValue(type, out var valueType))
 	    {
-		    throw new NullReferenceException("Reference type not exist");
+		    return valueType;
 	    }
-	    return type;
-    }
 
+	    return type.IsDelegate() ? ValueType.Function : ValueType.Invalid;
+    }
+    
     internal static bool IsUseAnsi(object[] customAttributes)
     {
 	    foreach (var a in customAttributes)
@@ -284,27 +158,9 @@ internal static class TypeUtils
 
 	    return false;
     }
-    
-    internal static bool IsArrayRef(this Type paramType)
-    {
-	    return paramType.IsByRef && paramType.Name.EndsWith("[]&");
-    }   
-    
+
     internal static bool IsDelegate(this Type paramType)
     {
 	    return typeof(Delegate).IsAssignableFrom(paramType);
-    }
-
-    internal static bool IsHiddenObjectParam(this Type paramType)
-    {
-	    ValueType valueType = ConvertToValueType(paramType);
-	    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-	    {
-		    return valueType is > ValueType.LastPrimitive and < ValueType.FirstPOD or >= ValueType.Vector3;
-	    }
-	    else
-	    {
-		    return valueType is > ValueType.LastPrimitive and < ValueType.FirstPOD or >= ValueType.Matrix4x4;
-	    }
     }
 }

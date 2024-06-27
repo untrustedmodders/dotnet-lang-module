@@ -12,7 +12,7 @@ namespace Plugify
         public Guid guid;
     }
     
-    internal static class MethodUtils
+    public static class MethodUtils
     {
         private static readonly MethodInfo s_FuncInvoke = typeof(Func<object[], object>).GetMethod("Invoke")!;
         private static readonly MethodInfo s_ArrayEmpty = typeof(Array).GetMethod(nameof(Array.Empty))!.MakeGenericMethod(typeof(object));
@@ -28,10 +28,10 @@ namespace Plugify
         // try {
         //      ret = handler.Invoke(args);
         // } finally {
-        //      param0 = (T0)args[0];   // only generated for each byref argument
+        //      param0 = (T0)args[0]; // only generated for each byref argument
         // }
         // return (TRet)ret;
-        internal static Delegate CreateObjectArrayDelegate(Type delegateType, Func<object[], object> handler)
+        public static Delegate CreateObjectArrayDelegate(Type delegateType, Func<object[], object> handler)
         {
             MethodInfo delegateInvokeMethod = delegateType.GetMethod("Invoke") ?? throw new InvalidOperationException();
 
@@ -139,7 +139,7 @@ namespace Plugify
 
         private static Type ConvertToBoxableType(Type t)
         {
-            return (t.IsPointer) ? typeof(nint) : t;
+            return t.IsPointer ? typeof(nint) : t;
         }
     }
 }

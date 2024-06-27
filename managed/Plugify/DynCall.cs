@@ -6,74 +6,159 @@ public class DCCallVM : SafeHandle
 {
     public DCCallVM(nuint size) : base(nint.Zero, true)
     {
-        handle = DCMethods.NewVM(size);
+        handle = DyncallMethods.NewVM(size);
+        SetMode(CallingConventions.DC_CALL_C_DEFAULT);
     }
 
     public override bool IsInvalid => handle == nint.Zero;
 
     protected override bool ReleaseHandle()
     {
-        DCMethods.Free(handle);
+        DyncallMethods.Free(handle);
         return true;
     }
 
-    public void Reset() => DCMethods.Reset(handle);
-    public void SetMode(int mode) => DCMethods.Mode(handle, mode);
+    public void Reset() => DyncallMethods.Reset(handle);
+    public void SetMode(int mode) => DyncallMethods.Mode(handle, mode);
     
-    public void ArgBool(bool value) => DCMethods.ArgBool(handle, value);
-    public void ArgChar(char value) => DCMethods.ArgChar(handle, value);
-    public void ArgInt8(sbyte value) => DCMethods.ArgInt8(handle, value);
-    public void ArgUInt8(byte value) => DCMethods.ArgUInt8(handle, value);
-    public void ArgInt16(short value) => DCMethods.ArgInt16(handle, value);
-    public void ArgUInt16(ushort value) => DCMethods.ArgUInt16(handle, value);
-    public void ArgInt32(int value) => DCMethods.ArgInt32(handle, value);
-    public void ArgUInt32(uint value) => DCMethods.ArgUInt32(handle, value);
-    public void ArgInt64(long value) => DCMethods.ArgInt64(handle, value);
-    public void ArgUInt64(ulong value) => DCMethods.ArgUInt64(handle, value);
-    public void ArgFloat(float value) => DCMethods.ArgFloat(handle, value);
-    public void ArgDouble(double value) => DCMethods.ArgDouble(handle, value);
-    public void ArgPointer(nint value) => DCMethods.ArgPointer(handle, value);
-    public void ArgAggr(DCaggr ag, nint value) => DCMethods.ArgAggr(handle, ag.DangerousGetHandle(), value);
+    public void ArgBool(bool value) => DyncallMethods.ArgBool(handle, value);
+    public void ArgChar8(char value) => DyncallMethods.ArgChar8(handle, value);
+    public void ArgChar16(char value) => DyncallMethods.ArgChar16(handle, value);
+    public void ArgInt8(sbyte value) => DyncallMethods.ArgInt8(handle, value);
+    public void ArgUInt8(byte value) => DyncallMethods.ArgUInt8(handle, value);
+    public void ArgInt16(short value) => DyncallMethods.ArgInt16(handle, value);
+    public void ArgUInt16(ushort value) => DyncallMethods.ArgUInt16(handle, value);
+    public void ArgInt32(int value) => DyncallMethods.ArgInt32(handle, value);
+    public void ArgUInt32(uint value) => DyncallMethods.ArgUInt32(handle, value);
+    public void ArgInt64(long value) => DyncallMethods.ArgInt64(handle, value);
+    public void ArgUInt64(ulong value) => DyncallMethods.ArgUInt64(handle, value);
+    public void ArgFloat(float value) => DyncallMethods.ArgFloat(handle, value);
+    public void ArgDouble(double value) => DyncallMethods.ArgDouble(handle, value);
+    public void ArgPointer(nint value) => DyncallMethods.ArgPointer(handle, value);
+    public void ArgAggr(DCaggr ag, nint value) => DyncallMethods.ArgAggr(handle, ag.DangerousGetHandle(), value);
 
-    public void CallVoid(nint funcptr) => DCMethods.CallVoid(handle, funcptr);
-    public bool CallBool(nint funcptr) => DCMethods.CallBool(handle, funcptr);
-    public char CallChar(nint funcptr) => DCMethods.CallChar(handle, funcptr);
-    public sbyte CallInt8(nint funcptr) => DCMethods.CallInt8(handle, funcptr);
-    public byte CallUInt8(nint funcptr) => DCMethods.CallUInt8(handle, funcptr);
-    public short CallInt16(nint funcptr) => DCMethods.CallInt16(handle, funcptr);
-    public ushort CallUInt16(nint funcptr) => DCMethods.CallUInt16(handle, funcptr);
-    public int CallInt32(nint funcptr) => DCMethods.CallInt32(handle, funcptr);
-    public uint CallUInt32(nint funcptr) => DCMethods.CallUInt32(handle, funcptr);
-    public long CallInt64(nint funcptr) => DCMethods.CallInt64(handle, funcptr);
-    public ulong CallUInt64(nint funcptr) => DCMethods.CallUInt64(handle, funcptr);
-    public float CallFloat(nint funcptr) => DCMethods.CallFloat(handle, funcptr);
-    public double CallDouble(nint funcptr) => DCMethods.CallDouble(handle, funcptr);
-    public nint CallPointer(nint funcptr) => DCMethods.CallPointer(handle, funcptr);
-    public void CallAggr(nint funcptr, DCaggr ag, nint returnValue) => DCMethods.CallAggr(handle, funcptr, ag.DangerousGetHandle(), returnValue);
+    public void CallVoid(nint funcptr) => DyncallMethods.CallVoid(handle, funcptr);
+    public bool CallBool(nint funcptr) => DyncallMethods.CallBool(handle, funcptr);
+    public char CallChar8(nint funcptr) => DyncallMethods.CallChar8(handle, funcptr);
+    public char CallChar16(nint funcptr) => DyncallMethods.CallChar16(handle, funcptr);
+    public sbyte CallInt8(nint funcptr) => DyncallMethods.CallInt8(handle, funcptr);
+    public byte CallUInt8(nint funcptr) => DyncallMethods.CallUInt8(handle, funcptr);
+    public short CallInt16(nint funcptr) => DyncallMethods.CallInt16(handle, funcptr);
+    public ushort CallUInt16(nint funcptr) => DyncallMethods.CallUInt16(handle, funcptr);
+    public int CallInt32(nint funcptr) => DyncallMethods.CallInt32(handle, funcptr);
+    public uint CallUInt32(nint funcptr) => DyncallMethods.CallUInt32(handle, funcptr);
+    public long CallInt64(nint funcptr) => DyncallMethods.CallInt64(handle, funcptr);
+    public ulong CallUInt64(nint funcptr) => DyncallMethods.CallUInt64(handle, funcptr);
+    public float CallFloat(nint funcptr) => DyncallMethods.CallFloat(handle, funcptr);
+    public double CallDouble(nint funcptr) => DyncallMethods.CallDouble(handle, funcptr);
+    public nint CallPointer(nint funcptr) => DyncallMethods.CallPointer(handle, funcptr);
+    public void CallAggr(nint funcptr, DCaggr ag, nint returnValue) => DyncallMethods.CallAggr(handle, funcptr, ag.DangerousGetHandle(), returnValue);
+    public unsafe void CallAggr(nint funcptr, DCaggr ag, void* returnValue) => DyncallMethods.CallAggr(handle, funcptr, ag.DangerousGetHandle(), (nint)returnValue);
 
-    public int GetError() => DCMethods.GetError(handle);
+    public int GetError() => DyncallMethods.GetError(handle);
 }
 
 public class DCaggr : SafeHandle
 {
     public DCaggr(nuint fieldCount, nuint size) : base(nint.Zero, true)
     {
-        handle = DCMethods.NewAggr(fieldCount, size);
+        handle = DyncallMethods.NewAggr(fieldCount, size);
     }
 
     public override bool IsInvalid => handle == nint.Zero;
 
     protected override bool ReleaseHandle()
     {
-        DCMethods.FreeAggr(handle);
+        DyncallMethods.FreeAggr(handle);
         return true;
     }
 
-    public void AddField(char type, int offset, nuint arrayLength) => DCMethods.AggrField(handle, type, offset, arrayLength);
-    public new void Close() => DCMethods.CloseAggr(handle);
+    public void AddField(SignatureChars type, int offset, nuint arrayLength) => DyncallMethods.AggrField(handle, (char)type, offset, arrayLength);
+    public void Reset() => DyncallMethods.CloseAggr(handle);
 }
 
-internal static class DCMethods
+internal static class CallingConventions
+{
+    public const int DC_CALL_C_DEFAULT = 0;
+    public const int DC_CALL_C_ELLIPSIS = 100;
+    public const int DC_CALL_C_ELLIPSIS_VARARGS = 101;
+    public const int DC_CALL_C_X86_CDECL = 1;
+    public const int DC_CALL_C_X86_WIN32_STD = 2;
+    public const int DC_CALL_C_X86_WIN32_FAST_MS = 3;
+    public const int DC_CALL_C_X86_WIN32_FAST_GNU = 4;
+    public const int DC_CALL_C_X86_WIN32_THIS_MS = 5;
+    public const int DC_CALL_C_X86_WIN32_THIS_GNU = 6;
+    public const int DC_CALL_C_X64_WIN64 = 7;
+    public const int DC_CALL_C_X64_SYSV = 8;
+    public const int DC_CALL_C_PPC32_DARWIN = 9;
+    public const int DC_CALL_C_PPC32_OSX = DC_CALL_C_PPC32_DARWIN; // alias
+    public const int DC_CALL_C_ARM_ARM_EABI = 10;
+    public const int DC_CALL_C_ARM_THUMB_EABI = 11;
+    public const int DC_CALL_C_ARM_ARMHF = 30;
+    public const int DC_CALL_C_MIPS32_EABI = 12;
+    public const int DC_CALL_C_MIPS32_PSPSDK = DC_CALL_C_MIPS32_EABI; // alias - deprecated
+    public const int DC_CALL_C_PPC32_SYSV = 13;
+    public const int DC_CALL_C_PPC32_LINUX = DC_CALL_C_PPC32_SYSV; // alias
+    public const int DC_CALL_C_ARM_ARM = 14;
+    public const int DC_CALL_C_ARM_THUMB = 15;
+    public const int DC_CALL_C_MIPS32_O32 = 16;
+    public const int DC_CALL_C_MIPS64_N32 = 17;
+    public const int DC_CALL_C_MIPS64_N64 = 18;
+    public const int DC_CALL_C_X86_PLAN9 = 19;
+    public const int DC_CALL_C_SPARC32 = 20;
+    public const int DC_CALL_C_SPARC64 = 21;
+    public const int DC_CALL_C_ARM64 = 22;
+    public const int DC_CALL_C_PPC64 = 23;
+    public const int DC_CALL_C_PPC64_LINUX = DC_CALL_C_PPC64; // alias
+    public const int DC_CALL_SYS_DEFAULT = 200;
+    public const int DC_CALL_SYS_X86_INT80H_LINUX = 201;
+    public const int DC_CALL_SYS_X86_INT80H_BSD = 202;
+    public const int DC_CALL_SYS_PPC32 = 210;
+
+    // Error codes
+    public const int DC_ERROR_NONE = 0;
+    public const int DC_ERROR_UNSUPPORTED_MODE = -1;
+}
+
+public enum SignatureChars
+{
+    Void = 'v',
+    Bool = 'B',
+    Char = 'c',
+    UChar = 'C',
+    Short = 's',
+    UShort = 'S',
+    Int = 'i',
+    UInt = 'I',
+    Long = 'j',
+    ULong = 'J',
+    LongLong = 'l',
+    ULongLong = 'L',
+    Float = 'f',
+    Double = 'd',
+    Pointer = 'p', // also used for arrays, as such args decay to ptrs
+    String = 'Z', // in theory same as 'p', but convenient to disambiguate
+    Aggregate = 'A', // aggregate (struct/union described out-of-band via DCaggr)
+    EndArg = ')',
+
+    // Calling convention / mode signatures
+    CcPrefix = '_', // announces next char to be one of the below calling convention mode chars
+    CcDefault = ':', // default calling conv (platform native)
+    CcThisCall = '*', // C++ this calls (platform native)
+    CcEllipsis = 'e',
+    CcEllipsisVarArgs = '.',
+    CcCdecl = 'c', // x86 specific
+    CcStdCall = 's', // x86 specific
+    CcFastCallMs = 'F', // x86 specific
+    CcFastCallGnu = 'f', // x86 specific
+    CcThisCallMs = '+', // x86 specific, MS C++ this calls
+    CcThisCallGnu = '#', // x86 specific, GNU C++ this calls are cdecl, but keep specific sig char for clarity
+    CcArmArm = 'A',
+    CcArmThumb = 'a',
+    CcSysCall = '$',
+}
+
+internal static class DyncallMethods
 {
     [DllImport(NativeMethods.DllName)]
     public static extern nint NewVM(nuint size);
@@ -90,8 +175,11 @@ internal static class DCMethods
     [DllImport(NativeMethods.DllName)]
     public static extern void ArgBool(nint vm, bool value);
 
+    [DllImport(NativeMethods.DllName, CharSet = CharSet.Ansi)]
+    public static extern void ArgChar8(nint vm, char value);
+    
     [DllImport(NativeMethods.DllName)]
-    public static extern void ArgChar(nint vm, [MarshalAs(UnmanagedType.I1)] char value);
+    public static extern void ArgChar16(nint vm, char value);
 
     [DllImport(NativeMethods.DllName)]
     public static extern void ArgInt8(nint vm, sbyte value);
@@ -137,7 +225,10 @@ internal static class DCMethods
 
     [DllImport(NativeMethods.DllName)]
     [return: MarshalAs(UnmanagedType.I1)]
-    public static extern char CallChar(nint vm, nint funcptr);
+    public static extern char CallChar8(nint vm, nint funcptr);
+    
+    [DllImport(NativeMethods.DllName)]
+    public static extern char CallChar16(nint vm, nint funcptr);
 
     [DllImport(NativeMethods.DllName)]
     public static extern sbyte CallInt8(nint vm, nint funcptr);
@@ -181,8 +272,8 @@ internal static class DCMethods
     [DllImport(NativeMethods.DllName)]
     public static extern nint NewAggr(nuint fieldCount, nuint size);
 
-    [DllImport(NativeMethods.DllName)]
-    public static extern void AggrField(nint ag, [MarshalAs(UnmanagedType.I1)] char type, int offset, nuint arrayLength);
+    [DllImport(NativeMethods.DllName, CharSet = CharSet.Ansi)]
+    public static extern void AggrField(nint ag, char type, int offset, nuint arrayLength);
 
     [DllImport(NativeMethods.DllName)]
     public static extern void CloseAggr(nint ag);
@@ -190,7 +281,7 @@ internal static class DCMethods
     [DllImport(NativeMethods.DllName)]
     public static extern void FreeAggr(nint ag);
 
-    [DllImport(NativeMethods.DllName)]
-    public static extern int GetModeFromCCSigChar([MarshalAs(UnmanagedType.I1)] char sigChar);
+    [DllImport(NativeMethods.DllName, CharSet = CharSet.Ansi)]
+    public static extern int GetModeFromCCSigChar(char sigChar);
 
 }

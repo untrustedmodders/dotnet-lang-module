@@ -8,7 +8,8 @@ NETLM_EXPORT void Reset(DCCallVM* vm) { dcReset(vm); }
 NETLM_EXPORT void Mode(DCCallVM* vm, int mode) { dcMode(vm, mode); }
 
 NETLM_EXPORT void ArgBool(DCCallVM* vm, bool value) { dcArgBool(vm, value); }
-NETLM_EXPORT void ArgChar(DCCallVM* vm, char value) { dcArgChar(vm, value); }
+NETLM_EXPORT void ArgChar8(DCCallVM* vm, char value) { dcArgChar(vm, value); }
+NETLM_EXPORT void ArgChar16(DCCallVM* vm, char16_t value) { dcArgShort(vm, static_cast<short>(value)); }
 NETLM_EXPORT void ArgInt8(DCCallVM* vm, int8_t value) { dcArgChar(vm, value); }
 NETLM_EXPORT void ArgUInt8(DCCallVM* vm, uint8_t value) { dcArgChar(vm, static_cast<int8_t>(value)); }
 NETLM_EXPORT void ArgInt16(DCCallVM* vm, int16_t value) { dcArgShort(vm, value); }
@@ -24,7 +25,8 @@ NETLM_EXPORT void ArgAggr(DCCallVM* vm, DCaggr* ag, void* value) { dcArgAggr(vm,
 
 NETLM_EXPORT void CallVoid(DCCallVM* vm, void* funcptr) { dcCallVoid(vm, funcptr); }
 NETLM_EXPORT bool CallBool(DCCallVM* vm, void* funcptr) { return dcCallBool(vm, funcptr); }
-NETLM_EXPORT char CallChar(DCCallVM* vm, void* funcptr) { return dcCallChar(vm, funcptr); }
+NETLM_EXPORT char CallChar8(DCCallVM* vm, void* funcptr) { return dcCallChar(vm, funcptr); }
+NETLM_EXPORT char16_t CallChar16(DCCallVM* vm, void* funcptr) { return static_cast<char16_t>(dcCallShort(vm, funcptr)); }
 NETLM_EXPORT int8_t CallInt8(DCCallVM* vm, void* funcptr) { return dcCallChar(vm, funcptr); }
 NETLM_EXPORT uint8_t CallUInt8(DCCallVM* vm, void* funcptr) { return static_cast<uint8_t>(dcCallChar(vm, funcptr)); }
 NETLM_EXPORT int16_t CallInt16(DCCallVM* vm, void* funcptr) { return dcCallShort(vm, funcptr); }

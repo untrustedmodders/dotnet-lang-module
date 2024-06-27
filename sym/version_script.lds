@@ -135,7 +135,8 @@
 		Reset;
 		Mode;
 		ArgBool;
-		ArgChar;
+		ArgChar8;
+		ArgChar16;
 		ArgInt8;
 		ArgUInt8;
 		ArgInt16;
@@ -150,7 +151,8 @@
 		ArgAggr;
 		CallVoid;
 		CallBool;
-		CallChar;
+		CallChar8;
+		CallChar16;
 		CallInt8;
 		CallUInt8;
 		CallInt16;

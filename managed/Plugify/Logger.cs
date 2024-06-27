@@ -14,7 +14,7 @@ public enum Severity : byte
 	Verbose = 6,
 }
     
-public class Logger
+public static class Logger
 {
 	public static void Log(Severity severity, string message, params object[] args)
 	{
