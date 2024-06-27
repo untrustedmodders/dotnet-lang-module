@@ -6,6 +6,12 @@
 //generated with https://github.com/untrustedmodders/cpp-lang-module/blob/main/generator/generator.py from CSharpTest 
 
 namespace CSharpTest {
+	using MyExportFunctionFunc = void(*)(int, const std::string&, const std::vector<int32_t>&);
+	inline void MyExportFunction(int a, MyExportFunctionFunc cb) {
+		using MyExportFunctionFn = void (*)(int, MyExportFunctionFunc);
+		static auto func = reinterpret_cast<MyExportFunctionFn>(plugify::GetMethodPtr("CSharpTest.MyExportFunction"));
+		func(a, cb);
+	}
 	inline void NoParamReturnVoid() {
 		using NoParamReturnVoidFn = void (*)();
 		static auto func = reinterpret_cast<NoParamReturnVoidFn>(plugify::GetMethodPtr("CSharpTest.NoParamReturnVoid"));

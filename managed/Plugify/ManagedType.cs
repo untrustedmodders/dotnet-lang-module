@@ -3,14 +3,14 @@ using System.Runtime.InteropServices;
 
 namespace Plugify;
 
-[StructLayout(LayoutKind.Sequential, Size = 16)]
+[StructLayout(LayoutKind.Sequential, Size = 2)]
 public struct ManagedType
 {
     public byte valueType;
     public byte reference;
     /** Delegate info **/
-    public int paramCount;
-    public ushort[] paramTypes;
+    //public int paramCount;
+    //public short[] paramTypes;
 
     public ManagedType(Type type, object[] attributes)
     {
@@ -22,32 +22,32 @@ public struct ManagedType
 	            valueType = (byte) ValueType.Function;
                 reference = type.IsByRef ? (byte)1 : (byte)0;
                 
-                ParameterInfo[] parameterInfos = methodInfo.GetParameters();
+                /*ParameterInfo[] parameterInfos = methodInfo.GetParameters();
             
                 paramCount = parameterInfos.Length;
-                paramTypes = new ushort[paramCount + 1];
+                paramTypes = new short[paramCount + 1];
                 
                 for (int i = 0; i < paramCount; i++)
                 {
 	                Type paramType = parameterInfos[i].ParameterType;
-	                paramTypes[i] = BitConverter.ToUInt16([(byte) paramType.ToValueType(), paramType.IsByRef ? (byte)1 : (byte)0], 0);
+	                paramTypes[i] = BitConverter.ToInt16([(byte) TypeUtils.ConvertToValueType(paramType), paramType.IsByRef ? (byte)1 : (byte)0], 0);
                 }
 
                 Type returnType = methodInfo.ReturnType;
-                paramTypes[paramCount] = BitConverter.ToUInt16([(byte) returnType.ToValueType(), returnType.IsByRef ? (byte)1 : (byte)0], 0);
+                paramTypes[paramCount] = BitConverter.ToInt16([(byte) TypeUtils.ConvertToValueType(returnType), returnType.IsByRef ? (byte)1 : (byte)0], 0);*/
             }
             else
             {
 	            valueType = (byte) ValueType.Invalid;
                 reference = 0;
                 
-                paramCount = 0;
-                paramTypes = [];
+                //paramCount = 0;
+                //paramTypes = [];
             }
         }
         else
         {
-	        var vt = type.ToValueType();
+	        var vt = TypeUtils.ConvertToValueType(type);
 
             switch (vt)
             {
@@ -62,8 +62,8 @@ public struct ManagedType
             valueType = (byte) vt;
             reference = type.IsByRef ? (byte)1 : (byte)0;
 
-            paramCount = 0;
-            paramTypes = [];
+            //paramCount = 0;
+           // paramTypes = [];
         }
     }
 }
@@ -124,11 +124,22 @@ internal enum ValueType : byte {
 	//Matrix3x4,
 	//Matrix4x2,
 	//Matrix4x3,
+	
+	//! Helpers
+
+	FirstPrimitive = Void,
+	LastPrimitive = Function,
+
+	FirstObject = String,
+	LastObject = ArrayString,
+
+	FirstPOD = Vector2,
+	LastPOD = Matrix4x4,
 };
 
 internal static class TypeUtils
 {
-    internal static ValueType NameToValueType(string? typeName)
+    private static ValueType NameToValueType(string? typeName)
     {
         switch (typeName)
         {
@@ -245,12 +256,12 @@ internal static class TypeUtils
         }
     }
     
-    internal static ValueType ToValueType(this Type paramType)
+    internal static ValueType ConvertToValueType(Type paramType)
     {
 	    return paramType.IsDelegate() ? ValueType.Function : NameToValueType(paramType.FullName);
     }
     
-    internal static Type GetUnrefType(this Type paramType)
+    internal static Type ConvertToUnrefType(Type paramType)
     {
 	    string? paramName = paramType.FullName;
 	    var type = paramName is { Length: > 0 } ? Type.GetType(paramName[..^1]) : null;
@@ -261,16 +272,6 @@ internal static class TypeUtils
 	    return type;
     }
 
-    internal static bool IsArrayRef(this Type paramType)
-    {
-	    return paramType.IsByRef && paramType.Name.EndsWith("[]&");
-    }   
-    
-    internal static bool IsDelegate(this Type paramType)
-    {
-	    return typeof(Delegate).IsAssignableFrom(paramType);
-    }   
-    
     internal static bool IsUseAnsi(object[] customAttributes)
     {
 	    foreach (var a in customAttributes)
@@ -282,5 +283,28 @@ internal static class TypeUtils
 	    }
 
 	    return false;
+    }
+    
+    internal static bool IsArrayRef(this Type paramType)
+    {
+	    return paramType.IsByRef && paramType.Name.EndsWith("[]&");
+    }   
+    
+    internal static bool IsDelegate(this Type paramType)
+    {
+	    return typeof(Delegate).IsAssignableFrom(paramType);
+    }
+
+    internal static bool IsHiddenObjectParam(this Type paramType)
+    {
+	    ValueType valueType = ConvertToValueType(paramType);
+	    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+	    {
+		    return valueType is > ValueType.LastPrimitive and < ValueType.FirstPOD or >= ValueType.Vector3;
+	    }
+	    else
+	    {
+		    return valueType is > ValueType.LastPrimitive and < ValueType.FirstPOD or >= ValueType.Matrix4x4;
+	    }
     }
 }

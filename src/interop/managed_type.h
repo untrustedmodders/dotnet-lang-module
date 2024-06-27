@@ -2,32 +2,32 @@
 
 namespace netlm {
 
-	struct ManagedParam;
+	//struct ManagedParam;
 
 	struct ManagedType {
 		plugify::ValueType type;
 		bool ref;
 		/** Delegate info **/
-		uint32_t paramCount;
-		ManagedParam* paramTypes;
+		//uint32_t paramCount;
+		//ManagedParam* paramTypes;
 	};
 
-	static_assert(sizeof(ManagedType) == 16, "ManagedType size mismatch with C#");
+	static_assert(sizeof(ManagedType) == 2, "ManagedType size mismatch with C#");
 
-	struct ManagedParam {
+	/*struct ManagedParam {
 		plugify::ValueType type;
 		bool ref;
 
 		bool operator==(const plugify::Property& property) const {
 			return type == property.type && ref == property.ref;
 		}
-	};
+	};*/
 
 	// Same as above but use ownership semantics.
-	struct ManagedTypeHolder {
+	/*struct ManagedTypeHolder {
 		plugify::ValueType type;
 		bool ref;
-		/** Delegate info **/
+		// Delegate info
 		uint32_t paramCount;
 		std::unique_ptr<ManagedParam[]> paramTypes;
 
@@ -63,5 +63,5 @@ namespace netlm {
 			
 			return true;
 		}
-	};
+	};*/
 }

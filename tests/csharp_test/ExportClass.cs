@@ -451,5 +451,12 @@ namespace CSharpTest
             sum += Convert.ToInt64(p13);
             return sum;
         }
+        
+        public delegate void MyFunc(int a, string b, int[] c);
+        
+        public static void MyExportFunction(int a, MyFunc func)
+        {
+            func(a, "Hello", [1, 2, 3]);
+        }
     }
 }

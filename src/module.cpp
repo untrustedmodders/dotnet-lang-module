@@ -248,10 +248,10 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		Class* classPtr = assembly->GetClassObjectHolder().FindClassByName(separated[1]);
 		ManagedMethod* methodPtr = classPtr->GetMethod(std::string(separated[2].data(), separated[2].size()));
 
-		const ManagedTypeHolder& returnType = methodPtr->returnType;
-		const Property& methodReturnType = method.retType;
+		const ValueType& returnType = methodPtr->returnType.type;
+		const ValueType& methodReturnType = method.retType.type;
 		if (returnType != methodReturnType) {
-			methodErrors.emplace_back(std::format("Method '{}' has invalid return type '{}' when it should have '{}'", method.funcName, ValueTypeToString(methodReturnType.type), ValueTypeToString(returnType.type)));
+			methodErrors.emplace_back(std::format("Method '{}' has invalid return type '{}' when it should have '{}'", method.funcName, ValueTypeToString(methodReturnType), ValueTypeToString(returnType)));
 			continue;
 		}
 
@@ -264,11 +264,11 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		bool methodFail = false;
 
 		for (size_t i = 0; i < paramCount; ++i) {
-			const ManagedTypeHolder& paramType = methodPtr->parameterTypes[i];
-			const Property& methodParamType = method.paramTypes[i];
+			const ValueType& paramType = methodPtr->parameterTypes[i].type;
+			const ValueType& methodParamType = method.paramTypes[i].type;
 			if (paramType != methodParamType) {
 				methodFail = true;
-				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.funcName, ValueTypeToString(methodParamType.type), i, ValueTypeToString(paramType.type)));
+				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.funcName, ValueTypeToString(methodParamType), i, ValueTypeToString(paramType)));
 				continue;
 			}
 		}
@@ -1264,14 +1264,15 @@ NETLM_EXPORT void ManagedClass_AddMethod(ManagedClass managedClass, const char* 
 
 	ManagedMethod methodObject;
 	methodObject.guid = guid;
-	methodObject.returnType = ManagedTypeHolder(returnType);
+	methodObject.returnType = returnType;
 
 	if (numParameters != 0) {
-		methodObject.parameterTypes.reserve(numParameters);
+		/*methodObject.parameterTypes.reserve(numParameters);
 
 		for (uint32_t i = 0; i < numParameters; ++i) {
 			methodObject.parameterTypes.emplace_back(parameterTypes[i]);
-		}
+		}*/
+		methodObject.parameterTypes.assign(parameterTypes, parameterTypes + numParameters);
 	}
 
 	if (numAttributes != 0) {

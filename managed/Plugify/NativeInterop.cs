@@ -1,4 +1,5 @@
 using System;
+using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -275,7 +276,7 @@ public static class NativeInterop
                 continue;
             }
 
-            paramType = paramType.GetUnrefType();
+            paramType = TypeUtils.ConvertToUnrefType(paramType);
             
             object? paramValue = parameters[i];
             nint paramPtr = *(nint*)paramAddress;
@@ -373,7 +374,7 @@ public static class NativeInterop
                 }
                 break;
             case TypeCode.Boolean:
-                if (paramValue is bool[] arrBoolean) NativeMethods.AssignVectorBool(paramPtr, arrBoolean, arrBoolean.Length);
+                if (paramValue is bool[] arrBool) NativeMethods.AssignVectorBool(paramPtr, arrBool, arrBool.Length);
                 break;
             case TypeCode.SByte:
                 if (paramValue is sbyte[] arrInt8) NativeMethods.AssignVectorInt8(paramPtr, arrInt8, arrInt8.Length);
@@ -490,7 +491,7 @@ public static class NativeInterop
     {
         if (paramType.IsByRef)
         {
-            paramType = paramType.GetUnrefType();
+            paramType = TypeUtils.ConvertToUnrefType(paramType);
         }
 
         nint paramPtr = *(nint*)paramAddress;
@@ -512,9 +513,9 @@ public static class NativeInterop
                     return arrChar;
                 }
             case TypeCode.Boolean:
-                var arrBoolean = new bool[NativeMethods.GetVectorSizeBool(paramPtr)];
-                NativeMethods.GetVectorDataBool(paramPtr, arrBoolean);
-                return arrBoolean;
+                var arrBool = new bool[NativeMethods.GetVectorSizeBool(paramPtr)];
+                NativeMethods.GetVectorDataBool(paramPtr, arrBool);
+                return arrBool;
             case TypeCode.SByte:
                 var arrInt8 = new sbyte[NativeMethods.GetVectorSizeInt8(paramPtr)];
                 NativeMethods.GetVectorDataInt8(paramPtr, arrInt8);
@@ -575,7 +576,7 @@ public static class NativeInterop
     {
         if (paramType.IsByRef)
         {
-            paramType = paramType.GetUnrefType();
+            paramType = TypeUtils.ConvertToUnrefType(paramType);
 
             // Should be pass by pointers in unmanaged
             nint paramPtr = *(nint*)paramAddress;
@@ -616,7 +617,7 @@ public static class NativeInterop
                 case TypeCode.String:
                     return NativeMethods.GetStringData(paramPtr);
             }
-            
+
             if (paramType == typeof(nint))
             {
                 return *(nint*)paramPtr;
@@ -667,6 +668,13 @@ public static class NativeInterop
                     return NativeMethods.GetStringData(paramPtr);
             }
             
+            if (paramType.IsDelegate())
+            {
+                nint funcAddress = *(nint*)paramAddress;
+                // TODO: If no strings or arrays use Marshal.CreateDelegate
+                //return MethodUtils.CreateObjectArrayDelegate(paramType, ExternalInvoke(funcAddress, paramType));
+            }
+            
             if (paramType == typeof(nint))
             {
                 return *(nint*)paramAddress;
@@ -681,6 +689,585 @@ public static class NativeInterop
 
         throw new NotImplementedException($"Parameter type {paramType.Name} not implemented");
     }
+
+    /*private static Func<object[], object> ExternalInvoke(nint funcAddress, Type paramType)
+    {
+        MethodInfo methodInfo = paramType.GetMethod("Invoke") ?? throw new InvalidOperationException("Invalid delegate!");
+        Type returnType = methodInfo.ReturnType;
+        bool hasRet = returnType.IsHiddenObjectParam();
+         
+        var types = new List<Type>();
+        
+        if (hasRet)
+        {
+            types.Add(typeof(nint));
+        }
+        
+        foreach (var param in methodInfo.GetParameters())
+        {
+            Type type = param.ParameterType;
+            if (type.IsArray || type.IsArrayRef() || type == typeof(string))
+            {
+                types.Add(typeof(nint));
+            }
+            else
+            {
+                types.Add(type);
+            }
+        }
+        
+        if (returnType.IsArray || returnType.IsArrayRef() || returnType == typeof(string))
+        {
+            types.Add(typeof(nint));
+        }
+        else
+        {
+            types.Add(returnType);
+        }
+        
+        Type delegateType = Expression.GetDelegateType(types.ToArray());
+        
+        return parameters =>
+        {
+            object[] args = new object[hasRet ? parameters.Length + 1 : parameters.Length];
+
+            if (hasRet)
+            {
+                if (returnType.IsArray)
+                {
+                    Type? elementType = returnType.GetElementType();
+                    switch (Type.GetTypeCode(elementType))
+                    {
+                        case TypeCode.Boolean:
+                            args[0] = NativeMethods.AllocateVectorBool();
+                            break;
+                        case TypeCode.Char:
+                            if (TypeUtils.IsUseAnsi(methodInfo.ReturnTypeCustomAttributes.GetCustomAttributes(typeof(MarshalAsAttribute), false)))
+                            {
+                                args[0] = NativeMethods.AllocateVectorChar8();
+                            }
+                            else
+                            {
+                                args[0] = NativeMethods.AllocateVectorChar16();
+                            }
+                            break;
+                        case TypeCode.SByte:
+                            args[0] = NativeMethods.AllocateVectorInt8();
+                            break;
+                        case TypeCode.Int16:
+                            args[0] = NativeMethods.AllocateVectorInt16();
+                            break;
+                        case TypeCode.Int32:
+                            args[0] = NativeMethods.AllocateVectorInt32();
+                            break;
+                        case TypeCode.Int64:
+                            args[0] = NativeMethods.AllocateVectorInt64();
+                            break;
+                        case TypeCode.Byte:
+                            args[0] = NativeMethods.AllocateVectorUInt8();
+                            break;
+                        case TypeCode.UInt16:
+                            args[0] = NativeMethods.AllocateVectorUInt16();
+                            break;
+                        case TypeCode.UInt32:
+                            args[0] = NativeMethods.AllocateVectorUInt32();
+                            break;
+                        case TypeCode.UInt64:
+                            args[0] = NativeMethods.AllocateVectorUInt64();
+                            break;
+                        case TypeCode.Single:
+                            args[0] = NativeMethods.AllocateVectorFloat();
+                            break;
+                        case TypeCode.Double:
+                            args[0] = NativeMethods.AllocateVectorDouble();
+                            break;
+                        case TypeCode.String:
+                            args[0] = NativeMethods.AllocateVectorString();
+                            break;
+                        default:
+                            if (elementType == typeof(nint))
+                            {
+                                args[0] = NativeMethods.AllocateVectorIntPtr();
+                                break;
+                            }
+                    
+                            throw new NotImplementedException($"Array type {elementType?.Name ?? ""} not implemented");
+                    }
+                }
+                else
+                {
+                    if (returnType == typeof(string))
+                    {
+                        args[0] = NativeMethods.AllocateString();
+                    }
+                }
+            }
+            
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                object paramValue = parameters[i];
+                Type paramType = paramValue.GetType();
+            
+                int j = hasRet ? i + 1 : i;
+
+                if (paramType.IsEnum)
+                {
+                    // If paramType is an enum we need to get the underlying type
+                    paramType = Enum.GetUnderlyingType(paramType);
+                    args[j] = Convert.ChangeType(paramValue, paramType);
+                }
+                else if (paramType.IsArray || paramType.IsArrayRef())
+                {
+                    if (paramType.IsByRef)
+                    {
+                        paramType = TypeUtils.ConvertToUnrefType(paramType);
+                    }
+                    
+                    Type? elementType = paramType.GetElementType();
+                    switch (Type.GetTypeCode(elementType))
+                    {
+                        case TypeCode.Char:
+                            if (paramValue is char[] arrChar)
+                            {
+                                if (TypeUtils.IsUseAnsi(methodInfo.GetParameters()[i].GetCustomAttributes(typeof(MarshalAsAttribute), false)))
+                                {
+                                    args[j] = NativeMethods.CreateVectorChar8(arrChar, arrChar.Length);
+                                }
+                                else
+                                {
+                                    args[j] = NativeMethods.CreateVectorChar16(arrChar, arrChar.Length);
+                                }
+                            }
+                            else
+                            {
+                                if (TypeUtils.IsUseAnsi(methodInfo.GetParameters()[i].GetCustomAttributes(typeof(MarshalAsAttribute), false)))
+                                {
+                                    args[j] = NativeMethods.CreateVectorChar8([], 0);
+                                }
+                                else
+                                {
+                                    args[j] = NativeMethods.CreateVectorChar16([], 0);
+                                }
+                            }
+                            break;
+                        case TypeCode.Boolean:
+                            if (paramValue is bool[] arrBool)
+                            {
+                                args[j] = NativeMethods.CreateVectorBool(arrBool, arrBool.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorBool([], 0);
+                            }
+                            break;
+                        case TypeCode.SByte:
+                            if (paramValue is sbyte[] arrInt8)
+                            {
+                                args[j] = NativeMethods.CreateVectorInt8(arrInt8, arrInt8.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorInt8([], 0);
+                            }
+                            break;
+                        case TypeCode.Int16:
+                            if (paramValue is short[] arrInt16)
+                            {
+                                args[j] = NativeMethods.CreateVectorInt16(arrInt16, arrInt16.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorInt16([], 0);
+                            }
+                            break;
+                        case TypeCode.Int32:
+                            if (paramValue is int[] arrInt32)
+                            {
+                                args[j] = NativeMethods.CreateVectorInt32(arrInt32, arrInt32.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorInt32([], 0);
+                            }
+                            break;
+                        case TypeCode.Int64:
+                            if (paramValue is long[] arrInt64)
+                            {
+                                args[j] = NativeMethods.CreateVectorInt64(arrInt64, arrInt64.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorInt64([], 0);
+                            }
+                            break;
+                        case TypeCode.Byte:
+                            if (paramValue is byte[] arrUInt8)
+                            {
+                                args[j] = NativeMethods.CreateVectorUInt8(arrUInt8, arrUInt8.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorUInt8([], 0);
+                            }
+                            break;
+                        case TypeCode.UInt16:
+                            if (paramValue is ushort[] arrUInt16)
+                            {
+                                args[j] = NativeMethods.CreateVectorUInt16(arrUInt16, arrUInt16.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorUInt16([], 0);
+                            }
+                            break;
+                        case TypeCode.UInt32:
+                            if (paramValue is uint[] arrUInt32)
+                            {
+                                args[j] = NativeMethods.CreateVectorUInt32(arrUInt32, arrUInt32.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorUInt32([], 0);
+                            }
+                            break;
+                        case TypeCode.UInt64:
+                            if (paramValue is ulong[] arrUInt64)
+                            {
+                                args[j] = NativeMethods.CreateVectorUInt64(arrUInt64, arrUInt64.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorUInt64([], 0);
+                            }
+                            break;
+                        case TypeCode.Single:
+                            if (paramValue is float[] arrFloat)
+                            {
+                                args[j] = NativeMethods.CreateVectorFloat(arrFloat, arrFloat.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorFloat([], 0);
+                            }
+                            break;
+                        case TypeCode.Double:
+                            if (paramValue is double[] arrDouble)
+                            {
+                                args[j] = NativeMethods.CreateVectorDouble(arrDouble, arrDouble.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorDouble([], 0);
+                            }
+                            break;
+                        case TypeCode.String:
+                            if (paramValue is string[] arrString)
+                            {
+                                args[j] = NativeMethods.CreateVectorString(arrString, arrString.Length);
+                            }
+                            else
+                            {
+                                args[j] = NativeMethods.CreateVectorString([], 0);
+                            }
+                            break;
+                        default:
+                            if (elementType == typeof(nint))
+                            {
+                                if (paramValue is nint[] arrIntPtr)
+                                {
+                                    args[j] = NativeMethods.CreateVectorIntPtr(arrIntPtr, arrIntPtr.Length);
+                                }
+                                else
+                                {
+                                    args[j] = NativeMethods.CreateVectorIntPtr([], 0);
+                                }
+                            }
+                            else
+                                throw new NotImplementedException($"Unknown array type {elementType?.Name ?? ""}");
+                            break;
+                    }
+                }
+                else
+                {
+                    if (paramType == typeof(string))
+                    {
+                        if (paramValue is string str)
+                        {
+                            args[j] = NativeMethods.CreateString(str);
+                        }
+                        else
+                        {
+                            args[j] = NativeMethods.CreateString("");
+                        }
+                    }
+                    else if (paramType.IsDelegate())
+                    {
+                        args[j] = Marshal.GetFunctionPointerForDelegate(paramValue);
+                    }
+                    else
+                    {
+                        args[j] = paramValue;
+                    }
+                }
+            }
+            
+            Delegate func = Marshal.GetDelegateForFunctionPointer(funcAddress, delegateType);
+            object? ret = func.DynamicInvoke(args);
+            
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                object paramValue = parameters[i];
+                Type paramType = paramValue.GetType();
+            
+                int j = hasRet ? i + 1 : i;
+
+                if (paramType.IsEnum)
+                {
+                    // If paramType is an enum we need to get the underlying type
+                    paramType = Enum.GetUnderlyingType(paramType);
+                    parameters[i] = Enum.ToObject(paramType, args[j]);
+                }
+                else if (paramType.IsArray || paramType.IsArrayRef())
+                {
+                    if (paramType.IsByRef)
+                    {
+                        paramType = TypeUtils.ConvertToUnrefType(paramType);
+                    }
+                    
+                    Type? elementType = paramType.GetElementType();
+                    switch (Type.GetTypeCode(elementType))
+                    {
+                        case TypeCode.Char:
+                            nint ptrChar = (nint)args[j];
+                            if (TypeUtils.IsUseAnsi(methodInfo.GetParameters()[i].GetCustomAttributes(typeof(MarshalAsAttribute), false)))
+                            {
+                                if (paramType.IsByRef) NativeMethods.GetVectorDataChar8(ptrChar, (char[])parameters[i]); 
+                                NativeMethods.DeleteVectorChar8(ptrChar);
+                            }
+                            else
+                            {
+                                if (paramType.IsByRef) NativeMethods.GetVectorDataChar16(ptrChar, (char[])parameters[i]); 
+                                NativeMethods.DeleteVectorChar16(ptrChar);
+                            }
+                            break;
+                        case TypeCode.Boolean:
+                            nint ptrBoolean = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataBool(ptrBoolean, (bool[])parameters[i]); 
+                            NativeMethods.DeleteVectorBool(ptrBoolean);
+                            break;
+                        case TypeCode.SByte:
+                            nint ptrInt8 = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataInt8(ptrInt8, (sbyte[])parameters[i]); 
+                            NativeMethods.DeleteVectorInt8(ptrInt8);
+                            break;
+                        case TypeCode.Int16:
+                            nint ptrInt16 = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataInt16(ptrInt16, (short[])parameters[i]); 
+                            NativeMethods.DeleteVectorInt16(ptrInt16);
+                            break;
+                        case TypeCode.Int32:
+                            nint ptrInt32 = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataInt32(ptrInt32, (int[])parameters[i]); 
+                            NativeMethods.DeleteVectorInt32(ptrInt32);
+                            break;
+                        case TypeCode.Int64:
+                            nint ptrInt64 = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataInt64(ptrInt64, (long[])parameters[i]); 
+                            NativeMethods.DeleteVectorInt64(ptrInt64);
+                            break;
+                        case TypeCode.Byte:
+                            nint ptrUInt8 = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataUInt8(ptrUInt8, (byte[])parameters[i]); 
+                            NativeMethods.DeleteVectorUInt8(ptrUInt8);
+                            break;
+                        case TypeCode.UInt16:
+                            nint ptrUInt16 = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataUInt16(ptrUInt16, (ushort[])parameters[i]); 
+                            NativeMethods.DeleteVectorUInt16(ptrUInt16);
+                            break;
+                        case TypeCode.UInt32:
+                            nint ptrUInt32 = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataUInt32(ptrUInt32, (uint[])parameters[i]); 
+                            NativeMethods.DeleteVectorUInt32(ptrUInt32);
+                            break;
+                        case TypeCode.UInt64:
+                            nint ptrUInt64 = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataUInt64(ptrUInt64, (ulong[])parameters[i]); 
+                            NativeMethods.DeleteVectorUInt64(ptrUInt64);
+                            break;
+                        case TypeCode.Single:
+                            nint ptrFloat = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataFloat(ptrFloat, (float[])parameters[i]); 
+                            NativeMethods.DeleteVectorFloat(ptrFloat);
+                            break;
+                        case TypeCode.Double:
+                            nint ptrDouble = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataDouble(ptrDouble, (double[])parameters[i]); 
+                            NativeMethods.DeleteVectorDouble(ptrDouble);
+                            break;
+                        case TypeCode.String:
+                            nint ptrString = (nint)args[j];
+                            if (paramType.IsByRef) NativeMethods.GetVectorDataString(ptrString, (string[])parameters[i]); 
+                            NativeMethods.DeleteVectorString(ptrString);
+                            break;
+                        default:
+                            if (elementType == typeof(nint))
+                            {
+                                nint ptrIntPtr = (nint)args[j];
+                                if (paramType.IsByRef) NativeMethods.GetVectorDataIntPtr(ptrIntPtr, (nint[])parameters[i]); 
+                                NativeMethods.DeleteVectorIntPtr(ptrIntPtr);
+                            }
+                            else
+                                throw new NotImplementedException($"Unknown array type {elementType?.Name ?? ""}");
+                            break;
+                    }
+                }
+                else
+                {
+                    if (paramType == typeof(string))
+                    {
+                        nint ptr = (nint)args[j];
+                        if (paramType.IsByRef) parameters[i] = NativeMethods.GetStringData(ptr);
+                        NativeMethods.DeleteString(ptr);
+                    }
+                }
+            }
+            
+            if (hasRet)
+            {
+                if (returnType.IsArray)
+                {
+                    Type? elementType = returnType.GetElementType();
+                    switch (Type.GetTypeCode(elementType))
+                    {
+                        case TypeCode.Boolean:
+                            nint ptrBool = (nint)args[0];
+                            bool[] arrBool = new bool[NativeMethods.GetVectorSizeBool(ptrBool)];
+                            NativeMethods.GetVectorDataBool(ptrBool, arrBool);
+                            NativeMethods.FreeVectorBool(ptrBool);
+                            ret = arrBool;
+                            break;
+                        case TypeCode.Char:
+                            nint ptrChar = (nint)args[0];
+                            if (TypeUtils.IsUseAnsi(methodInfo.ReturnTypeCustomAttributes.GetCustomAttributes(typeof(MarshalAsAttribute), false)))
+                            {
+                                char[] arrChar = new char[NativeMethods.GetVectorSizeChar8(ptrChar)];
+                                NativeMethods.GetVectorDataChar8(ptrChar, arrChar);
+                                NativeMethods.FreeVectorChar8(ptrChar);
+                                ret = arrChar;
+                            }
+                            else
+                            {
+                                char[] arrChar = new char[NativeMethods.GetVectorSizeChar16(ptrChar)];
+                                NativeMethods.GetVectorDataChar16(ptrChar, arrChar);
+                                NativeMethods.FreeVectorChar16(ptrChar);
+                                ret = arrChar;
+                            }
+                            break;
+                        case TypeCode.SByte:
+                            nint ptrInt8 = (nint)args[0];
+                            sbyte[] arrInt8 = new sbyte[NativeMethods.GetVectorSizeInt8(ptrInt8)];
+                            NativeMethods.GetVectorDataInt8(ptrInt8, arrInt8);
+                            NativeMethods.FreeVectorInt8(ptrInt8);
+                            ret = arrInt8;
+                            break;
+                        case TypeCode.Int16:
+                            nint ptrInt16 = (nint)args[0];
+                            short[] arrInt16 = new short[NativeMethods.GetVectorSizeInt16(ptrInt16)];
+                            NativeMethods.GetVectorDataInt16(ptrInt16, arrInt16);
+                            NativeMethods.FreeVectorInt16(ptrInt16);
+                            ret = arrInt16;
+                            break;
+                        case TypeCode.Int32:
+                            nint ptrInt32 = (nint)args[0];
+                            int[] arrInt32 = new int[NativeMethods.GetVectorSizeInt32(ptrInt32)];
+                            NativeMethods.GetVectorDataInt32(ptrInt32, arrInt32);
+                            NativeMethods.FreeVectorInt32(ptrInt32);
+                            ret = arrInt32;
+                            break;
+                        case TypeCode.Int64:
+                            nint ptrInt64 = (nint)args[0];
+                            long[] arrInt64 = new long[NativeMethods.GetVectorSizeInt64(ptrInt64)];
+                            NativeMethods.GetVectorDataInt64(ptrInt64, arrInt64);
+                            NativeMethods.FreeVectorInt64(ptrInt64);
+                            ret = arrInt64;
+                            break;
+                        case TypeCode.Byte:
+                            nint ptrUInt8 = (nint)args[0];
+                            byte[] arrUInt8 = new byte[NativeMethods.GetVectorSizeUInt8(ptrUInt8)];
+                            NativeMethods.GetVectorDataUInt8(ptrUInt8, arrUInt8);
+                            NativeMethods.FreeVectorUInt8(ptrUInt8);
+                            ret = arrUInt8;
+                            break;
+                        case TypeCode.UInt16:
+                            nint ptrUInt16 = (nint)args[0];
+                            ushort[] arrUInt16 = new ushort[NativeMethods.GetVectorSizeUInt16(ptrUInt16)];
+                            NativeMethods.GetVectorDataUInt16(ptrUInt16, arrUInt16);
+                            NativeMethods.FreeVectorUInt16(ptrUInt16);
+                            ret = arrUInt16;
+                            break;
+                        case TypeCode.UInt32:
+                            nint ptrUInt32 = (nint)args[0];
+                            uint[] arrUInt32 = new uint[NativeMethods.GetVectorSizeUInt32(ptrUInt32)];
+                            NativeMethods.GetVectorDataUInt32(ptrUInt32, arrUInt32);
+                            NativeMethods.FreeVectorUInt32(ptrUInt32);
+                            ret = arrUInt32;
+                            break;
+                        case TypeCode.UInt64:
+                            nint ptrUInt64 = (nint)args[0];
+                            ulong[] arrUInt64 = new ulong[NativeMethods.GetVectorSizeUInt64(ptrUInt64)];
+                            NativeMethods.GetVectorDataUInt64(ptrUInt64, arrUInt64);
+                            NativeMethods.FreeVectorUInt64(ptrUInt64);
+                            ret = arrUInt64;
+                            break;
+                        case TypeCode.Single:
+                            nint ptrFloat = (nint)args[0];
+                            float[] arrFloat = new float[NativeMethods.GetVectorSizeFloat(ptrFloat)];
+                            NativeMethods.GetVectorDataFloat(ptrFloat, arrFloat);
+                            NativeMethods.FreeVectorFloat(ptrFloat);
+                            ret = arrFloat;
+                            break;
+                        case TypeCode.Double:
+                            nint ptrDouble = (nint)args[0];
+                            double[] arrDouble = new double[NativeMethods.GetVectorSizeDouble(ptrDouble)];
+                            NativeMethods.GetVectorDataDouble(ptrDouble, arrDouble);
+                            NativeMethods.FreeVectorDouble(ptrDouble);
+                            ret = arrDouble;
+                            break;
+                        case TypeCode.String:
+                            nint ptrString = (nint)args[0];
+                            string[] arrString = new string[NativeMethods.GetVectorSizeString(ptrString)];
+                            NativeMethods.GetVectorDataString(ptrString, arrString);
+                            NativeMethods.FreeVectorString(ptrString);
+                            ret = arrString;
+                            break;
+                        default:
+                            if (elementType == typeof(nint))
+                            {
+                                nint ptrIntPtr = (nint)args[0];
+                                nint[] arrIntPtr = new nint[NativeMethods.GetVectorSizeIntPtr(ptrIntPtr)];
+                                NativeMethods.GetVectorDataIntPtr(ptrIntPtr, arrIntPtr);
+                                NativeMethods.FreeVectorIntPtr(ptrIntPtr);
+                                break;
+                            }
+                    
+                            throw new NotImplementedException($"Array type {elementType?.Name ?? ""} not implemented");
+                    }
+                }
+                else
+                {
+                    if (returnType == typeof(string))
+                    {
+                        nint ptr = (nint)args[0];
+                        ret = NativeMethods.GetStringData(ptr);
+                        NativeMethods.FreeString(ptr);
+                    }
+                }
+            }
+            
+            return ret ?? throw new InvalidOperationException();
+        };
+    }*/
 
     public static void FreeObject(ManagedObject obj)
     {

@@ -7,8 +7,8 @@
 namespace netlm {
 	struct ManagedMethod {
 		ManagedGuid guid;
-		ManagedTypeHolder returnType;
-		std::vector<ManagedTypeHolder> parameterTypes;
+		ManagedType returnType;
+		std::vector<ManagedType> parameterTypes;
 		std::vector<std::string> attributeNames;
 
 		[[nodiscard]] bool HasAttribute(std::string_view attributeName) const {

@@ -18,6 +18,45 @@
 	],
 	"exportedMethods": [
 		{
+			"name": "MyExportFunction",
+			"funcName": "CSharpTest.ExportClass.MyExportFunction",
+			"paramTypes": [
+				{
+					"name": "a",
+					"type": "int32",
+					"ref": false
+				},
+				{
+					"name": "func",
+					"type": "function",
+					"ref": false,
+					"prototype": {
+						"name": "MyFunc",
+						"paramTypes": [
+							{
+								"name": "a",
+								"type": "int32"
+							},
+							{
+								"name": "b",
+								"type": "string"
+							},
+							{
+								"name": "c",
+								"type": "int32*"
+							}
+						],
+						"retType": {
+							"type": "void"
+						}
+					}
+				}
+			],
+			"retType": {
+				"type": "void"
+			}
+		},
+		{
 			"name": "NoParamReturnVoid",
 			"funcName": "CSharpTest.ExportClass.NoParamReturnVoid",
 			"paramTypes": [],

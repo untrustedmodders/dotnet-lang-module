@@ -6,10 +6,18 @@
 
 class CppTestPlugin : public plugify::IPluginEntry {
 public:
+	static void CB(int a, const std::string& b, const std::vector<int32_t>& c) {
+		std::cout << a << std::endl;
+		std::cout << b << std::endl;
+		std::cout << c.size() << std::endl;
+	}
+
     void OnPluginStart() override {
         // No Params, Only Return
         {
             std::cout << "=================================C++=======================================" << std::endl;
+
+			CSharpTest::MyExportFunction(1, &CB);
 
             CSharpTest::NoParamReturnVoid();
             assert(CSharpTest::NoParamReturnBool() == true);
