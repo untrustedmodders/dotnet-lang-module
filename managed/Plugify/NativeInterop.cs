@@ -700,6 +700,9 @@ public static class NativeInterop
     {
 	    ManagedType returnType =  new ManagedType(methodInfo.ReturnType, methodInfo.ReturnTypeCustomAttributes.GetCustomAttributes(typeof(MarshalAsAttribute), false));
 	    ManagedType[] parameterTypes = methodInfo.GetParameters().Select(p => new ManagedType(p.ParameterType, p.GetCustomAttributes(typeof(MarshalAsAttribute), false))).ToArray();
+	   
+	    bool hasRet = returnType.ValueType is >= ValueType.String and <= ValueType.ArrayString;
+	    bool hasRefs = parameterTypes.Any(t => t.IsByRef);
 	    
         return parameters =>
         {
@@ -707,132 +710,125 @@ public static class NativeInterop
 	        {
 		        vm.Reset();
 
-		        bool hasRet = true;
-		        bool hasRefs = false;
-
 		        // Store parameters
 
 		        List<(nint, ValueType)> handlers = [];
 
-		        ValueType type = returnType.ValueType;
-		        switch (type)
+		        ValueType retType = returnType.ValueType;
+		        switch (retType)
 		        {
 			        case ValueType.String:
 			        {
 				        nint ptr = NativeMethods.AllocateString();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayBool:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorBool();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayChar8:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorChar8();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayChar16:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorChar16();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayInt8:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorInt8();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayInt16:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorInt16();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayInt32:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorInt32();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayInt64:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorInt64();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayUInt8:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorUInt8();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayUInt16:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorUInt16();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayUInt32:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorUInt32();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayUInt64:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorUInt64();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayPointer:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorIntPtr();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayFloat:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorFloat();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayDouble:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorDouble();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
 			        case ValueType.ArrayString:
 			        {
 				        nint ptr = NativeMethods.AllocateVectorString();
-				        handlers.Add((ptr, type));
+				        handlers.Add((ptr, retType));
 				        vm.ArgPointer(ptr);
 				        break;
 			        }
-			        default:
-				        // Should not require storage
-				        hasRet = false;
-				        break;
 		        }
 
 		        List<GCHandle> pins = [];
@@ -847,7 +843,6 @@ public static class NativeInterop
 			        {
 				        switch (valueType)
 				        {
-					        case ValueType.Invalid:
 					        case ValueType.Void:
 						        break;
 					        case ValueType.Bool:
@@ -1039,14 +1034,11 @@ public static class NativeInterop
 					        default:
 						        throw new ArgumentOutOfRangeException();
 				        }
-
-				        hasRefs = true;
 			        }
 			        else
 			        {
 				        switch (valueType)
 				        {
-					        case ValueType.Invalid:
 					        case ValueType.Void:
 						        break;
 					        case ValueType.Bool:
@@ -1243,10 +1235,8 @@ public static class NativeInterop
 
 		        object? ret = null;
 
-		        switch (type)
+		        switch (retType)
 		        {
-			        case ValueType.Invalid:
-				        break;
 			        case ValueType.Void:
 				        vm.CallVoid(funcAddress);
 				        break;
