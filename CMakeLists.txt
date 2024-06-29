@@ -81,7 +81,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         NETLM_LIBRARY_PREFIX="${CMAKE_SHARED_LIBRARY_PREFIX}"
 )
 
-set(NETLM_VERSION "${CMAKE_PROJECT_VERSION}" CACHE STRING "Set version name")
+set(NETLM_VERSION "0" CACHE STRING "Set version name")
 set(NETLM_PACKAGE "${PROJECT_NAME}" CACHE STRING "Set package name")
 
 configure_file(
