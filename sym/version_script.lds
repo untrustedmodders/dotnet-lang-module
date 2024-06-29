@@ -24,6 +24,7 @@
         CreateString;
         GetStringData;
         GetStringLength;
+        ConstructString;
         AssignString;
         FreeString;
         DeleteString;
@@ -107,6 +108,22 @@
         AssignVectorFloat;
         AssignVectorDouble;
         AssignVectorString;
+
+        ConstructVectorBool;
+        ConstructVectorChar8;
+        ConstructVectorChar16;
+        ConstructVectorInt8;
+        ConstructVectorInt16;
+        ConstructVectorInt32;
+        ConstructVectorInt64;
+        ConstructVectorUInt8;
+        ConstructVectorUInt16;
+        ConstructVectorUInt32;
+        ConstructVectorUInt64;
+        ConstructVectorIntPtr;
+        ConstructVectorFloat;
+        ConstructVectorDouble;
+        ConstructVectorString;
 
         DeleteVectorBool;
         DeleteVectorChar8;

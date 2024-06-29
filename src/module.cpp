@@ -126,10 +126,6 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 
 	_rt = std::make_shared<asmjit::JitRuntime>();
 
-	DCCallVM* vm = dcNewCallVM(4096);
-	dcMode(vm, DC_CALL_C_DEFAULT);
-	_callVirtMachine = std::deleted_unique_ptr<DCCallVM>(vm, dcFree);
-
 	return InitResultData{};
 }
 
@@ -150,7 +146,6 @@ void DotnetLanguageModule::Shutdown() {
 	_rt.reset();
 
 	_provider->Log(LOG_PREFIX "Shut down .NET runtime", Severity::Debug);
-
 	_provider.reset();
 }
 
@@ -182,7 +177,7 @@ ErrorString DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPa
 	int32_t result = hostfxr_initialize_for_runtime_config(configPath.c_str(), nullptr, &cxt);
 	std::deleted_unique_ptr<void> context(cxt, hostfxr_close);
 
-	if ((result < Success || result > Success_DifferentRuntimeProperties) || cxt == nullptr) {
+	if ((result < 0 || result > 2) || cxt == nullptr) {
 		return std::format("Failed to initialize hostfxr: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
 	}
 
@@ -190,15 +185,15 @@ ErrorString DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPa
 	//hostfxr_set_runtime_property_value(cxt, STRING("APP_CONTEXT_BASE_DIRECTORY"), basePath.c_str());
 
 	result = hostfxr_get_runtime_delegate(cxt, hdt_load_assembly_and_get_function_pointer, reinterpret_cast<void**>(&load_assembly_and_get_function_pointer));
-	if (result != Success || load_assembly_and_get_function_pointer == nullptr) {
+	if (result != 0 || load_assembly_and_get_function_pointer == nullptr) {
 		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly_and_get_function_pointer failed: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
 	}
 	/*result = hostfxr_get_runtime_delegate(cxt, hdt_get_function_pointer, reinterpret_cast<void**>(&get_function_pointer));
-	if (result != Success || get_function_pointer == nullptr) {
+	if (result != 0 || get_function_pointer == nullptr) {
 		return std::format("hostfxr_get_runtime_delegate::hdt_get_function_pointer failed: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
 	}
 	result = hostfxr_get_runtime_delegate(cxt, hdt_load_assembly, reinterpret_cast<void**>(&load_assembly));
-	if (result != Success || load_assembly == nullptr) {
+	if (result != 0 || load_assembly == nullptr) {
 		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly failed: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
 	}*/
 
@@ -271,6 +266,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.funcName, ValueTypeToString(methodParamType), i, ValueTypeToString(paramType)));
 				continue;
 			}
+
 		}
 
 		if (methodFail)
@@ -317,7 +313,7 @@ T DotnetLanguageModule::GetDelegate(const char_t* assemblyPath, const char_t* ty
 			nullptr,
 			reinterpret_cast<void**>(&delegatePtr));
 
-	if (result != Success) {
+	if (result != 0) {
 		_provider->Log(std::format("Failed to load assembly and get function pointer: {:x} ({})", uint32_t(result), hostfxr_str_error(result)), Severity::Error);
 		return nullptr;
 	}
@@ -582,6 +578,9 @@ extern "C" {
 	NETLM_EXPORT int GetStringLength(std::string* string) {
 		return static_cast<int>(string->length());
 	}
+	NETLM_EXPORT void ConstructString(std::string* string, const char* source) {
+		std::construct_at(string, source);
+	}
 	NETLM_EXPORT void AssignString(std::string* string, const char* source) {
 		if (source == nullptr)
 			string->clear();
@@ -655,14 +654,7 @@ extern "C" {
 	}
 
 	NETLM_EXPORT std::vector<std::string>* CreateVectorString(char* arr[], int len) {
-		auto* vector = new std::vector<std::string>();
-		if (len != 0) {
-			vector->reserve(static_cast<size_t>(len));
-			for (int i = 0; i < len; ++i) {
-				vector->emplace_back(arr[i]);
-			}
-		}
-		return vector;
+		return len == 0 ? new std::vector<std::string>() : new std::vector<std::string>(arr, arr + len);
 	}
 
 	// AllocateVector Functions
@@ -886,6 +878,68 @@ extern "C" {
 		}
 	}
 
+	// Construct Functions
+
+	NETLM_EXPORT void ConstructVectorDataBool(std::vector<bool>* vector, bool* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<bool>() : std::vector<bool>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataChar8(std::vector<char>* vector, char* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<char>() : std::vector<char>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataChar16(std::vector<char16_t>* vector, char16_t* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<char16_t>() : std::vector<char16_t>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataInt8(std::vector<int8_t>* vector, int8_t* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<int8_t>() : std::vector<int8_t>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataInt16(std::vector<int16_t>* vector, int16_t* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<int16_t>() : std::vector<int16_t>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataInt32(std::vector<int32_t>* vector, int32_t* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<int32_t>() : std::vector<int32_t>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataInt64(std::vector<int64_t>* vector, int64_t* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<int64_t>() : std::vector<int64_t>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataUInt8(std::vector<uint8_t>* vector, uint8_t* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<uint8_t>() : std::vector<uint8_t>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataUInt16(std::vector<uint16_t>* vector, uint16_t* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<uint16_t>() : std::vector<uint16_t>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataUInt32(std::vector<uint32_t>* vector, uint32_t* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<uint32_t>() : std::vector<uint32_t>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataUInt64(std::vector<uint64_t>* vector, uint64_t* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<uint64_t>() : std::vector<uint64_t>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<uintptr_t>() : std::vector<uintptr_t>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataFloat(std::vector<float>* vector, float* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<float>() : std::vector<float>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataDouble(std::vector<double>* vector, double* arr, int len) {
+		std::construct_at(vector, len == 0 ? std::vector<double>() : std::vector<double>(arr, arr + len));
+	}
+
+	NETLM_EXPORT void ConstructVectorDataString(std::vector<std::string>* vector, char* arr[], int len) {
+		std::construct_at(vector, len == 0 ? std::vector<std::string>() : std::vector<std::string>(arr, arr + len));
+	}
+
 	// AssignVector Functions
 
 	NETLM_EXPORT void AssignVectorBool(std::vector<bool>* vector, bool* arr, int len) {
@@ -989,13 +1043,8 @@ extern "C" {
 	NETLM_EXPORT void AssignVectorString(std::vector<std::string>* vector, char* arr[], int len) {
 		if (arr == nullptr || len == 0)
 			vector->clear();
-		else {
-			auto N = static_cast<size_t>(len);
-			vector->resize(N);
-			for (size_t i = 0; i < N; ++i) {
-				(*vector)[i].assign(arr[i]);
-			}
-		}
+		else
+			vector->assign(arr, arr + len);
 	}
 
 	// DeleteVector Functions
@@ -1292,7 +1341,7 @@ extern "C" {
 	}
 
 	NETLM_EXPORT void ManagedClass_SetNewObjectFunction(ManagedClass managedClass, Class::NewObjectFunction newObjectFptr) {
-		if (managedClass.classObject) {
+		if (!managedClass.classObject) {
 			return;
 		}
 

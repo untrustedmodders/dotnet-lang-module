@@ -71,9 +71,6 @@ namespace netlm {
 		std::unordered_map<std::string, void*> _nativesMap;
 		std::unordered_map<void*, plugify::Function> _functions;
 
-		std::deleted_unique_ptr<DCCallVM> _callVirtMachine;
-		std::mutex _mutex;
-
 		InitializeAssemblyDelegate _initializeAssembly;
 		UnloadAssemblyDelegate _unloadAssembly;
 	};
