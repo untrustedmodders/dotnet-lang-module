@@ -167,7 +167,7 @@ internal static class TypeUtils
 
 	    return false;
     }
-    
+
     internal static Type ConvertToUnrefType(Type paramType)
     {
 	    string? paramName = paramType.FullName;
