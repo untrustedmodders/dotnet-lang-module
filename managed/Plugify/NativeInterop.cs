@@ -693,7 +693,9 @@ public static class NativeInterop
 
 	    return Marshal.GetDelegateForFunctionPointer(funcAddress, delegateType);
     }
-    
+
+    #region External Call from C# to C++
+
     private static Func<object[], object> ExternalInvoke(nint funcAddress, MethodInfo methodInfo)
     {
 	    ManagedType returnType =  new ManagedType(methodInfo.ReturnType, methodInfo.ReturnTypeCustomAttributes.GetCustomAttributes(typeof(MarshalAsAttribute), false));
@@ -903,7 +905,7 @@ public static class NativeInterop
 						        vm.ArgPointer(Pin<Matrix4x4>(paramValue, pins));
 						        break;
 					        case ValueType.Function:
-						        Delegate d = GetWrapperDelegateForDelegate((Delegate)paramValue);
+						        Delegate d = CreateConvertDelegate((Delegate)paramValue);
 						        Pin<Delegate>(d, pins);
 								vm.ArgPointer(Pin<nint>(Marshal.GetFunctionPointerForDelegate(d), pins));
 						        break;
@@ -1102,7 +1104,7 @@ public static class NativeInterop
 						        vm.ArgPointer(Pin<Matrix4x4>(paramValue, pins));
 						        break;
 					        case ValueType.Function:
-						        Delegate d = GetWrapperDelegateForDelegate((Delegate)paramValue);
+						        Delegate d = CreateConvertDelegate((Delegate)paramValue);
 						        Pin<Delegate>(d, pins);
 						        vm.ArgPointer(Pin<nint>(Marshal.GetFunctionPointerForDelegate(d), pins));
 						        break;
@@ -1793,11 +1795,15 @@ public static class NativeInterop
         }
     }
     
-    public static Delegate GetWrapperDelegateForDelegate(Delegate d)
+    #endregion
+
+    public static Delegate CreateConvertDelegate(Delegate d)
     {
 	    MethodInfo methodInfo = d.Method;
 	    if (NeedMarshal(methodInfo.ReturnType) || methodInfo.GetParameters().Any(p => NeedMarshal(p.ParameterType)))
 	    {
+		    // Convert all string and array types into nint, if string and array return, append 1st hidden parameter
+		    
 		    List<Type> types = [];
 		        
 		    Type returnType = methodInfo.ReturnType;
@@ -1824,6 +1830,8 @@ public static class NativeInterop
 	    return d;
     }
 
+    #region External Call from C++ to C#
+    
     private static Func<object[], object> InternalInvoke(Delegate d)
     {
 	    MethodInfo methodInfo = d.Method;
@@ -2206,6 +2214,25 @@ public static class NativeInterop
 	    };
     }
 
+    #endregion
+    
+    public static void FreeObject(ManagedObject obj)
+    {
+        if (!ManagedObjectCache.Instance.RemoveObject(obj.guid))
+        {
+            throw new Exception("Failed to remove object from cache: " + obj.guid);
+        }
+    }
+
+    private static void OutError(nint outErrorStringPtr, string message)
+    {
+        if (outErrorStringPtr == nint.Zero)
+            return;
+        
+        byte[] bytes = Encoding.ASCII.GetBytes(message);
+        Marshal.Copy(bytes, 0, outErrorStringPtr, bytes.Length);
+    }
+
     internal static bool NeedMarshal(Type paramType)
     {
 	    if (paramType.IsByRef)
@@ -2222,23 +2249,6 @@ public static class NativeInterop
 		    }
 	    }
 	    return valueType is >= ValueType.String and <= ValueType.ArrayString;
-    }
-
-    public static void FreeObject(ManagedObject obj)
-    {
-        if (!ManagedObjectCache.Instance.RemoveObject(obj.guid))
-        {
-            throw new Exception("Failed to remove object from cache: " + obj.guid);
-        }
-    }
-
-    private static void OutError(nint outErrorStringPtr, string message)
-    {
-        if (outErrorStringPtr == nint.Zero)
-            return;
-        
-        byte[] bytes = Encoding.ASCII.GetBytes(message);
-        Marshal.Copy(bytes, 0, outErrorStringPtr, bytes.Length);
     }
 
     [DllImport(NativeMethods.DllName)]
