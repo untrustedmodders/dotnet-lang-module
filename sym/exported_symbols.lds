@@ -1,21 +1,10 @@
 GetLanguageModule
 
+Log
 GetMethodPtr
 GetBaseDir
 IsModuleLoaded
 IsPluginLoaded
-Log
-
-GetPluginId
-GetPluginName
-GetPluginFullName
-GetPluginDescription
-GetPluginVersion
-GetPluginAuthor
-GetPluginWebsite
-GetPluginBaseDir
-GetPluginDependencies
-GetPluginDependenciesSize
 FindPluginResource
 
 AllocateString

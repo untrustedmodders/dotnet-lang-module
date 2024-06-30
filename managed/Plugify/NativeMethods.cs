@@ -19,36 +19,8 @@ public static class NativeMethods
 	[DllImport(DllName)]
 	public static extern bool IsPluginLoaded([MarshalAs(UnmanagedType.LPStr)] string pluginName, int version, bool minimum);
 	[DllImport(DllName)]
-	public static extern long GetPluginId(nint pluginHandle);
-	[DllImport(DllName)]
 	[return: MarshalAs(UnmanagedType.LPStr)]
-	public static extern string GetPluginName(nint pluginHandle);
-	[DllImport(DllName)]
-	[return: MarshalAs(UnmanagedType.LPStr)]
-	public static extern string GetPluginFullName(nint pluginHandle);
-	[DllImport(DllName)]
-	[return: MarshalAs(UnmanagedType.LPStr)]
-	public static extern string GetPluginDescription(nint pluginHandle);
-	[DllImport(DllName)]
-	[return: MarshalAs(UnmanagedType.LPStr)]
-	public static extern string GetPluginVersion(nint pluginHandle);
-	[DllImport(DllName)]
-	[return: MarshalAs(UnmanagedType.LPStr)]
-	public static extern string GetPluginAuthor(nint pluginHandle);
-	[DllImport(DllName)]
-	[return: MarshalAs(UnmanagedType.LPStr)]
-	public static extern string GetPluginWebsite(nint pluginHandle);
-	[DllImport(DllName)]
-	[return: MarshalAs(UnmanagedType.LPStr)]
-	public static extern string GetPluginBaseDir(nint pluginHandle);
-	[DllImport(DllName)]
-	public static extern void GetPluginDependencies(nint pluginHandle, [MarshalAs(UnmanagedType.LPArray)] [In, Out] string[] deps);
-	[DllImport(DllName)]
-	public static extern int GetPluginDependenciesSize(nint pluginHandle);
-
-	[DllImport(DllName)]
-	[return: MarshalAs(UnmanagedType.LPStr)]
-	public static extern string FindPluginResource(nint pluginHandle, [MarshalAs(UnmanagedType.LPStr)] string path);
+	public static extern string FindPluginResource([MarshalAs(UnmanagedType.LPStr)] string pluginName, [MarshalAs(UnmanagedType.LPStr)] string path);
 
 	#endregion
 	

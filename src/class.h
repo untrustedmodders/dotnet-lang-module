@@ -18,6 +18,8 @@ namespace netlm {
 		ManagedGuid freeObjectGuid;
 	};
 
+	using MethodMap = std::unordered_map<std::string, ManagedMethod>;
+
 	class Class {
 	public:
 		using NewObjectFunction = ManagedObject (*)();
@@ -26,7 +28,6 @@ namespace netlm {
 		Class(ClassHolder* parent, std::string name)
 			: _parent{parent},
 			  _name{std::move(name)},
-			  _plugin{false},
 			  _newObjectFunction{nullptr},
 			  _freeObjectFunction{nullptr} {
 		}
@@ -48,13 +49,13 @@ namespace netlm {
 
 		[[nodiscard]] bool HasMethod(const std::string& methodName) const { return _methods.find(methodName) != _methods.end(); }
 
+		[[nodiscard]] bool IsAssignableFrom(std::string_view typeHash) const;
+		void SetBaseClasses(char** baseClasses, uint32_t numBaseClasses) { _baseClasses.assign(baseClasses, baseClasses + numBaseClasses); }
+
 		[[nodiscard]] ManagedMethod* GetMethod(const std::string& methodName);
 		[[nodiscard]] const ManagedMethod* GetMethod(const std::string& methodName) const;
 
-		[[nodiscard]] bool IsPlugin() const { return _plugin; }
-		void SetPlugin(bool plugin) { _plugin = plugin; }
-
-		[[nodiscard]] const std::unordered_map<std::string, ManagedMethod>& GetMethods() const { return _methods; }
+		[[nodiscard]] const MethodMap& GetMethods() const { return _methods; }
 
 		void AddMethod(const std::string& methodName, ManagedMethod&& methodObject) { _methods[methodName] = std::move(methodObject); }
 
@@ -70,7 +71,7 @@ namespace netlm {
 			auto it = _methods.find(methodName);
 			assert(it != _methods.end() && "Method not found");
 
-			const ManagedMethod& methodObject = it->second;
+			const auto& methodObject = std::get<ManagedMethod>(*it);
 
 			void* argsVptr[] = { &args... };
 
@@ -87,8 +88,9 @@ namespace netlm {
 
 	private:
 		std::string _name;
-		std::unordered_map<std::string, ManagedMethod> _methods;
-		bool _plugin;
+
+		MethodMap _methods;
+		std::vector<std::string> _baseClasses;
 
 		ClassHolder* _parent;
 

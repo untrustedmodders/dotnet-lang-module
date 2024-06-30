@@ -36,7 +36,7 @@ ManagedMethod* Class::GetMethod(const std::string& methodName) {
 		return nullptr;
 	}
 
-	return &it->second;
+	return &std::get<ManagedMethod>(*it);
 }
 
 const ManagedMethod* Class::GetMethod(const std::string& methodName) const {
@@ -45,5 +45,9 @@ const ManagedMethod* Class::GetMethod(const std::string& methodName) const {
 		return nullptr;
 	}
 
-	return &it->second;
+	return &std::get<ManagedMethod>(*it);
+}
+
+bool Class::IsAssignableFrom(std::string_view typeHash) const {
+	return std::find(_baseClasses.begin(), _baseClasses.end(), typeHash) != _baseClasses.end();
 }

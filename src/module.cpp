@@ -2,6 +2,7 @@
 #include "library.h"
 #include "assembly.h"
 #include "class.h"
+#include "object.h"
 #include "strings.h"
 
 #include "interop/managed_guid.h"
@@ -69,8 +70,8 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 	}
 
 	auto error = InitializeRuntimeHost(configPath);
-	if (error) {
-		return ErrorData{ std::move(*error) };
+	if (!error.empty()) {
+		return ErrorData{ std::move(error) };
 	}
 
 	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
@@ -132,11 +133,7 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 void DotnetLanguageModule::Shutdown() {
 	_provider->Log(LOG_PREFIX "Shutting down .NET runtime", Severity::Debug);
 
-	for (auto it = _loadedAssemblies.rbegin(); it != _loadedAssemblies.rend(); ++it) {
-		it->reset();
-	}
-
-	_loadedAssemblies.clear();
+	_scripts.clear();
 	_nativesMap.clear();
 	_exportMethods.clear();
 	_functions.clear();
@@ -172,7 +169,7 @@ bool DotnetLanguageModule::LoadHostFXR(const fs::path& hostPath) {
 		   hostfxr_set_error_writer;
 }
 
-ErrorString DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPath) {
+std::string DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPath) {
 	hostfxr_handle cxt = nullptr;
 	int32_t result = hostfxr_initialize_for_runtime_config(configPath.c_str(), nullptr, &cxt);
 	std::deleted_unique_ptr<void> context(cxt, hostfxr_close);
@@ -201,7 +198,7 @@ ErrorString DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPa
 
 	hostfxr_set_error_writer(ErrorWriter);
 
-	return std::nullopt;
+	return {};
 }
 
 LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
@@ -227,6 +224,11 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		return ErrorData{ std::move(errorStr) };
 	}
 
+	Class* pluginClassPtr = assembly->GetClassObjectHolder().FindClassBySubClass("Plugin");
+	if (!pluginClassPtr) {
+		return ErrorData{"Failed to find 'Plugin' class implementation"};
+	}
+
 	std::vector<std::string> methodErrors;
 
 	const auto& exportedMethods = plugin.GetDescriptor().exportedMethods;
@@ -241,7 +243,16 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		}
 
 		Class* classPtr = assembly->GetClassObjectHolder().FindClassByName(separated[1]);
-		ManagedMethod* methodPtr = classPtr->GetMethod(std::string(separated[2].data(), separated[2].size()));
+		if (!classPtr) {
+			methodErrors.emplace_back(std::format("Failed to find class '{}'", method.funcName));
+			continue;
+		}
+
+		ManagedMethod* methodPtr = classPtr->GetMethod(separated[2].data());
+		if (!methodPtr) {
+			methodErrors.emplace_back(std::format("Failed to find method '{}'", method.funcName));
+			continue;
+		}
 
 		const ValueType& returnType = methodPtr->returnType.type;
 		const ValueType& methodReturnType = method.retType.type;
@@ -289,12 +300,15 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 	if (!methodErrors.empty()) {
 		std::string funcs(methodErrors[0]);
 		for (auto it = std::next(methodErrors.begin()); it != methodErrors.end(); ++it) {
-			std::format_to(std::back_inserter(funcs), "\n{}", *it);
+			std::format_to(std::back_inserter(funcs), ", {}", *it);
 		}
 		return ErrorData{ std::format("Not found {} method function(s)", funcs) };
 	}
 
-	_loadedAssemblies.emplace_back(std::move(assembly));
+	const auto [_, result] = _scripts.try_emplace(plugin.GetName(), plugin, std::move(assembly), pluginClassPtr->NewObject());
+	if (!result) {
+		return ErrorData{ std::format("Plugin name duplicate") };
+	}
 
 	return LoadResultData{ std::move(methods) };
 }
@@ -321,12 +335,22 @@ T DotnetLanguageModule::GetDelegate(const char_t* assemblyPath, const char_t* ty
 	return delegatePtr;
 }
 
-void DotnetLanguageModule::OnPluginStart(const IPlugin& ) {
-	//_startPlugin();
+void DotnetLanguageModule::OnPluginStart(const IPlugin& plugin) {
+	ScriptOpt scriptRef = FindScript(plugin.GetName());
+	if (scriptRef.has_value()) {
+		const auto& script = scriptRef->get();
+
+		script.InvokeOnStart();
+	}
 }
 
-void DotnetLanguageModule::OnPluginEnd(const IPlugin& ) {
-	//_endPlugin();
+void DotnetLanguageModule::OnPluginEnd(const IPlugin& plugin) {
+	ScriptOpt scriptRef = FindScript(plugin.GetName());
+	if (scriptRef.has_value()) {
+		const auto& script = scriptRef->get();
+
+		script.InvokeOnEnd();
+	}
 }
 
 void* DotnetLanguageModule::GetNativeMethod(const std::string& methodName) const {
@@ -365,6 +389,13 @@ bool DotnetLanguageModule::UnloadAssembly(ManagedGuid assemblyGuid) const {
 	return bool(result);
 }
 
+ScriptOpt DotnetLanguageModule::FindScript(const std::string& name) {
+	auto it = _scripts.find(name);
+	if (it != _scripts.end())
+		return std::get<ScriptInstance>(*it);
+	return std::nullopt;
+}
+
 // C++ to C#
 void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret) {
 	const auto& [classPtr, methodPtr] = *reinterpret_cast<ExportMethod*>(data);
@@ -374,8 +405,61 @@ void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* dat
 	std::vector<void*> args;
 	args.reserve(hasRet ? count - 1 : count);
 
-	for (uint8_t i = hasRet; i < count; ++i) {
-		args.push_back(p->GetArgumentPtr(i));
+	for (uint8_t i = hasRet, j = 0; i < count; ++i, ++j) {
+		void* arg;
+		const auto& param = method->paramTypes[j];
+		if (param.ref) {
+			arg = p->GetArgument<void*>(i);
+		} else {
+			switch (param.type) {
+				// Value types
+				case ValueType::Bool:
+				case ValueType::Char8:
+				case ValueType::Char16:
+				case ValueType::Int8:
+				case ValueType::Int16:
+				case ValueType::Int32:
+				case ValueType::Int64:
+				case ValueType::UInt8:
+				case ValueType::UInt16:
+				case ValueType::UInt32:
+				case ValueType::UInt64:
+				case ValueType::Pointer:
+				case ValueType::Float:
+				case ValueType::Double:
+					arg = p->GetArgumentPtr(i);
+					break;
+				// Ref types
+				case ValueType::Function:
+				case ValueType::Vector2:
+				case ValueType::Vector3:
+				case ValueType::Vector4:
+				case ValueType::Matrix4x4:
+				case ValueType::String:
+				case ValueType::ArrayBool:
+				case ValueType::ArrayChar8:
+				case ValueType::ArrayChar16:
+				case ValueType::ArrayInt8:
+				case ValueType::ArrayInt16:
+				case ValueType::ArrayInt32:
+				case ValueType::ArrayInt64:
+				case ValueType::ArrayUInt8:
+				case ValueType::ArrayUInt16:
+				case ValueType::ArrayUInt32:
+				case ValueType::ArrayUInt64:
+				case ValueType::ArrayPointer:
+				case ValueType::ArrayFloat:
+				case ValueType::ArrayDouble:
+				case ValueType::ArrayString:
+					arg = p->GetArgument<void*>(i);
+					break;
+				default:
+					std::puts("Unsupported types!\n");
+					std::terminate();
+					break;
+			}
+		}
+		args.push_back(arg);
 	}
 
 	void* retPtr = hasRet ? p->GetArgument<void*>(0) : ret->GetReturnPtr();
@@ -442,6 +526,44 @@ void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* dat
 	}
 }
 
+/*_________________________________________________*/
+
+ScriptInstance::ScriptInstance(const IPlugin& plugin, std::unique_ptr<Assembly> assembly, std::unique_ptr<Object> instance)
+	: _plugin{plugin},
+	  _assembly{std::move(assembly)},
+	  _instance{std::move(instance)} {
+
+	const auto& desc = plugin.GetDescriptor();
+	std::vector<std::string> deps;
+	deps.reserve(desc.dependencies.size());
+	for (const auto& dependency : desc.dependencies) {
+		deps.emplace_back(dependency.name);
+	}
+	_instance->InvokeMethodByName<void>("set_Id", plugin.GetId());
+	_instance->InvokeMethodByName<void>("set_Name", plugin.GetName());
+	_instance->InvokeMethodByName<void>("set_FullName", plugin.GetFriendlyName());
+	_instance->InvokeMethodByName<void>("set_Description", desc.description);
+	_instance->InvokeMethodByName<void>("set_Version", desc.versionName);
+	_instance->InvokeMethodByName<void>("set_Author", desc.createdBy);
+	_instance->InvokeMethodByName<void>("set_Website", desc.createdByURL);
+	_instance->InvokeMethodByName<void>("set_BaseDir", plugin.GetBaseDir().string());
+	_instance->InvokeMethodByName<void>("set_Dependencies", deps);
+}
+
+void ScriptInstance::InvokeOnStart() const {
+	ManagedMethod* onStartMethod = _instance->GetClass()->GetMethod("OnStart");
+	if (onStartMethod) {
+		_instance->InvokeMethod<void>(onStartMethod);
+	}
+}
+
+void ScriptInstance::InvokeOnEnd() const {
+	ManagedMethod* onEndMethod = _instance->GetClass()->GetMethod("OnEnd");
+	if (onEndMethod) {
+		_instance->InvokeMethod<void>(onEndMethod);
+	}
+}
+
 namespace netlm {
 	DotnetLanguageModule g_netlm;
 }
@@ -473,90 +595,17 @@ extern "C" {
 		g_netlm.GetProvider()->Log(std::format(LOG_PREFIX "{}:{}: {}", funcName, line, message), severity);
 	}
 
-	NETLM_EXPORT UniqueId GetPluginId(const plugify::IPlugin& plugin) {
-		return plugin.GetId();
-	}
-
-	NETLM_EXPORT const char* GetPluginName(const plugify::IPlugin& plugin) {
-		auto& source = plugin.GetName();
-		size_t size = source.length() + 1;
-		char* dest = reinterpret_cast<char*>(memAlloc(size));
-		std::memcpy(dest, source.c_str(), size);
-		return dest;
-	}
-
-	NETLM_EXPORT const char* GetPluginFullName(const plugify::IPlugin& plugin) {
-		auto& source = plugin.GetFriendlyName();
-		size_t size = source.length() + 1;
-		char* dest = reinterpret_cast<char*>(memAlloc(size));
-		std::memcpy(dest, source.c_str(), size);
-		return dest;
-	}
-
-	NETLM_EXPORT const char* GetPluginDescription(const plugify::IPlugin& plugin) {
-		auto& source = plugin.GetDescriptor().description;
-		size_t size = source.length() + 1;
-		char* dest = reinterpret_cast<char*>(memAlloc(size));
-		std::memcpy(dest, source.c_str(), size);
-		return dest;
-	}
-
-	NETLM_EXPORT const char* GetPluginVersion(const plugify::IPlugin& plugin) {
-		auto& source = plugin.GetDescriptor().versionName;
-		size_t size = source.length() + 1;
-		char* dest = reinterpret_cast<char*>(memAlloc(size));
-		std::memcpy(dest, source.c_str(), size);
-		return dest;
-	}
-
-	NETLM_EXPORT const char* GetPluginAuthor(const plugify::IPlugin& plugin) {
-		auto& source = plugin.GetDescriptor().createdBy;
-		size_t size = source.length() + 1;
-		char* dest = reinterpret_cast<char*>(memAlloc(size));
-		std::memcpy(dest, source.c_str(), size);
-		return dest;
-	}
-
-	NETLM_EXPORT const char* GetPluginWebsite(const plugify::IPlugin& plugin) {
-		auto& source = plugin.GetDescriptor().createdByURL;
-		size_t size = source.length() + 1;
-		char* dest = reinterpret_cast<char*>(memAlloc(size));
-		std::memcpy(dest, source.c_str(), size);
-		return dest;
-	}
-
-	NETLM_EXPORT const char* GetPluginBaseDir(const plugify::IPlugin& plugin) {
-		auto source = plugin.GetBaseDir().string();
-		size_t size = source.length() + 1;
-		char* dest = reinterpret_cast<char*>(memAlloc(size));
-		std::memcpy(dest, source.c_str(), size);
-		return dest;
-	}
-
-	NETLM_EXPORT void GetPluginDependencies(const plugify::IPlugin& plugin, char* deps[]) {
-		auto& dependencies = plugin.GetDescriptor().dependencies;
-		for (size_t i = 0; i < dependencies.size(); ++i) {
-			const auto& source = dependencies[i].name;
-			size_t size = source.size() + 1;
-			char* str = reinterpret_cast<char*>(memAlloc(size));
-			std::memcpy(str, source.c_str(), size);
-			memFree(deps[i]);
-			deps[i] = str;
-		}
-	}
-
-	NETLM_EXPORT int GetPluginDependenciesSize(const plugify::IPlugin& plugin) {
-		return static_cast<int>(plugin.GetDescriptor().dependencies.size());
-	}
-
-	NETLM_EXPORT const char* FindPluginResource(const plugify::IPlugin& plugin, const char* path) {
-		auto resource = plugin.FindResource(path);
-		if (resource.has_value()) {
-			auto source= resource->string();
-			size_t size = source.length() + 1;
-			char* dest = reinterpret_cast<char*>(memAlloc(size));
-			std::memcpy(dest, source.c_str(), size);
-			return dest;
+	NETLM_EXPORT const char* FindPluginResource(const char* pluginName, const char* path) {
+		ScriptOpt scriptRef = g_netlm.FindScript(pluginName);
+		if (scriptRef.has_value()) {
+			auto resource = scriptRef->get().GetPlugin().FindResource(path);
+			if (resource.has_value()) {
+				auto source= resource->string();
+				size_t size = source.length() + 1;
+				char* dest = reinterpret_cast<char*>(memAlloc(size));
+				std::memcpy(dest, source.c_str(), size);
+				return dest;
+			}
 		}
 		return nullptr;
 	}
@@ -1296,12 +1345,14 @@ extern "C" {
 		// @TODO: Store the assembly guid somewhere
 	}
 
-	NETLM_EXPORT void ManagedClass_Create(ManagedGuid* assemblyGuid, ClassHolder* classHolder, int32_t typeHash, const char* typeName, bool isPlugin, ManagedClass* outManagedClass) {
+	NETLM_EXPORT void ManagedClass_Create(ManagedGuid* assemblyGuid, ClassHolder* classHolder, int32_t typeHash, const char* typeName, uint32_t numBaseClasses, char** baseClasses, ManagedClass* outManagedClass) {
 		assert(assemblyGuid != nullptr);
 		assert(classHolder != nullptr);
 
 		Class* classObject = classHolder->GetOrCreateClassObject(typeHash, typeName);
-		classObject->SetPlugin(isPlugin); // true only if delivered from base plugin class
+		if (numBaseClasses > 0) {
+			classObject->SetBaseClasses(baseClasses, numBaseClasses);
+		}
 
 		*outManagedClass = ManagedClass{typeHash, classObject, *assemblyGuid};
 	}
@@ -1316,20 +1367,11 @@ extern "C" {
 		methodObject.returnType = returnType;
 
 		if (numParameters != 0) {
-			/*methodObject.parameterTypes.reserve(numParameters);
-
-			for (uint32_t i = 0; i < numParameters; ++i) {
-				methodObject.parameterTypes.emplace_back(parameterTypes[i]);
-			}*/
 			methodObject.parameterTypes.assign(parameterTypes, parameterTypes + numParameters);
 		}
 
 		if (numAttributes != 0) {
-			methodObject.attributeNames.reserve(numAttributes);
-
-			for (uint32_t i = 0; i < numAttributes; ++i) {
-				methodObject.attributeNames.emplace_back(attributeNames[i]);
-			}
+			methodObject.attributeNames.assign(attributeNames, attributeNames + numAttributes);
 		}
 
 		if (managedClass.classObject->HasMethod(methodName)) {

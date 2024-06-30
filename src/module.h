@@ -1,5 +1,6 @@
 #include <plugify/language_module.h>
 #include <plugify/method.h>
+#include <plugify/plugin.h>
 #include <plugify/function.h>
 
 #include <asmjit/asmjit.h>
@@ -20,6 +21,7 @@ namespace netlm {
 	using InitializeAssemblyDelegate = void(*)(char*, ManagedGuid *, ClassHolder *, const char *);
 	using UnloadAssemblyDelegate = void(*)(ManagedGuid *, int32_t *);
 
+	class Object;
 	class Assembly;
 	class Library;
 
@@ -28,7 +30,27 @@ namespace netlm {
 		ManagedMethod* methodPtr;
 	};
 
-	using ErrorString = std::optional<std::string>;
+	class ScriptInstance {
+	public:
+		ScriptInstance(const plugify::IPlugin& plugin, std::unique_ptr<Assembly> assembly, std::unique_ptr<Object> instance);
+		~ScriptInstance() = default;
+
+		const plugify::IPlugin& GetPlugin() const { return _plugin; }
+
+	private:
+		void InvokeOnStart() const;
+		void InvokeOnEnd() const;
+
+	private:
+		const plugify::IPlugin& _plugin;
+		std::unique_ptr<Assembly> _assembly;
+		std::unique_ptr<Object> _instance;
+
+		friend class DotnetLanguageModule;
+	};
+
+	using ScriptMap = std::unordered_map<std::string, ScriptInstance>;
+	using ScriptOpt = std::optional<std::reference_wrapper<ScriptInstance>>;
 
 	class DotnetLanguageModule final : public plugify::ILanguageModule {
 	public:
@@ -42,6 +64,9 @@ namespace netlm {
 		void OnPluginEnd(const plugify::IPlugin& plugin) override;
 		void OnMethodExport(const plugify::IPlugin& plugin) override;
 
+		const ScriptMap& GetScripts() const { return _scripts; }
+		ScriptOpt FindScript(const std::string& name);
+
 		const std::shared_ptr<plugify::IPlugifyProvider>& GetProvider() { return _provider; }
 		void* GetNativeMethod(const std::string& methodName) const;
 
@@ -50,7 +75,7 @@ namespace netlm {
 
 	private:
 		bool LoadHostFXR(const fs::path& hostPath);
-		ErrorString InitializeRuntimeHost(const fs::path& configPath);
+		std::string InitializeRuntimeHost(const fs::path& configPath);
 
 		template<class T>
 		T GetDelegate(const char_t* assemblyPath, const char_t* typeName, const char_t* methodName, const char_t* delegateTypeName) const;
@@ -66,7 +91,7 @@ namespace netlm {
 		std::unique_ptr<Library> _dll;
 		std::deleted_unique_ptr<void> _ctx;
 		std::unique_ptr<Assembly> _rootAssembly;
-		std::vector<std::unique_ptr<Assembly>> _loadedAssemblies;
+		ScriptMap _scripts;
 		std::vector<std::unique_ptr<ExportMethod>> _exportMethods;
 		std::unordered_map<std::string, void*> _nativesMap;
 		std::unordered_map<void*, plugify::Function> _functions;

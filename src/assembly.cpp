@@ -50,16 +50,16 @@ Class* ClassHolder::GetOrCreateClassObject(int32_t typeHash, const char* typeNam
 	auto it = _classObjects.find(typeHash);
 
 	if (it != _classObjects.end()) {
-		return it->second.get();
+		return std::get<std::unique_ptr<Class>>(*it).get();
 	}
 
 	it = _classObjects.emplace(typeHash, std::make_unique<Class>(this, typeName)).first;
 
-	return it->second.get();
+	return std::get<std::unique_ptr<Class>>(*it).get();
 }
 
-Class* ClassHolder::FindClassByName(const char* typeName) {
-	for (const auto& [_, classPtr]: _classObjects) {
+Class* ClassHolder::FindClassByName(std::string_view typeName) const {
+	for (const auto& [_, classPtr] : _classObjects) {
 		if (classPtr->GetName() == typeName) {
 			return classPtr.get();
 		}
@@ -68,9 +68,9 @@ Class* ClassHolder::FindClassByName(const char* typeName) {
 	return nullptr;
 }
 
-Class* ClassHolder::FindClassByName(std::string_view typeName) {
-	for (const auto& [_, classPtr]: _classObjects) {
-		if (classPtr->GetName() == typeName) {
+Class* ClassHolder::FindClassBySubClass(std::string_view typeHash) const {
+	for (const auto& [_, classPtr] : _classObjects) {
+		if (classPtr->IsAssignableFrom(typeHash)) {
 			return classPtr.get();
 		}
 	}

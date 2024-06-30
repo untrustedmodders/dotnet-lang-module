@@ -1,44 +1,21 @@
 ﻿namespace Plugify;
 
-/// <summary>
-/// Class which every c# (.net) plugin must implement.
-/// </summary>
-public abstract class Plugin : IEquatable<Plugin>, IComparable<Plugin>
+public class Plugin : IEquatable<Plugin>, IComparable<Plugin>
 {
-	private readonly nint _handle;
-		
-	public long Id { get; }
-	public string Name { get; }
-	public string FullName { get; }
-	public string Description { get; }
-	public string Version { get; }
-	public string Author { get; }
-	public string Website { get; }
-	public string BaseDir { get; }
-	public string[] Dependencies { get; }
-		
-	protected Plugin(nint handle)
-	{
-		_handle = handle;
-		Id = NativeMethods.GetPluginId(_handle);
-		Name = NativeMethods.GetPluginName(_handle);
-		FullName = NativeMethods.GetPluginFullName(_handle);
-		Description = NativeMethods.GetPluginDescription(_handle);
-		Version = NativeMethods.GetPluginVersion(_handle);
-		Author = NativeMethods.GetPluginAuthor(_handle);
-		Website = NativeMethods.GetPluginWebsite(_handle);
-		BaseDir = NativeMethods.GetPluginBaseDir(_handle);
-		Dependencies = new string[NativeMethods.GetPluginDependenciesSize(_handle)];
-		NativeMethods.GetPluginDependencies(_handle, Dependencies);
-	}
-		
+	public long Id { get; private set; } = -1;
+	public string Name { get; private set; } = "";
+	public string FullName { get; private set; } = "";
+	public string Description { get; private set; } = "";
+	public string Version { get; private set; } = "";
+	public string Author { get; private set; } = "";
+	public string Website { get; private set; } = "";
+	public string BaseDir { get; private set; } = "";
+	public string[] Dependencies { get; private set; } = [];
+
 	public string FindResource(string path)
 	{
-		return NativeMethods.FindPluginResource(_handle, path);
+		return NativeMethods.FindPluginResource(Name, path);
 	}
-
-	public abstract void OnStart();
-	public abstract void OnEnd();
 
 	public static bool operator ==(Plugin lhs, Plugin rhs)
 	{

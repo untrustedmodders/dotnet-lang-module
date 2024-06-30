@@ -16,7 +16,7 @@ public static class NativeInterop
 	public static readonly int ApiVersion = 1;
     public static InvokeMethodDelegate InvokeMethodDelegate = InvokeMethod;
     
-    private static readonly DCCallVM vm = new DCCallVM(4096);
+    private static readonly DCCallVM vm = new(4096);
 
     [UnmanagedCallersOnly]
     public static void InitializeAssembly(nint outErrorStringPtr, nint outAssemblyGuid, nint classHolderPtr, nint assemblyPathStringPtr)
@@ -155,10 +155,23 @@ public static class NativeInterop
     {
         string typeName = type.Name;
         nint typeNamePtr = Marshal.StringToHGlobalAnsi(typeName);
-        bool isPlugin = type.IsAssignableFrom(typeof(Plugin));
+        
+        List<nint> baseClassNamesPtrs = [];
+        Type? currentType = type.BaseType;
 
-        ManagedClass_Create(ref assemblyGuid, classHolderPtr, type.GetHashCode(), typeNamePtr, isPlugin, out ManagedClass managedClass);
+        while (currentType != null)
+        {
+	        baseClassNamesPtrs.Add(Marshal.StringToHGlobalAnsi(currentType.Name));
+	        currentType = currentType.BaseType;
+        }
 
+        ManagedClass_Create(ref assemblyGuid, classHolderPtr, type.GetHashCode(), typeNamePtr, (uint)baseClassNamesPtrs.Count, baseClassNamesPtrs.ToArray(), out ManagedClass managedClass);
+
+        foreach (var baseClassNamePtr in baseClassNamesPtrs)
+        {
+	        Marshal.FreeHGlobal(baseClassNamePtr);
+        }
+        
         Marshal.FreeHGlobal(typeNamePtr);
 
         Dictionary<string, MethodInfo> methods = new Dictionary<string, MethodInfo>();
@@ -229,7 +242,7 @@ public static class NativeInterop
         for (int i = 0; i < numParams; i++)
         {
             // params is stored as void**
-            nint paramAddress = *(nint*)((byte*)paramsPtr + paramsOffset);
+            nint paramPtr = *(nint*)((byte*)paramsPtr + paramsOffset);
             paramsOffset += nint.Size;
 
             ParameterInfo parameterInfo = parameterInfos[i];
@@ -239,11 +252,11 @@ public static class NativeInterop
             if (paramType.IsEnum)
             {
                 Type underlyingType = Enum.GetUnderlyingType(paramType);
-                parameters[i] = Enum.ToObject(paramType, Extract(underlyingType, paramAttributes, paramAddress));
+                parameters[i] = Enum.ToObject(paramType, Extract(underlyingType, paramAttributes, paramPtr));
             } 
             else
             {
-                parameters[i] = Extract(paramType, paramAttributes, paramAddress);
+                parameters[i] = Extract(paramType, paramAttributes, paramPtr);
             }
         }
     }
@@ -263,7 +276,7 @@ public static class NativeInterop
         for (int i = 0; i < numParams; i++)
         {
             // params is stored as void**
-            nint paramAddress = *(nint*)((byte*)paramsPtr + paramsOffset);
+            nint paramPtr = *(nint*)((byte*)paramsPtr + paramsOffset);
             paramsOffset += nint.Size;
 
             ParameterInfo parameterInfo = parameterInfos[i];
@@ -277,7 +290,6 @@ public static class NativeInterop
             paramType = TypeUtils.ConvertToUnrefType(paramType);
 
             object? paramValue = parameters[i];
-            nint paramPtr = *(nint*)paramAddress;
             object[] paramAttributes = parameterInfo.GetCustomAttributes(typeof(MarshalAsAttribute), false);
 
             if (paramType.IsEnum)
@@ -485,199 +497,130 @@ public static class NativeInterop
         throw new NotImplementedException($"Parameter type {paramType.Name} not implemented");
     }
 
-    private static unsafe object Extract(Type paramType, object[] paramAttributes, nint paramAddress)
+    private static unsafe object Extract(Type paramType, object[] paramAttributes, nint paramPtr)
     {
-	    object? LoadFromAddress(nint paramPtr, ValueType valueType)
-	    {
-		    switch (valueType)
-		    {
-			    case ValueType.Function:
-				    return GetDelegateForFunctionPointer(paramPtr, paramType);
-			    case ValueType.String:
-				    return NativeMethods.GetStringData(paramPtr);
-			    case ValueType.ArrayBool:
-				    var arrBool = new bool[NativeMethods.GetVectorSizeBool(paramPtr)];
-				    NativeMethods.GetVectorDataBool(paramPtr, arrBool);
-				    return arrBool;
-			    case ValueType.ArrayChar8:
-			    case ValueType.ArrayChar16:
-				    if (TypeUtils.IsUseAnsi(paramAttributes))
-				    {
-					    var arrChar = new char[NativeMethods.GetVectorSizeChar8(paramPtr)];
-					    NativeMethods.GetVectorDataChar8(paramPtr, arrChar);
-					    return arrChar;
-				    }
-				    else
-				    {
-					    var arrChar = new char[NativeMethods.GetVectorSizeChar16(paramPtr)];
-					    NativeMethods.GetVectorDataChar16(paramPtr, arrChar);
-					    return arrChar;
-				    }
-			    case ValueType.ArrayInt8:
-				    var arrInt8 = new sbyte[NativeMethods.GetVectorSizeInt8(paramPtr)];
-				    NativeMethods.GetVectorDataInt8(paramPtr, arrInt8);
-				    return arrInt8;
-			    case ValueType.ArrayInt16:
-				    var arrInt16 = new short[NativeMethods.GetVectorSizeInt16(paramPtr)];
-				    NativeMethods.GetVectorDataInt16(paramPtr, arrInt16);
-				    return arrInt16;
-			    case ValueType.ArrayInt32:
-				    var arrInt32 = new int[NativeMethods.GetVectorSizeInt32(paramPtr)];
-				    NativeMethods.GetVectorDataInt32(paramPtr, arrInt32);
-				    return arrInt32;
-			    case ValueType.ArrayInt64:
-				    var arrInt64 = new long[NativeMethods.GetVectorSizeInt64(paramPtr)];
-				    NativeMethods.GetVectorDataInt64(paramPtr, arrInt64);
-				    return arrInt64;
-			    case ValueType.ArrayUInt8:
-				    var arrUInt8 = new byte[NativeMethods.GetVectorSizeUInt8(paramPtr)];
-				    NativeMethods.GetVectorDataUInt8(paramPtr, arrUInt8);
-				    return arrUInt8;
-			    case ValueType.ArrayUInt16:
-				    var arrUInt16 = new ushort[NativeMethods.GetVectorSizeUInt16(paramPtr)];
-				    NativeMethods.GetVectorDataUInt16(paramPtr, arrUInt16);
-				    return arrUInt16;
-			    case ValueType.ArrayUInt32:
-				    var arrUInt32 = new uint[NativeMethods.GetVectorSizeUInt32(paramPtr)];
-				    NativeMethods.GetVectorDataUInt32(paramPtr, arrUInt32);
-				    return arrUInt32;
-			    case ValueType.ArrayUInt64:
-				    var arrUInt64 = new ulong[NativeMethods.GetVectorSizeUInt64(paramPtr)];
-				    NativeMethods.GetVectorDataUInt64(paramPtr, arrUInt64);
-				    return arrUInt64;
-			    case ValueType.ArrayPointer:
-				    var arrIntPtr = new nint[NativeMethods.GetVectorSizeIntPtr(paramPtr)];
-				    NativeMethods.GetVectorDataIntPtr(paramPtr, arrIntPtr);
-				    return arrIntPtr;
-			    case ValueType.ArrayFloat:
-				    var arrFloat = new float[NativeMethods.GetVectorSizeFloat(paramPtr)];
-				    NativeMethods.GetVectorDataFloat(paramPtr, arrFloat);
-				    return arrFloat;
-			    case ValueType.ArrayDouble:
-				    var arrDouble = new double[NativeMethods.GetVectorSizeDouble(paramPtr)];
-				    NativeMethods.GetVectorDataDouble(paramPtr, arrDouble);
-				    return arrDouble;
-			    case ValueType.ArrayString:
-				    var arrString = new string[NativeMethods.GetVectorSizeString(paramPtr)];
-				    NativeMethods.GetVectorDataString(paramPtr, arrString);
-				    return arrString;
-			    case ValueType.Vector2:
-			    case ValueType.Vector3:
-			    case ValueType.Vector4:
-			    case ValueType.Matrix4x4:
-				    return Marshal.PtrToStructure(paramPtr, paramType) ?? throw new InvalidOperationException("Invalid structure!");
-			    default:
-				    return null;
-		    }
-	    }
-
 	    if (paramType.IsByRef)
 	    {
 		    paramType = TypeUtils.ConvertToUnrefType(paramType);
-		    ValueType valueType = TypeUtils.ConvertToValueType(paramType);
-		    
-		    nint paramPtr = *(nint*)paramAddress;
-		    
-		    switch (valueType)
-		    {
-			    case ValueType.Bool:
-				    return *(byte*)paramPtr == 1;
-			    case ValueType.Char8:
-			    case ValueType.Char16:
-				    if (TypeUtils.IsUseAnsi(paramAttributes))
-				    {
-					    return (char)(*(byte*)paramPtr);
-				    }
-				    else
-				    {
-					    return (char)(*(short*)paramPtr);
-				    }
-			    case ValueType.Int8:
-				    return *(sbyte*)paramPtr;
-			    case ValueType.Int16:
-				    return *(short*)paramPtr;
-			    case ValueType.Int32:
-				    return *(int*)paramPtr;
-			    case ValueType.Int64:
-				    return *(long*)paramPtr;
-			    case ValueType.UInt8:
-				    return *(byte*)paramPtr;
-			    case ValueType.UInt16:
-				    return *(ushort*)paramPtr;
-			    case ValueType.UInt32:
-				    return *(uint*)paramPtr;
-			    case ValueType.UInt64:
-				    return *(ulong*)paramPtr;
-			    case ValueType.Pointer:
-				    return *(nint*)paramPtr;
-			    case ValueType.Float:
-				    return *(float*)paramPtr;
-			    case ValueType.Double:
-				    return *(double*)paramPtr;
-			    default:
-				    var result = LoadFromAddress(paramPtr, valueType);
-				    if (result != null)
-					    return result;
-				    break;
-		    }
-		    
-		    if (paramType.IsValueType)
-		    {
-			    return Marshal.PtrToStructure(paramPtr, paramType) ?? throw new InvalidOperationException("Invalid structure!");
-		    }
 	    }
-	    else
+
+	    ValueType valueType = TypeUtils.ConvertToValueType(paramType);
+	    switch (valueType)
 	    {
-		    ValueType valueType = TypeUtils.ConvertToValueType(paramType);
-		    switch (valueType)
-		    {
-			    case ValueType.Bool:
-				    return *(byte*)paramAddress == 1;
-			    case ValueType.Char8:
-			    case ValueType.Char16:
-				    if (TypeUtils.IsUseAnsi(paramAttributes))
-				    {
-					    return (char)(*(byte*)paramAddress);
-				    }
-				    else
-				    {
-					    return (char)(*(short*)paramAddress);
-				    }
-			    case ValueType.Int8:
-				    return *(sbyte*)paramAddress;
-			    case ValueType.Int16:
-				    return *(short*)paramAddress;
-			    case ValueType.Int32:
-				    return *(int*)paramAddress;
-			    case ValueType.Int64:
-				    return *(long*)paramAddress;
-			    case ValueType.UInt8:
-				    return *(byte*)paramAddress;
-			    case ValueType.UInt16:
-				    return *(ushort*)paramAddress;
-			    case ValueType.UInt32:
-				    return *(uint*)paramAddress;
-			    case ValueType.UInt64:
-				    return *(ulong*)paramAddress;
-			    case ValueType.Pointer:
-				    return *(nint*)paramAddress;
-			    case ValueType.Float:
-				    return *(float*)paramAddress;
-			    case ValueType.Double:
-				    return *(double*)paramAddress;
-			    default:
-				    nint paramPtr = *(nint*)paramAddress;
-				    var result = LoadFromAddress(paramPtr, valueType);
-				    if (result != null)
-					    return result;
-				    break;
-		    }
-		    
-		    if (paramType.IsValueType)
-		    {
-			    nint paramPtr = *(nint*)paramAddress;
+		    case ValueType.Bool:
+			    return *(byte*)paramPtr == 1;
+		    case ValueType.Char8:
+		    case ValueType.Char16:
+			    if (TypeUtils.IsUseAnsi(paramAttributes))
+			    {
+				    return (char)(*(byte*)paramPtr);
+			    }
+			    else
+			    {
+				    return (char)(*(short*)paramPtr);
+			    }
+		    case ValueType.Int8:
+			    return *(sbyte*)paramPtr;
+		    case ValueType.Int16:
+			    return *(short*)paramPtr;
+		    case ValueType.Int32:
+			    return *(int*)paramPtr;
+		    case ValueType.Int64:
+			    return *(long*)paramPtr;
+		    case ValueType.UInt8:
+			    return *(byte*)paramPtr;
+		    case ValueType.UInt16:
+			    return *(ushort*)paramPtr;
+		    case ValueType.UInt32:
+			    return *(uint*)paramPtr;
+		    case ValueType.UInt64:
+			    return *(ulong*)paramPtr;
+		    case ValueType.Pointer:
+			    return *(nint*)paramPtr;
+		    case ValueType.Float:
+			    return *(float*)paramPtr;
+		    case ValueType.Double:
+			    return *(double*)paramPtr;
+		    case ValueType.Function:
+			    return GetDelegateForFunctionPointer(paramPtr, paramType);
+		    case ValueType.String:
+			    return NativeMethods.GetStringData(paramPtr);
+		    case ValueType.ArrayBool:
+			    var arrBool = new bool[NativeMethods.GetVectorSizeBool(paramPtr)];
+			    NativeMethods.GetVectorDataBool(paramPtr, arrBool);
+			    return arrBool;
+		    case ValueType.ArrayChar8:
+		    case ValueType.ArrayChar16:
+			    if (TypeUtils.IsUseAnsi(paramAttributes))
+			    {
+				    var arrChar = new char[NativeMethods.GetVectorSizeChar8(paramPtr)];
+				    NativeMethods.GetVectorDataChar8(paramPtr, arrChar);
+				    return arrChar;
+			    }
+			    else
+			    {
+				    var arrChar = new char[NativeMethods.GetVectorSizeChar16(paramPtr)];
+				    NativeMethods.GetVectorDataChar16(paramPtr, arrChar);
+				    return arrChar;
+			    }
+		    case ValueType.ArrayInt8:
+			    var arrInt8 = new sbyte[NativeMethods.GetVectorSizeInt8(paramPtr)];
+			    NativeMethods.GetVectorDataInt8(paramPtr, arrInt8);
+			    return arrInt8;
+		    case ValueType.ArrayInt16:
+			    var arrInt16 = new short[NativeMethods.GetVectorSizeInt16(paramPtr)];
+			    NativeMethods.GetVectorDataInt16(paramPtr, arrInt16);
+			    return arrInt16;
+		    case ValueType.ArrayInt32:
+			    var arrInt32 = new int[NativeMethods.GetVectorSizeInt32(paramPtr)];
+			    NativeMethods.GetVectorDataInt32(paramPtr, arrInt32);
+			    return arrInt32;
+		    case ValueType.ArrayInt64:
+			    var arrInt64 = new long[NativeMethods.GetVectorSizeInt64(paramPtr)];
+			    NativeMethods.GetVectorDataInt64(paramPtr, arrInt64);
+			    return arrInt64;
+		    case ValueType.ArrayUInt8:
+			    var arrUInt8 = new byte[NativeMethods.GetVectorSizeUInt8(paramPtr)];
+			    NativeMethods.GetVectorDataUInt8(paramPtr, arrUInt8);
+			    return arrUInt8;
+		    case ValueType.ArrayUInt16:
+			    var arrUInt16 = new ushort[NativeMethods.GetVectorSizeUInt16(paramPtr)];
+			    NativeMethods.GetVectorDataUInt16(paramPtr, arrUInt16);
+			    return arrUInt16;
+		    case ValueType.ArrayUInt32:
+			    var arrUInt32 = new uint[NativeMethods.GetVectorSizeUInt32(paramPtr)];
+			    NativeMethods.GetVectorDataUInt32(paramPtr, arrUInt32);
+			    return arrUInt32;
+		    case ValueType.ArrayUInt64:
+			    var arrUInt64 = new ulong[NativeMethods.GetVectorSizeUInt64(paramPtr)];
+			    NativeMethods.GetVectorDataUInt64(paramPtr, arrUInt64);
+			    return arrUInt64;
+		    case ValueType.ArrayPointer:
+			    var arrIntPtr = new nint[NativeMethods.GetVectorSizeIntPtr(paramPtr)];
+			    NativeMethods.GetVectorDataIntPtr(paramPtr, arrIntPtr);
+			    return arrIntPtr;
+		    case ValueType.ArrayFloat:
+			    var arrFloat = new float[NativeMethods.GetVectorSizeFloat(paramPtr)];
+			    NativeMethods.GetVectorDataFloat(paramPtr, arrFloat);
+			    return arrFloat;
+		    case ValueType.ArrayDouble:
+			    var arrDouble = new double[NativeMethods.GetVectorSizeDouble(paramPtr)];
+			    NativeMethods.GetVectorDataDouble(paramPtr, arrDouble);
+			    return arrDouble;
+		    case ValueType.ArrayString:
+			    var arrString = new string[NativeMethods.GetVectorSizeString(paramPtr)];
+			    NativeMethods.GetVectorDataString(paramPtr, arrString);
+			    return arrString;
+		    case ValueType.Vector2:
+		    case ValueType.Vector3:
+		    case ValueType.Vector4:
+		    case ValueType.Matrix4x4:
 			    return Marshal.PtrToStructure(paramPtr, paramType) ?? throw new InvalidOperationException("Invalid structure!");
-		    }
+	    }
+	    
+	    if (paramType.IsValueType)
+	    {
+		    return Marshal.PtrToStructure(paramPtr, paramType) ?? throw new InvalidOperationException("Invalid structure!");
 	    }
 	    
 	    throw new NotImplementedException($"Parameter type {paramType.Name} not implemented");
@@ -2242,7 +2185,7 @@ public static class NativeInterop
     }
 
     [DllImport(NativeMethods.DllName)]
-    private static extern void ManagedClass_Create(ref Guid assemblyGuid, nint classHolderPtr, int typeHash, nint typeNamePtr, bool isPlugin, [Out] out ManagedClass result);
+    private static extern void ManagedClass_Create(ref Guid assemblyGuid, nint classHolderPtr, int typeHash, nint typeNamePtr, uint numBaseClasses, nint[] baseClassNames, [Out] out ManagedClass result);
 
     [DllImport(NativeMethods.DllName)]
     private static extern void NativeInterop_SetInvokeMethodFunction([In] ref Guid assemblyGuid, nint classHolderPtr, nint invokeMethodPtr);
