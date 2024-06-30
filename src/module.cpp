@@ -336,20 +336,16 @@ T DotnetLanguageModule::GetDelegate(const char_t* assemblyPath, const char_t* ty
 }
 
 void DotnetLanguageModule::OnPluginStart(const IPlugin& plugin) {
-	ScriptOpt scriptRef = FindScript(plugin.GetName());
-	if (scriptRef.has_value()) {
-		const auto& script = scriptRef->get();
-
-		script.InvokeOnStart();
+	ScriptInstance* script = FindScript(plugin.GetName());
+	if (script) {
+		script->InvokeOnStart();
 	}
 }
 
 void DotnetLanguageModule::OnPluginEnd(const IPlugin& plugin) {
-	ScriptOpt scriptRef = FindScript(plugin.GetName());
-	if (scriptRef.has_value()) {
-		const auto& script = scriptRef->get();
-
-		script.InvokeOnEnd();
+	ScriptInstance* script = FindScript(plugin.GetName());
+	if (script) {
+		script->InvokeOnEnd();
 	}
 }
 
@@ -389,11 +385,11 @@ bool DotnetLanguageModule::UnloadAssembly(ManagedGuid assemblyGuid) const {
 	return bool(result);
 }
 
-ScriptOpt DotnetLanguageModule::FindScript(const std::string& name) {
+ScriptInstance* DotnetLanguageModule::FindScript(const std::string& name) {
 	auto it = _scripts.find(name);
 	if (it != _scripts.end())
-		return std::get<ScriptInstance>(*it);
-	return std::nullopt;
+		return &std::get<ScriptInstance>(*it);
+	return nullptr;
 }
 
 // C++ to C#
@@ -596,9 +592,9 @@ extern "C" {
 	}
 
 	NETLM_EXPORT const char* FindPluginResource(const char* pluginName, const char* path) {
-		ScriptOpt scriptRef = g_netlm.FindScript(pluginName);
-		if (scriptRef.has_value()) {
-			auto resource = scriptRef->get().GetPlugin().FindResource(path);
+		ScriptInstance* script = g_netlm.FindScript(pluginName);
+		if (script) {
+			auto resource = script->GetPlugin().FindResource(path);
 			if (resource.has_value()) {
 				auto source= resource->string();
 				size_t size = source.length() + 1;

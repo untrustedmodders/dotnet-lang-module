@@ -23,13 +23,13 @@ namespace netlm {
 		ClassHolder& operator=(ClassHolder&&) noexcept = delete;
 		~ClassHolder() = default;
 
-		[[nodiscard]] bool CheckAssemblyLoaded() const;
-		[[nodiscard]] Assembly* GetOwnerAssembly() const { return _ownerAssembly; }
-		[[nodiscard]] const ClassMap& GetClasses() const { return _classObjects; }
-		[[nodiscard]] Class* GetOrCreateClassObject(int32_t typeHash, const char* typeName);
-		[[nodiscard]] Class* FindClassByName(std::string_view typeName) const;
-		[[nodiscard]] Class* FindClassBySubClass(std::string_view typeName) const;
-		[[nodiscard]] InvokeMethodFunction GetInvokeMethodFunction() const { return _invokeMethodFunction; }
+		bool CheckAssemblyLoaded() const;
+		Assembly* GetOwnerAssembly() const { return _ownerAssembly; }
+		const ClassMap& GetClasses() const { return _classObjects; }
+		Class* GetOrCreateClassObject(int32_t typeHash, const char* typeName);
+		Class* FindClassByName(std::string_view typeName) const;
+		Class* FindClassBySubClass(std::string_view typeName) const;
+		InvokeMethodFunction GetInvokeMethodFunction() const { return _invokeMethodFunction; }
 
 		void SetInvokeMethodFunction(InvokeMethodFunction invokeMethodFptr) { _invokeMethodFunction = invokeMethodFptr; }
 
@@ -51,11 +51,11 @@ namespace netlm {
 		Assembly& operator=(Assembly&&) noexcept = delete;
 		~Assembly();
 
-		[[nodiscard]] ManagedGuid& GetGuid() { return _guid; }
-		[[nodiscard]] const ManagedGuid& GetGuid() const { return _guid; }
-		[[nodiscard]] ClassHolder& GetClassObjectHolder() { return _classObjectHolder; }
-		[[nodiscard]] const ClassHolder& GetClassObjectHolder() const { return _classObjectHolder; }
-		[[nodiscard]] bool IsLoaded() const { return _guid.IsValid(); }
+		ManagedGuid& GetGuid() { return _guid; }
+		const ManagedGuid& GetGuid() const { return _guid; }
+		ClassHolder& GetClassObjectHolder() { return _classObjectHolder; }
+		const ClassHolder& GetClassObjectHolder() const { return _classObjectHolder; }
+		bool IsLoaded() const { return _guid.IsValid(); }
 
 		bool Unload();
 

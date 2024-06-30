@@ -38,24 +38,24 @@ namespace netlm {
 		Class& operator=(Class&&) noexcept = delete;
 		~Class() = default;
 
-		[[nodiscard]] const std::string& GetName() const { return _name; }
-		[[nodiscard]] ClassHolder* GetParent() const { return _parent; }
+		const std::string& GetName() const { return _name; }
+		ClassHolder* GetParent() const { return _parent; }
 
-		[[nodiscard]] NewObjectFunction GetNewObjectFunction() const { return _newObjectFunction; }
+		NewObjectFunction GetNewObjectFunction() const { return _newObjectFunction; }
 		void SetNewObjectFunction(NewObjectFunction newObjectFptr) { _newObjectFunction = newObjectFptr; }
 
-		[[nodiscard]] FreeObjectFunction GetFreeObjectFunction() const { return _freeObjectFunction; }
+		FreeObjectFunction GetFreeObjectFunction() const { return _freeObjectFunction; }
 		void SetFreeObjectFunction(FreeObjectFunction freeObjectFptr) { _freeObjectFunction = freeObjectFptr; }
 
-		[[nodiscard]] bool HasMethod(const std::string& methodName) const { return _methods.find(methodName) != _methods.end(); }
+		bool HasMethod(const std::string& methodName) const { return _methods.find(methodName) != _methods.end(); }
 
-		[[nodiscard]] bool IsAssignableFrom(std::string_view typeHash) const;
+		bool IsAssignableFrom(std::string_view typeHash) const;
 		void SetBaseClasses(char** baseClasses, uint32_t numBaseClasses) { _baseClasses.assign(baseClasses, baseClasses + numBaseClasses); }
 
-		[[nodiscard]] ManagedMethod* GetMethod(const std::string& methodName);
-		[[nodiscard]] const ManagedMethod* GetMethod(const std::string& methodName) const;
+		ManagedMethod* GetMethod(const std::string& methodName);
+		const ManagedMethod* GetMethod(const std::string& methodName) const;
 
-		[[nodiscard]] const MethodMap& GetMethods() const { return _methods; }
+		const MethodMap& GetMethods() const { return _methods; }
 
 		void AddMethod(const std::string& methodName, ManagedMethod&& methodObject) { _methods[methodName] = std::move(methodObject); }
 

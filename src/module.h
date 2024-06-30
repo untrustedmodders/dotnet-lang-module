@@ -50,7 +50,6 @@ namespace netlm {
 	};
 
 	using ScriptMap = std::unordered_map<std::string, ScriptInstance>;
-	using ScriptOpt = std::optional<std::reference_wrapper<ScriptInstance>>;
 
 	class DotnetLanguageModule final : public plugify::ILanguageModule {
 	public:
@@ -65,7 +64,7 @@ namespace netlm {
 		void OnMethodExport(const plugify::IPlugin& plugin) override;
 
 		const ScriptMap& GetScripts() const { return _scripts; }
-		ScriptOpt FindScript(const std::string& name);
+		ScriptInstance* FindScript(const std::string& name);
 
 		const std::shared_ptr<plugify::IPlugifyProvider>& GetProvider() { return _provider; }
 		void* GetNativeMethod(const std::string& methodName) const;

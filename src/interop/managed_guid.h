@@ -7,7 +7,7 @@ namespace netlm {
 		uint64_t low;
 		uint64_t high;
 
-		[[nodiscard]] bool IsValid() const {
+		bool IsValid() const {
 			return low != 0 || high != 0;
 		}
 	};

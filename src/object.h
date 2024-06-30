@@ -18,7 +18,7 @@ namespace netlm {
 		// Destructor frees the managed object
 		~Object();
 
-		[[nodiscard]] Class* GetClass() const { return _classPtr; }
+		Class* GetClass() const { return _classPtr; }
 
 		template<class ReturnType, class... Args>
 		ReturnType InvokeMethod(const ManagedMethod* methodPtr, Args&&... args) const {
@@ -54,7 +54,7 @@ namespace netlm {
 		}
 
 	private:
-		[[nodiscard]] const ManagedMethod* GetMethod(const std::string& methodName) const;
+		const ManagedMethod* GetMethod(const std::string& methodName) const;
 		void* InvokeMethod(const ManagedMethod* methodPtr, void** argsVptr, void* returnValueVptr) const;
 
 		Class* _classPtr;
