@@ -26,7 +26,7 @@ namespace netlm {
 			static_assert(std::is_void_v<ReturnType> || std::is_object_v<ReturnType>, "Return type must be either a value type or a pointer type to be used in interop (no references)");
 
 			if constexpr (sizeof...(args) != 0) {
-				void* argsVptr[] = {&args...};
+				void* argsVptr[] = { (void*) &args ... };
 
 				if constexpr (std::is_void_v<ReturnType>) {
 					InvokeMethod(methodPtr, argsVptr, nullptr);
@@ -47,7 +47,7 @@ namespace netlm {
 		}
 
 		template<class ReturnType, class... Args>
-		 ReturnType InvokeMethodByName(const std::string& methodName, Args&&... args) const {
+		ReturnType InvokeMethodByName(const std::string& methodName, Args&&... args) const {
 			const ManagedMethod* methodPtr = GetMethod(methodName);
 			assert(methodPtr != nullptr && "Method not found");
 			return InvokeMethod<ReturnType>(methodPtr, std::forward<Args>(args)...);

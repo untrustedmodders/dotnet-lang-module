@@ -37,5 +37,5 @@ const ManagedMethod* Object::GetMethod(const std::string& methodName) const {
 		return nullptr;
 	}
 
-	return &it->second;
+	return &std::get<ManagedMethod>(*it);
 }

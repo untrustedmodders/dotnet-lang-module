@@ -152,20 +152,7 @@ internal static class TypeUtils
 		    return valueType;
 	    }
 
-	    return type.IsDelegate() ? ValueType.Function : ValueType.Invalid;
-    }
-    
-    internal static bool IsUseAnsi(object[] customAttributes)
-    {
-	    foreach (var a in customAttributes)
-	    {
-		    if (a is MarshalAsAttribute attribute)
-		    {
-			    return attribute.Value is UnmanagedType.I1 or UnmanagedType.U1;
-		    }
-	    }
-
-	    return false;
+	    return typeof(Delegate).IsAssignableFrom(type) ? ValueType.Function : ValueType.Invalid;
     }
 
     internal static Type ConvertToUnrefType(Type paramType)
@@ -178,9 +165,17 @@ internal static class TypeUtils
 	    }
 	    return type;
     }
-    
-    internal static bool IsDelegate(this Type paramType)
+
+    internal static bool IsUseAnsi(object[] customAttributes)
     {
-	    return typeof(Delegate).IsAssignableFrom(paramType);
+	    foreach (var a in customAttributes)
+	    {
+		    if (a is MarshalAsAttribute attribute)
+		    {
+			    return attribute.Value is UnmanagedType.I1 or UnmanagedType.U1;
+		    }
+	    }
+
+	    return false;
     }
 }
