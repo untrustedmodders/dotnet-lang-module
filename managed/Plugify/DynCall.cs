@@ -54,6 +54,7 @@ public class DCCallVM : SafeHandle
     public nint CallPointer(nint funcptr) => DyncallMethods.CallPointer(handle, funcptr);
     public void CallAggr(nint funcptr, DCaggr ag, nint returnValue) => DyncallMethods.CallAggr(handle, funcptr, ag.DangerousGetHandle(), returnValue);
     public unsafe void CallAggr(nint funcptr, DCaggr ag, void* returnValue) => DyncallMethods.CallAggr(handle, funcptr, ag.DangerousGetHandle(), (nint)returnValue);
+    public unsafe void BeginCallAggr(DCaggr ag) => DyncallMethods.BeginCallAggr(handle, ag.DangerousGetHandle());
 
     public int GetError() => DyncallMethods.GetError(handle);
 }
@@ -265,6 +266,9 @@ internal static class DyncallMethods
 
     [DllImport(NativeMethods.DllName)]
     public static extern void CallAggr(nint vm, nint funcptr, nint ag, nint returnValue);
+
+    [DllImport(NativeMethods.DllName)]
+    public static extern void BeginCallAggr(nint vm, nint ag);
 
     [DllImport(NativeMethods.DllName)]
     public static extern int GetError(nint vm);

@@ -40,6 +40,8 @@ extern "C" {
 	NETLM_EXPORT void* CallPointer(DCCallVM* vm, void* funcptr) { return dcCallPointer(vm, funcptr); }
 	NETLM_EXPORT void CallAggr(DCCallVM* vm, void* funcptr, DCaggr* ag, void* returnValue) { dcCallAggr(vm, funcptr, ag, returnValue); }
 
+	NETLM_EXPORT void BeginCallAggr(DCCallVM* vm, DCaggr* ag) { dcBeginCallAggr(vm, ag); }
+
 	NETLM_EXPORT int GetError(DCCallVM* vm) { return dcGetError(vm); }
 
 	NETLM_EXPORT DCaggr* NewAggr(size_t fieldCount, size_t size) { return dcNewAggr(fieldCount, size); }
