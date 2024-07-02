@@ -87,7 +87,7 @@ CTYPES_MAP = {
     'void': 'void',
     'bool': 'bool',
     'char8': 'sbyte',
-    'char16': 'char',
+    'char16': 'ushort',
     'int8': 'sbyte',
     'int16': 'short',
     'int32': 'int',
@@ -126,7 +126,7 @@ VAL_TYPESCAST_MAP = {
     'void': '',
     'bool': '',
     'char8': 'Convert.ToSByte',
-    'char16': '',
+    'char16': 'Convert.ToUInt16',
     'int8': '',
     'int16': '',
     'int32': '',
@@ -151,7 +151,7 @@ VAL_TYPESCAST_MAP = {
     'uint16*': 'NativeMethods.CreateVectorUInt16',
     'uint32*': 'NativeMethods.CreateVectorUInt32',
     'uint64*': 'NativeMethods.CreateVectorUInt64',
-    'ptr64*': 'NativeMethods.CreateVectorUIntPtr',
+    'ptr64*': 'NativeMethods.CreateVectorIntPtr',
     'float*': 'NativeMethods.CreateVectorFloat',
     'double*': 'NativeMethods.CreateVectorDouble',
     'string*': 'NativeMethods.CreateVectorString',
@@ -165,7 +165,7 @@ RET_TYPESCAST_MAP = {
     'void': '',
     'bool': '',
     'char8': 'Convert.ToSByte',
-    'char16': '',
+    'char16': 'Convert.ToUInt16',
     'int8': '',
     'int16': '',
     'int32': '',
@@ -190,7 +190,7 @@ RET_TYPESCAST_MAP = {
     'uint16*': 'NativeMethods.AllocateVectorUInt16',
     'uint32*': 'NativeMethods.AllocateVectorUInt32',
     'uint64*': 'NativeMethods.AllocateVectorUInt64',
-    'ptr64*': 'NativeMethods.AllocateVectorUIntPtr',
+    'ptr64*': 'NativeMethods.AllocateVectorIntPtr',
     'float*': 'NativeMethods.AllocateVectorFloat',
     'double*': 'NativeMethods.AllocateVectorDouble',
     'string*': 'NativeMethods.AllocateVectorString',
@@ -204,7 +204,7 @@ ASS_TYPESCAST_MAP = {
     'void': '',
     'bool': '',
     'char8': 'Convert.ToChar',
-    'char16': '',
+    'char16': 'Convert.ToChar',
     'int8': '',
     'int16': '',
     'int32': '',
@@ -229,7 +229,7 @@ ASS_TYPESCAST_MAP = {
     'uint16*': 'NativeMethods.GetVectorDataUInt16',
     'uint32*': 'NativeMethods.GetVectorDataUInt32',
     'uint64*': 'NativeMethods.GetVectorDataUInt64',
-    'ptr64*': 'NativeMethods.GetVectorDataUIntPtr',
+    'ptr64*': 'NativeMethods.GetVectorDataIntPtr',
     'float*': 'NativeMethods.GetVectorDataFloat',
     'double*': 'NativeMethods.GetVectorDataDouble',
     'string*': 'NativeMethods.GetVectorDataString',
@@ -268,7 +268,7 @@ SIZ_TYPESCAST_MAP = {
     'uint16*': 'NativeMethods.GetVectorSizeUInt16',
     'uint32*': 'NativeMethods.GetVectorSizeUInt32',
     'uint64*': 'NativeMethods.GetVectorSizeUInt64',
-    'ptr64*': 'NativeMethods.GetVectorSizeUIntPtr',
+    'ptr64*': 'NativeMethods.GetVectorSizeIntPtr',
     'float*': 'NativeMethods.GetVectorSizeFloat',
     'double*': 'NativeMethods.GetVectorSizeDouble',
     'string*': 'NativeMethods.GetVectorSizeString',
@@ -307,7 +307,7 @@ DEL_TYPESCAST_MAP = {
     'uint16*': 'NativeMethods.DeleteVectorUInt16',
     'uint32*': 'NativeMethods.DeleteVectorUInt32',
     'uint64*': 'NativeMethods.DeleteVectorUInt64',
-    'ptr64*': 'NativeMethods.DeleteVectorUIntPtr',
+    'ptr64*': 'NativeMethods.DeleteVectorIntPtr',
     'float*': 'NativeMethods.DeleteVectorFloat',
     'double*': 'NativeMethods.DeleteVectorDouble',
     'string*': 'NativeMethods.DeleteVectorString',
@@ -346,7 +346,7 @@ FRE_TYPESCAST_MAP = {
     'uint16*': 'NativeMethods.FreeVectorUInt16',
     'uint32*': 'NativeMethods.FreeVectorUInt32',
     'uint64*': 'NativeMethods.FreeVectorUInt64',
-    'ptr64*': 'NativeMethods.FreeVectorUIntPtr',
+    'ptr64*': 'NativeMethods.FreeVectorIntPtr',
     'float*': 'NativeMethods.FreeVectorFloat',
     'double*': 'NativeMethods.FreeVectorDouble',
     'string*': 'NativeMethods.FreeVectorString',
@@ -385,7 +385,7 @@ DAT_WRAPPER_MAP = {
     'uint16*': 'NativeMethods.GetVectorDataUInt16',
     'uint32*': 'NativeMethods.GetVectorDataUInt32',
     'uint64*': 'NativeMethods.GetVectorDataUInt64',
-    'ptr64*': 'NativeMethods.GetVectorDataUIntPtr',
+    'ptr64*': 'NativeMethods.GetVectorDataIntPtr',
     'float*': 'NativeMethods.GetVectorDataFloat',
     'double*': 'NativeMethods.GetVectorDataDouble',
     'string*': 'NativeMethods.GetVectorDataString',
@@ -424,7 +424,7 @@ SIZ_WRAPPER_MAP = {
     'uint16*': 'ushort[NativeMethods.GetVectorSizeUInt16',
     'uint32*': 'uint[NativeMethods.GetVectorSizeUInt32',
     'uint64*': 'ulong[NativeMethods.GetVectorSizeUInt64',
-    'ptr64*': 'nint[NativeMethods.GetVectorSizeUIntPtr',
+    'ptr64*': 'nint[NativeMethods.GetVectorSizeIntPtr',
     'float*': 'float[NativeMethods.GetVectorSizeFloat',
     'double*': 'double[NativeMethods.GetVectorSizeDouble',
     'string*': 'string[NativeMethods.GetVectorSizeString',
@@ -463,7 +463,7 @@ RET_WRAPPER_MAP = {
     'uint16*': 'NativeMethods.AllocateVectorUInt16',
     'uint32*': 'NativeMethods.AllocateVectorUInt32',
     'uint64*': 'NativeMethods.AllocateVectorUInt64',
-    'ptr64*': 'NativeMethods.AllocateVectorUIntPtr',
+    'ptr64*': 'NativeMethods.AllocateVectorIntPtr',
     'float*': 'NativeMethods.AllocateVectorFloat',
     'double*': 'NativeMethods.AllocateVectorDouble',
     'string*': 'NativeMethods.AllocateVectorString',
@@ -502,7 +502,7 @@ ASS_WRAPPER_MAP = {
     'uint16*': 'NativeMethods.AssignVectorDataUInt16',
     'uint32*': 'NativeMethods.AssignVectorDataUInt32',
     'uint64*': 'NativeMethods.AssignVectorDataUInt64',
-    'ptr64*': 'NativeMethods.AssignVectorDataUIntPtr',
+    'ptr64*': 'NativeMethods.AssignVectorDataIntPtr',
     'float*': 'NativeMethods.AssignVectorDataFloat',
     'double*': 'NativeMethods.AssignVectorDataDouble',
     'string*': 'NativeMethods.AssignVectorDataString',
@@ -541,7 +541,7 @@ CTR_WRAPPER_MAP = {
     'uint16*': 'NativeMethods.ConstructVectorDataUInt16',
     'uint32*': 'NativeMethods.ConstructVectorDataUInt32',
     'uint64*': 'NativeMethods.ConstructVectorDataUInt64',
-    'ptr64*': 'NativeMethods.ConstructVectorDataUIntPtr',
+    'ptr64*': 'NativeMethods.ConstructVectorDataIntPtr',
     'float*': 'NativeMethods.ConstructVectorDataFloat',
     'double*': 'NativeMethods.ConstructVectorDataDouble',
     'string*': 'NativeMethods.ConstructVectorDataString',
@@ -796,7 +796,7 @@ def gen_params_string(method, param_gen: ParamGen):
                     return f'Marshal.GetFunctionPointerForDelegate({generate_name(param["name"])})'
             elif is_obj_return(param['type']):
                 return '__' + generate_name(param['name'])
-            elif param['type'] == 'char8':
+            elif param['type'] == 'char8' or param['type'] == 'char16':
                 if 'ref' in param and param['ref'] is True:
                     return 'ref __' + generate_name(param['name'])
                 else:
@@ -911,7 +911,7 @@ def gen_paramscast_assign_string(method):
             if 'VectorData' in type:
                 size = SIZ_TYPESCAST_MAP.get(param['type'], 'int')
                 output = f'Array.Resize(ref {name}, {size}(__{name}));\n'
-                output += f'\t\t\t{type}(__{name}, {name});'
+                output += f'\t\t\t{type}(__{name}, {name})'
                 return output
             elif type != '':
                 return f'{name} = {type}(__{name})'
@@ -924,8 +924,8 @@ def gen_paramscast_assign_string(method):
         if 'VectorData' in type:
             size = SIZ_TYPESCAST_MAP.get(param['type'], 'int')
             return_type = convert_type(param['type'], False)
-            output = f'var output = new {return_type[:-1]}{size}()];\n'
-            output += f'\t\t\t{type}(__output, output);'
+            output = f'var output = new {return_type[:-1]}{size}(__output)];\n'
+            output += f'\t\t\t{type}(__output, output)'
             return output
         elif type != '':
             return f'var output = {type}(__output)'
@@ -1125,21 +1125,22 @@ def main(manifest_path, output_dir, override):
 
     content += f'\n\tinternal static unsafe class {plugin_name}\n\t{{'
     content += '\n'
+    
+    content += '\t\tprivate static Dictionary<Delegate, Delegate> s_DelegateHolder = new();\n'
+    content += '\t\tprivate static TValue GetOrAdd<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key, TValue value) where TKey : notnull\n'
+    content += '\t\t{\n'
+    content += '\t\t\tif (dict.TryGetValue(key, out TValue? val))\n'
+    content += '\t\t\t{\n'
+    content += '\t\t\t\treturn val;\n'
+    content += '\t\t\t}\n'
+    content += '\t\t\tdict.Add(key, value);\n'
+    content += '\t\t\treturn value;\n'
+    content += '\t\t}\n\n'
+    
     for method in pplugin['exportedMethods']:
         content += f'\t\tprivate static nint {method["name"]}Ptr = nint.Zero;\n'
 
         ret_type = method['retType']
-
-        if "prototype" in ret_type:
-            prototype = ret_type['prototype']
-            if is_need_marshal(prototype):
-                content += f'\t\tprivate static {prototype["name"]}Wrapper {method["name"]}_{ret_type["name"]};\n'
-        for attribute in method['paramTypes']:
-            if "prototype" in attribute:
-                prototype = attribute['prototype']
-                if is_need_marshal(prototype):
-                    content += f'\t\tprivate static {prototype["name"]}Wrapper {method["name"]}_{attribute["name"]};\n'
-
         return_type = convert_type(ret_type['type'], 'ref' in ret_type and ret_type['ref'] is True)
         content += (f'\t\tinternal static {return_type} '
                     f'{method["name"]}({gen_params_string(method, ParamGen.TypesNames)})\n')
@@ -1149,7 +1150,7 @@ def main(manifest_path, output_dir, override):
             if "prototype" in attribute:
                 prototype = attribute['prototype']
                 if is_need_marshal(prototype):
-                    content += f'\t\t\t{method["name"]}_{attribute["name"]} = ({gen_params_string(prototype, ParamGen.WrapperNames)}) => {{\n'
+                    content += f'\t\t\tvar {method["name"]}_{attribute["name"]} = ({prototype["name"]}Wrapper) s_DelegateHolder.GetOrAdd({attribute["name"]}, ({gen_params_string(prototype, ParamGen.WrapperNames)}) => {{\n'
 
                     params = gen_paramswrapper_string(prototype)
                     if params != '':
@@ -1168,16 +1169,18 @@ def main(manifest_path, output_dir, override):
 
                     if is_obj_return(prot_ret_type['type']):
                         content += '\t\t\t\treturn @__output;\n'
+                    elif prot_ret_type['type'] == 'char8' or prot_ret_type['type'] == 'char16':
+                        content += '\t\t\t\treturn (char)__result__;\n'
                     elif prot_ret_type['type'] != 'void':
                         content += '\t\t\t\treturn __result__;\n'
 
-                    content += '\t\t\t};\n'
+                    content += '\t\t\t});\n'
 
         params = gen_paramscast_string(method)
         if params != '':
             content += f'{params}\n'
         
-        content += f'\t\t\tif ({method["name"]}Ptr == nint.Zero) {method["name"]}Ptr = NativeMethods.GetMethodPtr("{method["name"]}");\n'
+        content += f'\t\t\tif ({method["name"]}Ptr == nint.Zero) {method["name"]}Ptr = NativeMethods.GetMethodPtr("{plugin_name}.{method["name"]}");\n'
         content += f'\t\t\tvar {method["name"]}Func = (delegate* unmanaged[Cdecl]<{gen_types_string(method)}>){method["name"]}Ptr;\n'
         
         is_obj_ret = is_obj_return(ret_type['type'])
@@ -1196,6 +1199,8 @@ def main(manifest_path, output_dir, override):
         
         if is_obj_ret:
             content += '\t\t\treturn output;\n'
+        elif ret_type['type'] == 'char8' or ret_type['type'] == 'char16':
+            content += '\t\t\treturn (char)__result;\n'
         elif ret_type['type'] != 'void':
             content += '\t\t\treturn __result;\n'
         
