@@ -51,7 +51,7 @@ if(NOT COMPILER_SUPPORTS_FORMAT)
     set(NETLM_LINK_LIBRARIES ${NETLM_LINK_LIBRARIES} fmt::fmt-header-only)
 endif()
 
-include_directories(${CMAKE_BINARY_DIR}/_deps/dyncall-src/)
+include_directories(${dyncall_SOURCE_DIR})
 include_directories(external/dotnet/include)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${NETLM_LINK_LIBRARIES})
