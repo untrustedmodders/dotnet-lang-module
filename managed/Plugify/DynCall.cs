@@ -287,5 +287,4 @@ internal static class DyncallMethods
 
     [DllImport(NativeMethods.DllName, CharSet = CharSet.Ansi)]
     public static extern int GetModeFromCCSigChar(char sigChar);
-
 }
