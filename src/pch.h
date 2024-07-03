@@ -19,8 +19,3 @@
 namespace fs = std::filesystem;
 
 #include <plugify/compat_format.h>
-
-namespace std {
-	template<typename T>
-	using deleted_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
-}
