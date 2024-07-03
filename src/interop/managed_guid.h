@@ -4,8 +4,10 @@
 
 namespace netlm {
 	struct ManagedGuid {
-		uint64_t low;
-		uint64_t high;
+		uint64_t low{};
+		uint64_t high{};
+
+		bool operator==(const ManagedGuid& other) const = default;
 
 		bool IsValid() const {
 			return low != 0 || high != 0;
