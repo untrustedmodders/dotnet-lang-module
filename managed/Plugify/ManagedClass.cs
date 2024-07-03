@@ -10,11 +10,9 @@ public delegate void FreeObjectDelegate(ManagedObject obj);
 
 internal class DelegateCache
 {
-    private static readonly DelegateCache instance = new();
+    public static DelegateCache Instance { get; } = new();
 
-    public static DelegateCache Instance => instance;
-
-    private readonly Dictionary<Guid, GCHandle> _pinnedDelegates = new Dictionary<Guid, GCHandle>();
+    private readonly Dictionary<Guid, GCHandle> _pinnedDelegates = new();
 
     public void AddToCache(Guid delegateGuid, GCHandle handle)
     {
