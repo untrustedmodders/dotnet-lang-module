@@ -1,3 +1,0 @@
-D:/dotnet-lang-module/tests/cpp_test/cmake-build-debug/CMakeFiles/cpp_test.dir
-D:/dotnet-lang-module/tests/cpp_test/cmake-build-debug/CMakeFiles/edit_cache.dir
-D:/dotnet-lang-module/tests/cpp_test/cmake-build-debug/CMakeFiles/rebuild_cache.dir
