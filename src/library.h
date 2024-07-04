@@ -11,6 +11,10 @@ namespace netlm {
 		static std::unique_ptr<Library> LoadFromPath(const std::filesystem::path& assemblyPath);
 		static std::string GetError();
 
+		Library(const Library&) = delete;
+		Library& operator=(const Library&) = delete;
+		Library(Library&&) noexcept = delete;
+		Library& operator=(Library&&) noexcept = delete;
 		~Library();
 
 		void* GetFunction(const char* functionName) const;

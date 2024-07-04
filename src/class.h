@@ -1,8 +1,9 @@
 #pragma once
 
+#include "interop/managed_guid.h"
 #include "interop/managed_method.h"
 #include "interop/managed_object.h"
-#include "interop/managed_guid.h"
+#include "type.h"
 
 namespace netlm {
 	class Object;
@@ -25,8 +26,9 @@ namespace netlm {
 		using NewObjectFunction = ManagedObject (*)();
 		using FreeObjectFunction = void (*)(ManagedObject);
 
-		Class(ClassHolder* parent, std::string name)
+		Class(ClassHolder* parent, int32_t type, std::string name)
 			: _parent{parent},
+			  _type{type},
 			  _name{std::move(name)},
 			  _newObjectFunction{nullptr},
 			  _freeObjectFunction{nullptr} {
@@ -39,6 +41,8 @@ namespace netlm {
 		~Class() = default;
 
 		const std::string& GetName() const { return _name; }
+		Type& GetType() { return _type; }
+
 		ClassHolder* GetParent() const { return _parent; }
 
 		NewObjectFunction GetNewObjectFunction() const { return _newObjectFunction; }
@@ -48,9 +52,6 @@ namespace netlm {
 		void SetFreeObjectFunction(FreeObjectFunction freeObjectFptr) { _freeObjectFunction = freeObjectFptr; }
 
 		bool HasMethod(const std::string& methodName) const { return _methods.find(methodName) != _methods.end(); }
-
-		bool IsAssignableFrom(std::string_view typeHash) const;
-		void SetBaseClasses(char** baseClasses, uint32_t numBaseClasses) { _baseClasses.assign(baseClasses, baseClasses + numBaseClasses); }
 
 		ManagedMethod* GetMethod(const std::string& methodName);
 		const ManagedMethod* GetMethod(const std::string& methodName) const;
@@ -73,7 +74,7 @@ namespace netlm {
 
 			const auto& methodObject = std::get<ManagedMethod>(*it);
 
-			void* argsVptr[] = { &args... };
+			void* argsVptr[] = { (void*) &args... };
 
 			if constexpr (std::is_void_v<ReturnType>) {
 				InvokeStaticMethod(&methodObject, argsVptr, nullptr);
@@ -88,14 +89,12 @@ namespace netlm {
 
 	private:
 		std::string _name;
+		Type _type;
 
 		MethodMap _methods;
-		std::vector<std::string> _baseClasses;
-
 		ClassHolder* _parent;
 
 		NewObjectFunction _newObjectFunction;
 		FreeObjectFunction _freeObjectFunction;
 	};
-
 }

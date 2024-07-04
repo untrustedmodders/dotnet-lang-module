@@ -1,37 +1,34 @@
 ﻿using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Plugify;
 
-[StructLayout(LayoutKind.Sequential, Size = 2)]
+[StructLayout(LayoutKind.Sequential, Size = 8)]
 public struct ManagedType
 {
+    private int typeHash;
     private byte valueType;
     private byte reference;
 
 	public ValueType ValueType => (ValueType) valueType;
 	public bool IsByRef => reference == 1;
 
-	public ManagedType(Type type, object[] attributes)
+	public static ManagedType Invalid => new();
+
+	public ManagedType(Type type)
 	{
-		if (type.IsByRef)
-		{
-			type = TypeUtils.ConvertToUnrefType(type);
-			reference = 1;
-		}
-		else
-		{
-			reference = 0;
-		}
+		typeHash = RuntimeHelpers.GetHashCode(type);
+		reference = (byte)(type.IsByRef ? 1 : 0);
 
 		var vt = TypeUtils.ConvertToValueType(type);
 		switch (vt)
 		{
-			case ValueType.Char16 when TypeUtils.IsUseAnsi(attributes):
+			case ValueType.Char16 when TypeUtils.IsUseAnsi(type.GetCustomAttributes<MarshalAsAttribute>(false)):
 				vt = ValueType.Char8;
 				break;
-			case ValueType.ArrayChar16 when TypeUtils.IsUseAnsi(attributes):
+			case ValueType.ArrayChar16 when TypeUtils.IsUseAnsi(type.GetCustomAttributes<MarshalAsAttribute>(false)):
 				vt = ValueType.ArrayChar8;
 				break;
 		}
@@ -147,7 +144,7 @@ internal static class TypeUtils
 
     internal static ValueType ConvertToValueType(Type type)
     {
-	    if (TypeSwitcher.TryGetValue(type, out var valueType))
+	    if (TypeSwitcher.TryGetValue(type.IsByRef ? type.GetElementType() : type, out var valueType))
 	    {
 		    return valueType;
 	    }
@@ -155,25 +152,11 @@ internal static class TypeUtils
 	    return typeof(Delegate).IsAssignableFrom(type) ? ValueType.Function : ValueType.Invalid;
     }
 
-    internal static Type ConvertToUnrefType(Type paramType)
+    internal static bool IsUseAnsi(IEnumerable<MarshalAsAttribute> customAttributes)
     {
-	    string? paramName = paramType.FullName;
-	    var type = paramName is { Length: > 0 } ? Type.GetType(paramName[..^1]) : null;
-	    if (type == null)
+	    foreach (var attribute in customAttributes)
 	    {
-		    throw new NullReferenceException("Reference type not exist");
-	    }
-	    return type;
-    }
-
-    internal static bool IsUseAnsi(object[] customAttributes)
-    {
-	    foreach (var a in customAttributes)
-	    {
-		    if (a is MarshalAsAttribute attribute)
-		    {
-			    return attribute.Value is UnmanagedType.I1 or UnmanagedType.U1;
-		    }
+		    return attribute.Value is UnmanagedType.I1 or UnmanagedType.U1;
 	    }
 
 	    return false;

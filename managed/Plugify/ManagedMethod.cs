@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics.Contracts;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 
@@ -14,7 +12,7 @@ public struct ManagedMethod
     
 public static class MethodUtils
 {
-    private static readonly MethodInfo FuncInvoke = typeof(Func<object[], object>).GetMethod("Invoke")!;
+    private static readonly MethodInfo FuncInvoke = typeof(Func<object[], object>).GetMethod("Invoke");
     private static readonly MethodInfo ArrayEmpty = typeof(Array).GetMethod(nameof(Array.Empty))!.MakeGenericMethod(typeof(object));
 
     // https://github.com/mono/corefx/blob/main/src/System.Linq.Expressions/src/System/Dynamic/Utils/DelegateHelpers.cs
@@ -38,12 +36,12 @@ public static class MethodUtils
         Type returnType = delegateInvokeMethod.ReturnType;
         bool hasReturnValue = returnType != typeof(void);
 
-        ParameterInfo[] parameterInfos = delegateInvokeMethod.GetParameters();
-        Type[] paramTypes = new Type[parameterInfos.Length + 1];
+        ParameterInfo[] parameters = delegateInvokeMethod.GetParameters();
+        Type[] paramTypes = new Type[parameters.Length + 1];
         paramTypes[0] = typeof(Func<object[], object>);
-        for (int i = 0; i < parameterInfos.Length; i++)
+        for (int i = 0; i < parameters.Length; i++)
         {
-            paramTypes[i + 1] = parameterInfos[i].ParameterType;
+            paramTypes[i + 1] = parameters[i].ParameterType;
         }
 
         DynamicMethod thunkMethod = new DynamicMethod("Thunk", returnType, paramTypes);
@@ -53,22 +51,22 @@ public static class MethodUtils
         LocalBuilder retValue = ilgen.DeclareLocal(typeof(object));
 
         // create the argument array
-        if (parameterInfos.Length == 0)
+        if (parameters.Length == 0)
         {
             ilgen.Emit(OpCodes.Call, ArrayEmpty);
         }
         else
         {
-            ilgen.Emit(OpCodes.Ldc_I4, parameterInfos.Length);
+            ilgen.Emit(OpCodes.Ldc_I4, parameters.Length);
             ilgen.Emit(OpCodes.Newarr, typeof(object));
         }
         ilgen.Emit(OpCodes.Stloc, argArray);
 
         // populate object array
         bool hasRefArgs = false;
-        for (int i = 0; i < parameterInfos.Length; i++)
+        for (int i = 0; i < parameters.Length; i++)
         {
-            Type paramType = parameterInfos[i].ParameterType;
+            Type paramType = parameters[i].ParameterType;
             bool paramIsByReference = paramType.IsByRef;
             if (paramIsByReference)
                 paramType = paramType.GetElementType();
@@ -107,11 +105,12 @@ public static class MethodUtils
         {
             // copy back ref/out args
             ilgen.BeginFinallyBlock();
-            for (int i = 0; i < parameterInfos.Length; i++)
+            for (int i = 0; i < parameters.Length; i++)
             {
-                if (parameterInfos[i].ParameterType.IsByRef)
+                var paramType = parameters[i].ParameterType;
+                if (paramType.IsByRef)
                 {
-                    Type byrefToType = parameterInfos[i].ParameterType.GetElementType();
+                    Type byrefToType = paramType.GetElementType();
 
                     // update parameter
                     ilgen.Emit(OpCodes.Ldarg, i + 1);

@@ -47,7 +47,3 @@ const ManagedMethod* Class::GetMethod(const std::string& methodName) const {
 
 	return &std::get<ManagedMethod>(*it);
 }
-
-bool Class::IsAssignableFrom(std::string_view typeHash) const {
-	return std::find(_baseClasses.begin(), _baseClasses.end(), typeHash) != _baseClasses.end();
-}

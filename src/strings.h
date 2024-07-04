@@ -1,38 +1,40 @@
 #pragma once
 
-#include <cstring>
-
-#if NETLM_PLATFORM_WINDOWS
-#define STRING(str) L##str
-#define STR(str) String::WideStringToUTF8String(str)
-#else
-#define STRING(str) str
-#define STR(str) str
-#endif
+#include "core.h"
 
 namespace netlm {
 	class String {
 	public:
-		String() = delete;
+		static String New(std::string_view string);
 
-		static inline int Strncasecmp(const char* s1, const char* s2, std::size_t n) {
-#ifdef _MSC_VER
-			return _strnicmp(s1, s2, n);
-#else
-			return strncasecmp(s1, s2, n);
-#endif
-		}
+		static void Free(String& string);
+		
+		void Assign(std::string_view string);
+
+		operator std::string() const;
+
+		bool operator==(const String& other) const;
+		bool operator==(std::string_view other) const;
 
 #if NETLM_PLATFORM_WINDOWS
-		/// Converts the specified UTF-8 string to a wide string.
-		static std::wstring UTF8StringToWideString(std::string_view str);
-		static bool UTF8StringToWideString(std::wstring& dest, std::string_view str);
+		static String New(std::wstring_view string);
 
-		/// Converts the specified wide string to a UTF-8 string.
-		static std::string WideStringToUTF8String(std::wstring_view str);
-		static bool WideStringToUTF8String(std::string& dest, std::wstring_view str);
+		void Assign(std::wstring_view string);
+
+		operator std::wstring() const;
+
+		bool operator==(std::wstring_view other) const;
 #endif
 
-		static std::vector<std::string_view> Split(std::string_view strv, std::string_view delims = " ");
+		char_t* Data() { return _string; }
+		const char_t* Data() const { return _string; }
+
+		bool IsNull() const { return _string == nullptr; }
+		bool IsEmpty() const { return Size() == 0; }
+		size_t Size() const;
+
+	private:
+		char_t* _string{ nullptr };
+		Bool32 _disposed{ false }; // Required for the layout to match the C# NativeString struct, unused in C++
 	};
 }

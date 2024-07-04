@@ -45,8 +45,7 @@ public struct ManagedClass
 
     public void AddMethod(string methodName, Guid guid, MethodInfo methodInfo)
     {
-        object[] returnAttributes = methodInfo.ReturnTypeCustomAttributes.GetCustomAttributes(typeof(MarshalAsAttribute), false);
-        ManagedType returnType = new ManagedType(methodInfo.ReturnType, returnAttributes);
+        ManagedType returnType = new ManagedType(methodInfo.ReturnType);
 
         ParameterInfo[] parameterInfos = methodInfo.GetParameters();
         ManagedType[] parameterTypesPtrs = new ManagedType[parameterInfos.Length];
@@ -54,28 +53,14 @@ public struct ManagedClass
         for (int i = 0; i < parameterInfos.Length; i++)
         {
             ParameterInfo parameterInfo = parameterInfos[i];
-            object[] paramAttributes = parameterInfo.GetCustomAttributes(typeof(MarshalAsAttribute), false);
-            parameterTypesPtrs[i] = new ManagedType(parameterInfo.ParameterType, paramAttributes);
-        }
-        
-        object[] attributes = methodInfo.GetCustomAttributes(false);
-        nint[] attributeNamesPtrs = new nint[attributes.Length];
-        
-        for (int i = 0; i < attributes.Length; i++)
-        {
-            attributeNamesPtrs[i] = Marshal.StringToHGlobalAnsi(attributes[i].GetType().FullName);
+            parameterTypesPtrs[i] = new ManagedType(parameterInfo.ParameterType);
         }
 
         nint methodNamePtr = Marshal.StringToHGlobalAnsi(methodName);
 
-        ManagedClass_AddMethod(this, methodNamePtr, guid, returnType, (uint)parameterTypesPtrs.Length, parameterTypesPtrs, (uint)attributeNamesPtrs.Length, attributeNamesPtrs);
+        ManagedClass_AddMethod(this, methodNamePtr, guid, returnType, (uint)parameterTypesPtrs.Length, parameterTypesPtrs);
 
         Marshal.FreeHGlobal(methodNamePtr);
-        
-        for (int i = 0; i < attributeNamesPtrs.Length; i++)
-        {
-            Marshal.FreeHGlobal(attributeNamesPtrs[i]);
-        }
     }
 
     public NewObjectDelegate NewObjectFunction
@@ -116,7 +101,7 @@ public struct ManagedClass
 
     // Add a function pointer to the managed class
     [DllImport(NativeMethods.DllName)]
-    private static extern void ManagedClass_AddMethod(ManagedClass managedClass, nint methodNamePtr, Guid guid, ManagedType returnType, uint numParameters, ManagedType[] parameterTypes, uint numAttributes, nint[] attributeNames);
+    private static extern void ManagedClass_AddMethod(ManagedClass managedClass, nint methodNamePtr, Guid guid, ManagedType returnType, uint numParameters, ManagedType[] parameterTypes);
 
     [DllImport(NativeMethods.DllName)]
     private static extern void ManagedClass_SetNewObjectFunction(ManagedClass managedClass, nint newObjectFunctionPtr);

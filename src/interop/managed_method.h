@@ -9,16 +9,5 @@ namespace netlm {
 		ManagedGuid guid;
 		ManagedType returnType;
 		std::vector<ManagedType> parameterTypes;
-		std::vector<std::string> attributeNames;
-
-		bool HasAttribute(std::string_view attributeName) const {
-			for (const std::string& name : attributeNames) {
-				if (name == attributeName) {
-					return true;
-				}
-			}
-
-			return false;
-		}
 	};
 }

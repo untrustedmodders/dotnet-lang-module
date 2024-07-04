@@ -12,23 +12,13 @@
 namespace netlm {
 	constexpr int kApiVersion = 1;
 
-	class ClassHolder;
-	class Class;
 	struct ManagedGuid;
-	struct ManagedObject;
 	struct ManagedMethod;
 
-	using InitializeAssemblyDelegate = void(*)(char*, ManagedGuid *, ClassHolder *, const char *);
-	using UnloadAssemblyDelegate = void(*)(ManagedGuid *, int32_t *);
-
+	class Class;
 	class Object;
 	class Assembly;
 	class Library;
-
-	struct ExportMethod {
-		Class* classPtr;
-		ManagedMethod* methodPtr;
-	};
 
 	class ScriptInstance {
 	public:
@@ -47,6 +37,15 @@ namespace netlm {
 		std::unique_ptr<Object> _instance;
 
 		friend class DotnetLanguageModule;
+	};
+
+	struct HandleDeleter {
+		void operator()(hostfxr_handle handle) const noexcept;
+	};
+
+	struct ExportMethod {
+		Class* classPtr;
+		ManagedMethod* methodPtr;
 	};
 
 	using ScriptMap = std::unordered_map<std::string, ScriptInstance>;
@@ -69,15 +68,12 @@ namespace netlm {
 		const std::shared_ptr<plugify::IPlugifyProvider>& GetProvider() { return _provider; }
 		void* GetNativeMethod(const std::string& methodName) const;
 
-		std::unique_ptr<Assembly> LoadAssembly(const fs::path& assemblyPath) const;
-		bool UnloadAssembly(ManagedGuid guid) const;
-
 	private:
 		bool LoadHostFXR(const fs::path& hostPath);
 		std::string InitializeRuntimeHost(const fs::path& configPath);
 
 		template<class T>
-		T GetDelegate(const char_t* assemblyPath, const char_t* typeName, const char_t* methodName, const char_t* delegateTypeName) const;
+		T GetDelegate(const char_t* assemblyPath, const char_t* typeName, const char_t* methodName, const char_t* delegateTypeName = UNMANAGEDCALLERSONLY_METHOD) const;
 
 		static void ErrorWriter(const char_t* message);
 
@@ -88,15 +84,14 @@ namespace netlm {
 		std::shared_ptr<plugify::IPlugifyProvider> _provider;
 
 		std::unique_ptr<Library> _dll;
-		std::deleted_unique_ptr<void> _ctx;
+		std::unique_ptr<void, HandleDeleter> _ctx;
 		std::unique_ptr<Assembly> _rootAssembly;
 		ScriptMap _scripts;
 		std::vector<std::unique_ptr<ExportMethod>> _exportMethods;
 		std::unordered_map<std::string, void*> _nativesMap;
 		std::unordered_map<void*, plugify::Function> _functions;
 
-		InitializeAssemblyDelegate _initializeAssembly;
-		UnloadAssemblyDelegate _unloadAssembly;
+		Class* _basePluginClassPtr{};
 	};
 
 	extern DotnetLanguageModule g_netlm;

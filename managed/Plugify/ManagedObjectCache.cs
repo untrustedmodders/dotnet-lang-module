@@ -38,7 +38,7 @@ internal class StoredManagedObject : IDisposable
 
 internal class ManagedObjectCache
 {
-    private static ManagedObjectCache? _instance = null;
+    private static ManagedObjectCache? _instance;
 
     public static ManagedObjectCache Instance
     {

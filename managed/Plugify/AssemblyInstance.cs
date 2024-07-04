@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 
 namespace Plugify;
@@ -77,7 +79,7 @@ internal class AssemblyInstance(Guid guid, string path)
 	
 internal class AssemblyCache
 {
-    private static AssemblyCache? _instance = null;
+    private static AssemblyCache? _instance;
 
     public static AssemblyCache Instance
     {
@@ -87,6 +89,11 @@ internal class AssemblyCache
     private readonly Dictionary<Guid, AssemblyInstance> _assemblies = new();
 
     public Dictionary<Guid, AssemblyInstance> Assemblies => _assemblies;
+
+    public bool TryGetValue(Guid guid, [MaybeNullWhen(false)] out AssemblyInstance value)
+    {
+        return _assemblies.TryGetValue(guid, out value);
+    }
 
     public AssemblyInstance? Get(Guid guid)
     {

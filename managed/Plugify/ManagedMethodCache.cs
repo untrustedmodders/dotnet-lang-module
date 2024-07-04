@@ -10,7 +10,7 @@ internal struct StoredManagedMethod
 
 internal class ManagedMethodCache
 {
-    private static ManagedMethodCache? _instance = null;
+    private static ManagedMethodCache? _instance;
 
     public static ManagedMethodCache Instance
     {

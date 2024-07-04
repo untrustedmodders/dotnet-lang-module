@@ -1,12 +1,15 @@
 #include "module.h"
 #include "library.h"
+#include "memory.h"
 #include "assembly.h"
 #include "class.h"
 #include "object.h"
-#include "strings.h"
+#include "utils.h"
 
+#include "interop/managed_functions.h"
 #include "interop/managed_guid.h"
 #include "interop/managed_type.h"
+#include "strings.h"
 
 #include <module_export.h>
 
@@ -19,14 +22,7 @@
 #include <plugify/log.h>
 
 #if NETLM_PLATFORM_WINDOWS
-#include <strsafe.h>
-#include <objbase.h>
-#define memAlloc(t) ::CoTaskMemAlloc(t)
-#define memFree(t) ::CoTaskMemFree(t)
 #undef FindResource
-#else
-#define memAlloc(t) std::malloc(t)
-#define memFree(t) std::free(t)
 #endif
 
 #define LOG_PREFIX "[NETLM] "
@@ -47,6 +43,10 @@ namespace {
 }
 
 extern const char* hostfxr_str_error(int32_t error);
+
+void netlm::HandleDeleter::operator()(hostfxr_handle handle) const noexcept {
+	hostfxr_close(handle);
+}
 
 InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> provider, const IModule& module) {
 	if (!(_provider = provider.lock())) {
@@ -69,9 +69,9 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{ std::format("Config '{}' has not been found", configPath.string()) };
 	}
 
-	auto error = InitializeRuntimeHost(configPath);
-	if (!error.empty()) {
-		return ErrorData{ std::move(error) };
+	auto fatal = InitializeRuntimeHost(configPath);
+	if (!fatal.empty()) {
+		return ErrorData{ std::move(fatal) };
 	}
 
 	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
@@ -79,49 +79,83 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{ std::format("Assembly '{}' has not been found", assemblyPath.string()) };
 	}
 
-	const char_t* className = STRING("Plugify.NativeInterop, Plugify");
-
-	_initializeAssembly = GetDelegate<InitializeAssemblyDelegate>(
+	Managed.InitializeAssemblyFptr = GetDelegate<InitializeAssemblyFn>(
 			assemblyPath.c_str(),
-			className,
-			STRING("InitializeAssembly"),
-			UNMANAGEDCALLERSONLY_METHOD
-	);
-	if (_initializeAssembly == nullptr) {
+			NETLM_STR("Plugify.NativeInterop, Plugify"),
+			NETLM_STR("InitializeAssembly"));
+	if (Managed.InitializeAssemblyFptr == nullptr) {
 		return ErrorData{ "InitializeAssembly could not be found in Plugify.dll! Ensure .NET libraries are properly compiled." };
 	}
 
-	_unloadAssembly = GetDelegate<UnloadAssemblyDelegate>(
+	Managed.UnloadAssemblyFptr = GetDelegate<UnloadAssemblyFn>(
 			assemblyPath.c_str(),
-			className,
-			STRING("UnloadAssembly"),
-			UNMANAGEDCALLERSONLY_METHOD
-	);
-	if (_unloadAssembly == nullptr) {
+			NETLM_STR("Plugify.NativeInterop, Plugify"),
+			NETLM_STR("UnloadAssembly"));
+	if (Managed.UnloadAssemblyFptr == nullptr) {
 		return ErrorData{ "UnloadAssembly could not be found in Plugify.dll! Ensure .NET libraries are properly compiled." };
 	}
+
+	// Helpers
+	Managed.GetAssemblyNameFptr = GetDelegate<GetAssemblyNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.NativeInterop, Plugify"), NETLM_STR("GetAssemblyName"));
+	Managed.GetAssemblyTypesFptr = GetDelegate<GetAssemblyTypesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAssemblyTypes"));
+	Managed.GetTypeIdFptr = GetDelegate<GetTypeIdFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeId"));
+	Managed.GetFullTypeNameFptr = GetDelegate<GetFullTypeNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFullTypeName"));
+	Managed.GetAssemblyQualifiedNameFptr = GetDelegate<GetAssemblyQualifiedNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAssemblyQualifiedName"));
+	Managed.GetBaseTypeFptr = GetDelegate<GetBaseTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetBaseType"));
+	Managed.GetTypeSizeFptr = GetDelegate<GetTypeSizeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeSize"));
+	Managed.IsTypeSubclassOfFptr = GetDelegate<IsTypeSubclassOfFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeSubclassOf"));
+	Managed.IsTypeAssignableToFptr = GetDelegate<IsTypeAssignableToFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeAssignableTo"));
+	Managed.IsTypeAssignableFromFptr = GetDelegate<IsTypeAssignableFromFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeAssignableFrom"));
+	Managed.IsTypeSZArrayFptr = GetDelegate<IsTypeSZArrayFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeSZArray"));
+	Managed.IsTypeByRefFptr = GetDelegate<IsTypeByRefFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeByRef"));
+	Managed.GetElementTypeFptr = GetDelegate<GetElementTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetElementType"));
+	Managed.GetTypeMethodsFptr = GetDelegate<GetTypeMethodsFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeMethods"));
+	Managed.GetTypeFieldsFptr = GetDelegate<GetTypeFieldsFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeFields"));
+	Managed.GetTypePropertiesFptr = GetDelegate<GetTypePropertiesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeProperties"));
+	Managed.GetTypeMethodFptr = GetDelegate<GetTypeMethodFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeMethod"));
+	Managed.GetTypeFieldFptr = GetDelegate<GetTypeFieldFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeField"));
+	Managed.GetTypePropertyFptr = GetDelegate<GetTypePropertyFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeProperty"));
+	Managed.HasTypeAttributeFptr = GetDelegate<HasTypeAttributeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("HasTypeAttribute"));
+	Managed.GetTypeAttributesFptr = GetDelegate<GetTypeAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeAttributes"));
+	Managed.GetTypeManagedTypeFptr = GetDelegate<GetTypeManagedTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeManagedType"));
+
+	Managed.GetMethodInfoNameFptr = GetDelegate<GetMethodInfoNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoName"));
+	Managed.GetMethodInfoReturnTypeFptr = GetDelegate<GetMethodInfoReturnTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoReturnType"));
+	Managed.GetMethodInfoParameterTypesFptr = GetDelegate<GetMethodInfoParameterTypesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoParameterTypes"));
+	Managed.GetMethodInfoAccessibilityFptr = GetDelegate<GetMethodInfoAccessibilityFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoAccessibility"));
+	Managed.GetMethodInfoAttributesFptr = GetDelegate<GetMethodInfoAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoAttributes"));
+
+	Managed.GetFieldInfoNameFptr = GetDelegate<GetFieldInfoNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoName"));
+	Managed.GetFieldInfoTypeFptr = GetDelegate<GetFieldInfoTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoType"));
+	Managed.GetFieldInfoAccessibilityFptr = GetDelegate<GetFieldInfoAccessibilityFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoAccessibility"));
+	Managed.GetFieldInfoAttributesFptr = GetDelegate<GetFieldInfoAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoAttributes"));
+
+	Managed.GetPropertyInfoNameFptr = GetDelegate<GetPropertyInfoNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetPropertyInfoName"));
+	Managed.GetPropertyInfoTypeFptr = GetDelegate<GetPropertyInfoTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetPropertyInfoType"));
+	Managed.GetPropertyInfoAttributesFptr = GetDelegate<GetPropertyInfoAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetPropertyInfoAttributes"));
+
+	Managed.GetAttributeFieldValueFptr = GetDelegate<GetAttributeFieldValueFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAttributeFieldValue"));
+	Managed.GetAttributeTypeFptr = GetDelegate<GetAttributeTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAttributeType"));
+
+	Managed.CollectGarbageFptr = GetDelegate<CollectGarbageFn>(assemblyPath.c_str(), NETLM_STR("Plugify.GarbageCollector, Plugify"), NETLM_STR("CollectGarbage"));
+	Managed.WaitForPendingFinalizersFptr = GetDelegate<WaitForPendingFinalizersFn>(assemblyPath.c_str(), NETLM_STR("Plugify.GarbageCollector, Plugify"), NETLM_STR("WaitForPendingFinalizers"));
+
+	Managed.IsClassFptr = GetDelegate<IsClassFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsClass"));
+	Managed.IsEnumFptr = GetDelegate<IsEnumFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsEnum"));
+	Managed.IsValueTypeFptr = GetDelegate<IsValueTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsValueType"));
+	Managed.GetEnumNamesFptr = GetDelegate<GetEnumNamesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetEnumNames"));
+	Managed.GetEnumValuesFptr = GetDelegate<GetEnumValuesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetEnumValues"));
 
 	// Call the Initialize method in the NativeInterop class directly,
 	// to load all the classes and methods into the class object holder
 
-	auto rootAssembly = std::make_unique<Assembly>();
-	auto absolutePath= fs::absolute(assemblyPath, ec).string();
-	if (ec) {
-		return ErrorData{ "Failed to get main assembly path" };
+	auto rootAssembly = Assembly::LoadFromPath(assemblyPath);
+	if (!rootAssembly) {
+		return ErrorData{ Assembly::GetError() };
 	}
-
-	std::string errorStr;
-	errorStr.resize(256);
-	_initializeAssembly(
-			errorStr.data(),
-			&rootAssembly->GetGuid(),
-			&rootAssembly->GetClassObjectHolder(),
-			absolutePath.c_str());
-	if (errorStr.empty()) {
-		return ErrorData{std::move(errorStr)};
-	}
-
 	_rootAssembly = std::move(rootAssembly);
+
+	_basePluginClassPtr = _rootAssembly->GetClassObjectHolder().FindClassByName("Plugify.Plugin");
 
 	_provider->Log(LOG_PREFIX "Inited!", Severity::Debug);
 
@@ -172,14 +206,14 @@ bool DotnetLanguageModule::LoadHostFXR(const fs::path& hostPath) {
 std::string DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPath) {
 	hostfxr_handle cxt = nullptr;
 	int32_t result = hostfxr_initialize_for_runtime_config(configPath.c_str(), nullptr, &cxt);
-	std::deleted_unique_ptr<void> context(cxt, hostfxr_close);
+	std::unique_ptr<void, HandleDeleter> context(cxt);
 
 	if ((result < 0 || result > 2) || cxt == nullptr) {
 		return std::format("Failed to initialize hostfxr: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
 	}
 
 	// @TODO Add all necessary properties here
-	//hostfxr_set_runtime_property_value(cxt, STRING("APP_CONTEXT_BASE_DIRECTORY"), basePath.c_str());
+	//hostfxr_set_runtime_property_value(cxt, NETLM_STR("APP_CONTEXT_BASE_DIRECTORY"), basePath.c_str());
 
 	result = hostfxr_get_runtime_delegate(cxt, hdt_load_assembly_and_get_function_pointer, reinterpret_cast<void**>(&load_assembly_and_get_function_pointer));
 	if (result != 0 || load_assembly_and_get_function_pointer == nullptr) {
@@ -204,27 +238,13 @@ std::string DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPa
 LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 	fs::path assemblyPath(plugin.GetBaseDir() / plugin.GetDescriptor().entryPoint);
 
-	std::error_code ec;
-	auto absolutePath= fs::absolute(assemblyPath, ec).string();
-	if (ec) {
-		return ErrorData{ "Failed to get assembly path" };
+	auto assembly = Assembly::LoadFromPath(assemblyPath);
+	if (!assembly) {
+		return ErrorData{ Assembly::GetError() };
 	}
 
-	auto assembly = std::make_unique<Assembly>();
-
-	std::string errorStr;
-	errorStr.resize(256);
-	_initializeAssembly(
-			errorStr.data(),
-			&assembly->GetGuid(),
-			&assembly->GetClassObjectHolder(),
-			absolutePath.c_str()
-	);
-	if (errorStr.empty()) {
-		return ErrorData{ std::move(errorStr) };
-	}
-
-	Class* pluginClassPtr = assembly->GetClassObjectHolder().FindClassBySubClass("Plugin");
+	//Class* pluginClassPtr = assembly->GetClassObjectHolder().FindClassBySubclass(_basePluginClassPtr);
+	Class* pluginClassPtr = assembly->GetClassObjectHolder().FindClassByName("ExamplePlugin.ExamplePlugin");
 	if (!pluginClassPtr) {
 		return ErrorData{"Failed to find 'Plugin' class implementation"};
 	}
@@ -236,19 +256,21 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 	methods.reserve(exportedMethods.size());
 
 	for (const auto& method : exportedMethods) {
-		auto separated = String::Split(method.funcName, ".");
-		if (separated.size() != 3) {
-			methodErrors.emplace_back(std::format("Invalid function name: '{}'. Please provide name in that format: 'Namespace.Class.Method'", method.funcName));
+		auto separated = Utils::Split(method.funcName, ".");
+		size_t size = separated.size();
+		bool noNamespace = (size == 2);
+		if (size != 3 && noNamespace) {
+			methodErrors.emplace_back(std::format("Invalid function format: '{}'. Please provide name in that format: 'Namespace.Class.Method' or 'Namespace.MyParentClass+MyNestedClass.Method' or 'Class.Method'", method.funcName));
 			continue;
 		}
 
-		Class* classPtr = assembly->GetClassObjectHolder().FindClassByName(separated[1]);
+		Class* classPtr = assembly->GetClassObjectHolder().FindClassByName(separated[size-2]);
 		if (!classPtr) {
 			methodErrors.emplace_back(std::format("Failed to find class '{}'", method.funcName));
 			continue;
 		}
 
-		ManagedMethod* methodPtr = classPtr->GetMethod(separated[2].data());
+		ManagedMethod* methodPtr = classPtr->GetMethod(separated[size-1].data());
 		if (!methodPtr) {
 			methodErrors.emplace_back(std::format("Failed to find method '{}'", method.funcName));
 			continue;
@@ -315,7 +337,12 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 
 template<typename T>
 T DotnetLanguageModule::GetDelegate(const char_t* assemblyPath, const char_t* typeName, const char_t* methodName, const char_t* delegateTypeName) const {
-	_provider->Log(std::format("Loading .NET assembly: {}\tType Name: {}\tMethod Name: {}", STR(assemblyPath), STR(typeName), STR(methodName)), Severity::Info);
+	auto message = std::format(NETLM_STR("Loading .NET assembly: {}\tType Name: {}\tMethod Name: {}"), assemblyPath, typeName, methodName);
+#if NETLM_PLATFORM_WINDOWS
+	_provider->Log(Utils::WideStringToUTF8String(message), Severity::Verbose);
+#else
+	_provider->Log(message, Severity::Info);
+#endif
 
 	T delegatePtr = nullptr;
 
@@ -362,27 +389,6 @@ void DotnetLanguageModule::OnMethodExport(const IPlugin& plugin) {
 	for (const auto& [name, addr] : plugin.GetMethods()) {
 		_nativesMap.try_emplace(std::format("{}.{}", pluginName, name), addr);
 	}
-}
-
-std::unique_ptr<Assembly> DotnetLanguageModule::LoadAssembly(const fs::path& assemblyPath) const {
-	auto assembly = std::make_unique<Assembly>();
-
-	assert(_rootAssembly != nullptr);
-
-	_initializeAssembly(
-			nullptr,
-			&assembly->GetGuid(),
-			&assembly->GetClassObjectHolder(),
-			assemblyPath.string().c_str()
-	);
-
-	return assembly;
-}
-
-bool DotnetLanguageModule::UnloadAssembly(ManagedGuid assemblyGuid) const {
-	int32_t result;
-	_unloadAssembly(&assemblyGuid, &result);
-	return bool(result);
 }
 
 ScriptInstance* DotnetLanguageModule::FindScript(const std::string& name) {
@@ -450,7 +456,7 @@ void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* dat
 					arg = p->GetArgument<void*>(i);
 					break;
 				default:
-					std::puts("Unsupported types!\n");
+					std::puts(LOG_PREFIX "Unsupported types!\n");
 					std::terminate();
 					break;
 			}
@@ -569,12 +575,9 @@ extern "C" {
 		return g_netlm.GetNativeMethod(methodName);
 	}
 
-	NETLM_EXPORT const char* GetBaseDir() {
-		auto source = g_netlm.GetProvider()->GetBaseDir().string();
-		size_t size = source.length() + 1;
-		char* dest = reinterpret_cast<char*>(memAlloc(size));
-		std::memcpy(dest, source.c_str(), size);
-		return dest;
+	NETLM_EXPORT const char_t* GetBaseDir() {
+		auto source = g_netlm.GetProvider()->GetBaseDir();
+		return Memory::StringToCoTaskMemAuto(source.c_str());
 	}
 
 	NETLM_EXPORT bool IsModuleLoaded(const char* moduleName, int version, bool minimum) {
@@ -591,16 +594,12 @@ extern "C" {
 		g_netlm.GetProvider()->Log(std::format(LOG_PREFIX "{}:{}: {}", funcName, line, message), severity);
 	}
 
-	NETLM_EXPORT const char* FindPluginResource(const char* pluginName, const char* path) {
+	NETLM_EXPORT const char_t* FindPluginResource(const char* pluginName, const char* path) {
 		ScriptInstance* script = g_netlm.FindScript(pluginName);
 		if (script) {
 			auto resource = script->GetPlugin().FindResource(path);
 			if (resource.has_value()) {
-				auto source= resource->string();
-				size_t size = source.length() + 1;
-				char* dest = reinterpret_cast<char*>(memAlloc(size));
-				std::memcpy(dest, source.c_str(), size);
-				return dest;
+				return Memory::StringToCoTaskMemAuto(resource->c_str());
 			}
 		}
 		return nullptr;
@@ -614,11 +613,13 @@ extern "C" {
 	NETLM_EXPORT void* CreateString(const char* source) {
 		return source == nullptr ? new std::string() : new std::string(source);
 	}
-	NETLM_EXPORT const char* GetStringData(std::string* string) {
-		size_t size = string->length() + 1;
-		char* str = reinterpret_cast<char*>(memAlloc(size));
-		std::memcpy(str, string->c_str(), size);
-		return str;
+	NETLM_EXPORT const char_t* GetStringData(std::string* string) {
+#if NETLM_PLATFORM_WINDOWS
+		auto str = Utils::UTF8StringToWideString(*string);
+		return Memory::StringToCoTaskMemAuto(str);
+#else
+		return Memory::StringToCoTaskMemAuto(string->c_str());
+#endif
 	}
 	NETLM_EXPORT int GetStringLength(std::string* string) {
 		return static_cast<int>(string->length());
@@ -912,14 +913,16 @@ extern "C" {
 		}
 	}
 
-	NETLM_EXPORT void GetVectorDataString(std::vector<std::string>* vector, char* arr[]) {
+	NETLM_EXPORT void GetVectorDataString(std::vector<std::string>* vector, char_t* arr[]) {
 		for (size_t i = 0; i < vector->size(); ++i) {
 			const auto& source = (*vector)[i];
-			size_t size = source.size() + 1;
-			char* str = reinterpret_cast<char*>(memAlloc(size));
-			std::memcpy(str, source.c_str(), size);
-			memFree(arr[i]);
-			arr[i] = str;
+			Memory::FreeCoTaskMem(arr[i]);
+#if NETLM_PLATFORM_WINDOWS
+			auto str = Utils::UTF8StringToWideString(source);
+			arr[i] = Memory::StringToCoTaskMemAuto(str);
+#else
+			arr[i] = Memory::StringToCoTaskMemAuto(string.c_str());
+#endif
 		}
 	}
 
@@ -1238,7 +1241,7 @@ extern "C" {
 
 void DotnetLanguageModule::ErrorWriter(const char_t* message) {
 #if NETLM_PLATFORM_WINDOWS
-	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", String::WideStringToUTF8String(message)), Severity::Error);
+	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", Utils::WideStringToUTF8String(message)), Severity::Error);
 #else
 	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", message), Severity::Error);
 #endif
@@ -1341,19 +1344,16 @@ extern "C" {
 		// @TODO: Store the assembly guid somewhere
 	}
 
-	NETLM_EXPORT void ManagedClass_Create(ManagedGuid* assemblyGuid, ClassHolder* classHolder, int32_t typeHash, const char* typeName, uint32_t numBaseClasses, char** baseClasses, ManagedClass* outManagedClass) {
+	NETLM_EXPORT void ManagedClass_Create(ManagedGuid* assemblyGuid, ClassHolder* classHolder, int32_t typeHash, const char* typeName, ManagedClass* outManagedClass) {
 		assert(assemblyGuid != nullptr);
 		assert(classHolder != nullptr);
 
 		Class* classObject = classHolder->GetOrCreateClassObject(typeHash, typeName);
-		if (numBaseClasses > 0) {
-			classObject->SetBaseClasses(baseClasses, numBaseClasses);
-		}
 
 		*outManagedClass = ManagedClass{typeHash, classObject, *assemblyGuid};
 	}
 
-	NETLM_EXPORT void ManagedClass_AddMethod(ManagedClass managedClass, const char* methodName, ManagedGuid guid, ManagedType returnType, uint32_t numParameters, const ManagedType* parameterTypes, uint32_t numAttributes, const char** attributeNames) {
+	NETLM_EXPORT void ManagedClass_AddMethod(ManagedClass managedClass, const char* methodName, ManagedGuid guid, ManagedType returnType, uint32_t numParameters, const ManagedType* parameterTypes) {
 		if (!managedClass.classObject || !methodName) {
 			return;
 		}
@@ -1364,10 +1364,6 @@ extern "C" {
 
 		if (numParameters != 0) {
 			methodObject.parameterTypes.assign(parameterTypes, parameterTypes + numParameters);
-		}
-
-		if (numAttributes != 0) {
-			methodObject.attributeNames.assign(attributeNames, attributeNames + numAttributes);
 		}
 
 		if (managedClass.classObject->HasMethod(methodName)) {

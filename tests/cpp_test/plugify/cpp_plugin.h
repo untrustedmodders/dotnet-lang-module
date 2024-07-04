@@ -7,70 +7,70 @@
 #include <vector>
 
 namespace plugify {
-    constexpr int kApiVersion = 1;
+	constexpr int kApiVersion = 1;
 
-    using InitFunc = int (*)(const void* const*, int, const void*);
-    using StartFunc = void (*)();
-    using EndFunc = void (*)();
+	using InitFunc = int (*)(const void* const*, int, const void*);
+	using StartFunc = void (*)();
+	using EndFunc = void (*)();
 
-    using GetMethodPtrFn = void* (*)(const std::string&);
-    using GetBaseDirFn = const std::filesystem::path& (*)();
-    using IsModuleLoadedFn = bool (*)(const std::string&, std::optional<int32_t>, bool);
-    using IsPluginLoadedFn = bool (*)(const std::string&, std::optional<int32_t>, bool);
+	using GetMethodPtrFn = void* (*)(const std::string&);
+	using GetBaseDirFn = const std::filesystem::path& (*)();
+	using IsModuleLoadedFn = bool (*)(const std::string&, std::optional<int32_t>, bool);
+	using IsPluginLoadedFn = bool (*)(const std::string&, std::optional<int32_t>, bool);
 
-    extern GetMethodPtrFn GetMethodPtr;
-    extern GetBaseDirFn GetBaseDir;
-    extern IsModuleLoadedFn IsModuleLoaded;
-    extern IsPluginLoadedFn IsPluginLoaded;
+	extern GetMethodPtrFn GetMethodPtr;
+	extern GetBaseDirFn GetBaseDir;
+	extern IsModuleLoadedFn IsModuleLoaded;
+	extern IsPluginLoadedFn IsPluginLoaded;
 
-    namespace plugin {
-        extern void* handle;
+	namespace plugin {
+		extern void* handle;
 
-        using GetIdFn = std::ptrdiff_t (*)(void*);
-        using GetNameFn = const std::string& (*)(void*);
-        using GetFullNameFn = const std::string& (*)(void*);
-        using GetDescriptionFn = const std::string& (*)(void*);
-        using GetVersionFn = const std::string& (*)(void*);
-        using GetAuthorFn = const std::string& (*)(void*);
-        using GetWebsiteFn = const std::string& (*)(void*);
-        using GetBaseDirFn = const std::filesystem::path& (*)(void*);
-        using GetDependenciesFn = std::vector<std::string_view> (*)(void*);
-        using FindResourceFn = std::optional<std::filesystem::path> (*)(void*, const std::filesystem::path&);
+		using GetIdFn = std::ptrdiff_t (*)(void*);
+		using GetNameFn = const std::string& (*)(void*);
+		using GetFullNameFn = const std::string& (*)(void*);
+		using GetDescriptionFn = const std::string& (*)(void*);
+		using GetVersionFn = const std::string& (*)(void*);
+		using GetAuthorFn = const std::string& (*)(void*);
+		using GetWebsiteFn = const std::string& (*)(void*);
+		using GetBaseDirFn = const std::filesystem::path& (*)(void*);
+		using GetDependenciesFn = std::vector<std::string_view> (*)(void*);
+		using FindResourceFn = std::optional<std::filesystem::path> (*)(void*, const std::filesystem::path&);
 
-        extern GetIdFn GetId;
-        extern GetNameFn GetName;
-        extern GetFullNameFn GetFullName;
-        extern GetDescriptionFn GetDescription;
-        extern GetVersionFn GetVersion;
-        extern GetAuthorFn GetAuthor;
-        extern GetWebsiteFn GetWebsite;
-        extern GetBaseDirFn GetBaseDir;
-        extern GetDependenciesFn GetDependencies;
-        extern FindResourceFn FindResource;
-    }
+		extern GetIdFn GetId;
+		extern GetNameFn GetName;
+		extern GetFullNameFn GetFullName;
+		extern GetDescriptionFn GetDescription;
+		extern GetVersionFn GetVersion;
+		extern GetAuthorFn GetAuthor;
+		extern GetWebsiteFn GetWebsite;
+		extern GetBaseDirFn GetBaseDir;
+		extern GetDependenciesFn GetDependencies;
+		extern FindResourceFn FindResource;
+	}
 
-    class IPluginEntry {
-    protected:
-        IPluginEntry() = default;
-        ~IPluginEntry() = default;
+	class IPluginEntry {
+	protected:
+		IPluginEntry() = default;
+		~IPluginEntry() = default;
 
-    public:
-        std::ptrdiff_t GetId() const { return plugin::GetId(plugin::handle); }
-        const std::string& GetName() const { return plugin::GetName(plugin::handle); }
-        const std::string& GetFullName() const { return plugin::GetFullName(plugin::handle); }
-        const std::string& GetDescription() const { return plugin::GetDescription(plugin::handle); }
-        const std::string& GetVersion() const { return plugin::GetVersion(plugin::handle); }
-        const std::string& GetAuthor() const { return plugin::GetAuthor(plugin::handle); }
-        const std::string& GetWebsite() const { return plugin::GetWebsite(plugin::handle); }
-        const std::filesystem::path& GetBaseDir() const { return plugin::GetBaseDir(plugin::handle); }
-        std::vector<std::string_view> GetDependencies() const { return plugin::GetDependencies(plugin::handle); }
-        std::optional<std::filesystem::path> FindResource(const std::filesystem::path& path) const { return plugin::FindResource(plugin::handle, path); }
+	public:
+		std::ptrdiff_t GetId() const { return plugin::GetId(plugin::handle); }
+		const std::string& GetName() const { return plugin::GetName(plugin::handle); }
+		const std::string& GetFullName() const { return plugin::GetFullName(plugin::handle); }
+		const std::string& GetDescription() const { return plugin::GetDescription(plugin::handle); }
+		const std::string& GetVersion() const { return plugin::GetVersion(plugin::handle); }
+		const std::string& GetAuthor() const { return plugin::GetAuthor(plugin::handle); }
+		const std::string& GetWebsite() const { return plugin::GetWebsite(plugin::handle); }
+		const std::filesystem::path& GetBaseDir() const { return plugin::GetBaseDir(plugin::handle); }
+		std::vector<std::string_view> GetDependencies() const { return plugin::GetDependencies(plugin::handle); }
+		std::optional<std::filesystem::path> FindResource(const std::filesystem::path& path) const { return plugin::FindResource(plugin::handle, path); }
 
-        virtual void OnPluginStart() {};
-        virtual void OnPluginEnd() {};
-    };
+		virtual void OnPluginStart() {};
+		virtual void OnPluginEnd() {};
+	};
 
-    IPluginEntry* GetPluginEntry();
+	IPluginEntry* GetPluginEntry();
 }
 
 #define EXPOSE_PLUGIN(plugin_api, interface_addr) namespace plugify { \
@@ -128,48 +128,33 @@ namespace plugify {
 }
 
 namespace plugify {
-    struct Vector2 {
-        float x{};
-        float y{};
+	struct Vector2 {
+		float x{};
+		float y{};
 
-        bool operator==(const Vector2&) const = default;
-    };
+		bool operator==(const Vector2&) const = default;
+	};
 
-    struct Vector3 {
-        float x{};
-        float y{};
-        float z{};
+	struct Vector3 {
+		float x{};
+		float y{};
+		float z{};
 
-        bool operator==(const Vector3&) const = default;
-    };
+		bool operator==(const Vector3&) const = default;
+	};
 
-    struct Vector4 {
-        float x{};
-        float y{};
-        float z{};
-        float w{};
+	struct Vector4 {
+		float x{};
+		float y{};
+		float z{};
+		float w{};
 
-        bool operator==(const Vector4&) const = default;
-    };
+		bool operator==(const Vector4&) const = default;
+	};
 
-    struct Matrix4x4 {
-        float m00{}, m10{}, m20{}, m30{};
-        float m01{}, m11{}, m21{}, m31{};
-        float m02{}, m12{}, m22{}, m32{};
-        float m03{}, m13{}, m23{}, m33{};
+	struct Matrix4x4 {
+		float m[4][4]{};
 
-        Matrix4x4(
-                float m00, float m01, float m02, float m03,
-                float m10, float m11, float m12, float m13,
-                float m20, float m21, float m22, float m23,
-                float m30, float m31, float m32, float m33)
-        {
-            this->m00 = m00; this->m01 = m01; this->m02 = m02; this->m03 = m03;
-            this->m10 = m10; this->m11 = m11; this->m12 = m12; this->m13 = m13;
-            this->m20 = m20; this->m21 = m21; this->m22 = m22; this->m23 = m23;
-            this->m30 = m30; this->m31 = m31; this->m32 = m32; this->m33 = m33;
-        }
-
-        bool operator==(const Matrix4x4&) const = default;
-    };
+		bool operator==(const Matrix4x4&) const = default;
+	};
 }

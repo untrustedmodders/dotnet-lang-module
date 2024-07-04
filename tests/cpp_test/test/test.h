@@ -23,28 +23,10 @@ struct Vector4 {
 };
 
 struct Matrix4x4 {
-    float m00, m10, m20, m30;
-    float m01, m11, m21, m31;
-    float m02, m12, m22, m32;
-    float m03, m13, m23, m33;
+    float m[4][4]{};
 
     bool operator==(const Matrix4x4&) const = default;
 };
-
-
-static Matrix4x4 CreateMatrix4x4(
-        float m00, float m01, float m02, float m03,
-        float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23,
-        float m30, float m31, float m32, float m33)
-{
-    Matrix4x4 m;
-    m.m00 = m00; m.m01 = m01; m.m02 = m02; m.m03 = m03;
-    m.m10 = m10; m.m11 = m11; m.m12 = m12; m.m13 = m13;
-    m.m20 = m20; m.m21 = m21; m.m22 = m22; m.m23 = m23;
-    m.m30 = m30; m.m31 = m31; m.m32 = m32; m.m33 = m33;
-    return m;
-}
 
 // C++ exported
 
@@ -248,7 +230,7 @@ extern "C" PLUGIN_API Vector4 NoParamReturnVector4()
 extern "C" PLUGIN_API Matrix4x4 NoParamReturnMatrix4x4()
 {
     std::cout << "NoParamReturnMatrix4x4" << std::endl;
-    return CreateMatrix4x4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
+    return Matrix4x4{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 }
 
 // Params (no refs)
