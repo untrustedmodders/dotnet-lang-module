@@ -39,5 +39,5 @@ public static class Logger
 	}
 
 	[DllImport(NativeMethods.DllName)]
-	private static extern void Log(byte severity, [MarshalAs(UnmanagedType.LPStr)] string funcName, uint line, [MarshalAs(UnmanagedType.LPStr)] string message);
+	private static extern void Log(byte severity, /*[MarshalAs(UnmanagedType.LPStr)]*/ string funcName, uint line, /*[MarshalAs(UnmanagedType.LPStr)]*/  string message);
 }

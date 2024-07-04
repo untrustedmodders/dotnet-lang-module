@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 
 namespace Plugify;
 
-public static class Marshalling
+internal static class Marshalling
 {
-    public static void InvokeMethod(Guid managedMethodGuid, Guid thisObjectGuid, nint paramsPtr, nint outPtr)
+	internal static void InvokeMethod(Guid managedMethodGuid, Guid thisObjectGuid, nint paramsPtr, nint outPtr)
     {
 	    MethodInfo? methodInfo = ManagedMethodCache.Instance.GetMethod(managedMethodGuid);
 	    if (methodInfo == null)

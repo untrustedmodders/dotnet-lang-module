@@ -79,18 +79,12 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{ std::format("Assembly '{}' has not been found", assemblyPath.string()) };
 	}
 
-	Managed.InitializeAssemblyFptr = GetDelegate<InitializeAssemblyFn>(
-			assemblyPath.c_str(),
-			NETLM_STR("Plugify.NativeInterop, Plugify"),
-			NETLM_STR("InitializeAssembly"));
+	Managed.InitializeAssemblyFptr = GetDelegate<InitializeAssemblyFn>(assemblyPath.c_str(), NETLM_STR("Plugify.NativeInterop, Plugify"), NETLM_STR("InitializeAssembly"));
 	if (Managed.InitializeAssemblyFptr == nullptr) {
 		return ErrorData{ "InitializeAssembly could not be found in Plugify.dll! Ensure .NET libraries are properly compiled." };
 	}
 
-	Managed.UnloadAssemblyFptr = GetDelegate<UnloadAssemblyFn>(
-			assemblyPath.c_str(),
-			NETLM_STR("Plugify.NativeInterop, Plugify"),
-			NETLM_STR("UnloadAssembly"));
+	Managed.UnloadAssemblyFptr = GetDelegate<UnloadAssemblyFn>(assemblyPath.c_str(), NETLM_STR("Plugify.NativeInterop, Plugify"), NETLM_STR("UnloadAssembly"));
 	if (Managed.UnloadAssemblyFptr == nullptr) {
 		return ErrorData{ "UnloadAssembly could not be found in Plugify.dll! Ensure .NET libraries are properly compiled." };
 	}
@@ -337,12 +331,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 
 template<typename T>
 T DotnetLanguageModule::GetDelegate(const char_t* assemblyPath, const char_t* typeName, const char_t* methodName, const char_t* delegateTypeName) const {
-	auto message = std::format(NETLM_STR("Loading .NET assembly: {}\tType Name: {}\tMethod Name: {}"), assemblyPath, typeName, methodName);
-#if NETLM_PLATFORM_WINDOWS
-	_provider->Log(Utils::WideStringToUTF8String(message), Severity::Verbose);
-#else
-	_provider->Log(message, Severity::Info);
-#endif
+	_provider->Log(std::format("Loading .NET assembly: {}\tType Name: {}\tMethod Name: {}", NETLM_UTF8(assemblyPath), NETLM_UTF8(typeName), NETLM_UTF8(methodName)), Severity::Verbose);
 
 	T delegatePtr = nullptr;
 
@@ -571,8 +560,8 @@ namespace netlm {
 }
 
 extern "C" {
-	NETLM_EXPORT void* GetMethodPtr(const char* methodName) {
-		return g_netlm.GetNativeMethod(methodName);
+	NETLM_EXPORT void* GetMethodPtr(const char_t* methodName) {
+		return g_netlm.GetNativeMethod(NETLM_UTF8(methodName));
 	}
 
 	NETLM_EXPORT const char_t* GetBaseDir() {
@@ -580,22 +569,22 @@ extern "C" {
 		return Memory::StringToCoTaskMemAuto(source.c_str());
 	}
 
-	NETLM_EXPORT bool IsModuleLoaded(const char* moduleName, int version, bool minimum) {
+	NETLM_EXPORT bool IsModuleLoaded(const char_t* moduleName, int version, bool minimum) {
 		auto requiredVersion = (version >= 0 && version != INT_MAX) ? std::make_optional(version) : std::nullopt;
-		return g_netlm.GetProvider()->IsModuleLoaded(moduleName, requiredVersion, minimum);
+		return g_netlm.GetProvider()->IsModuleLoaded(NETLM_UTF8(moduleName), requiredVersion, minimum);
 	}
 
-	NETLM_EXPORT bool IsPluginLoaded(const char* pluginName, int version, bool minimum) {
+	NETLM_EXPORT bool IsPluginLoaded(const char_t* pluginName, int version, bool minimum) {
 		auto requiredVersion = (version >= 0 && version != INT_MAX) ? std::make_optional(version) : std::nullopt;
-		return g_netlm.GetProvider()->IsPluginLoaded(pluginName, requiredVersion, minimum);
+		return g_netlm.GetProvider()->IsPluginLoaded(NETLM_UTF8(pluginName), requiredVersion, minimum);
 	}
 
-	NETLM_EXPORT void Log(Severity severity, const char* funcName, uint32_t line, const char* message) {
-		g_netlm.GetProvider()->Log(std::format(LOG_PREFIX "{}:{}: {}", funcName, line, message), severity);
+	NETLM_EXPORT void Log(Severity severity, const char_t* funcName, uint32_t line, const char_t* message) {
+		g_netlm.GetProvider()->Log(std::format(LOG_PREFIX "{}:{}: {}", NETLM_UTF8(funcName), line, NETLM_UTF8(message)), severity);
 	}
 
-	NETLM_EXPORT const char_t* FindPluginResource(const char* pluginName, const char* path) {
-		ScriptInstance* script = g_netlm.FindScript(pluginName);
+	NETLM_EXPORT const char_t* FindPluginResource(const char_t* pluginName, const char_t* path) {
+		ScriptInstance* script = g_netlm.FindScript(NETLM_UTF8(pluginName));
 		if (script) {
 			auto resource = script->GetPlugin().FindResource(path);
 			if (resource.has_value()) {
@@ -610,8 +599,16 @@ extern "C" {
 	NETLM_EXPORT std::string* AllocateString() {
 		return static_cast<std::string*>(malloc(sizeof(std::string)));
 	}
-	NETLM_EXPORT void* CreateString(const char* source) {
+	NETLM_EXPORT void* CreateString(const char_t* source) {
+#if NETLM_PLATFORM_WINDOWS
+		auto output = new std::string();
+		if (source == nullptr) {
+			Utils::WideStringToUTF8String(*output, source);
+		}
+		return output;
+#else
 		return source == nullptr ? new std::string() : new std::string(source);
+#endif
 	}
 	NETLM_EXPORT const char_t* GetStringData(std::string* string) {
 #if NETLM_PLATFORM_WINDOWS
@@ -624,14 +621,17 @@ extern "C" {
 	NETLM_EXPORT int GetStringLength(std::string* string) {
 		return static_cast<int>(string->length());
 	}
-	NETLM_EXPORT void ConstructString(std::string* string, const char* source) {
-		std::construct_at(string, source);
+	NETLM_EXPORT void ConstructString(std::string* string, const char_t* source) {
+		if (source == nullptr)
+			std::construct_at(string, std::string());
+		else
+			std::construct_at(string, NETLM_UTF8(source));
 	}
-	NETLM_EXPORT void AssignString(std::string* string, const char* source) {
+	NETLM_EXPORT void AssignString(std::string* string, const char_t* source) {
 		if (source == nullptr)
 			string->clear();
 		else
-			string->assign(source);
+			string->assign(NETLM_UTF8(source));
 	}
 	NETLM_EXPORT void FreeString(std::string* string) {
 		string->~basic_string();
@@ -1240,11 +1240,7 @@ extern "C" {
 }
 
 void DotnetLanguageModule::ErrorWriter(const char_t* message) {
-#if NETLM_PLATFORM_WINDOWS
-	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", Utils::WideStringToUTF8String(message)), Severity::Error);
-#else
-	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", message), Severity::Error);
-#endif
+	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", NETLM_UTF8(message)), Severity::Error);
 }
 
 // https://github.com/dotnet/runtime/blob/main/docs/design/features/host-error-codes.md

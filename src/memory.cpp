@@ -32,7 +32,7 @@ char_t* Memory::StringToCoTaskMemAuto(string_view_t string) {
 
 	if (buffer != nullptr)
 	{
-		memset(buffer, 0xCE, size);
+		//memset(buffer, 0xCE, size);
 		//wcscpy(buffer, string.data());
 		wcscpy_s(buffer, length, string.data());
 	}
@@ -41,7 +41,7 @@ char_t* Memory::StringToCoTaskMemAuto(string_view_t string) {
 
 	if (buffer != nullptr)
 	{
-		memset(buffer, 0, size);
+		//memset(buffer, 0, size);
 		strncpy(buffer, string.data(), length);
 	}
 #endif

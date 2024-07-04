@@ -6,12 +6,12 @@ namespace Plugify;
 
 public delegate void InvokeMethodDelegate(Guid managedMethodGuid, Guid thisObjectGuid, nint paramsPtr, nint outPtr);
 
-public static class NativeInterop
+internal static class NativeInterop
 {
 	//public static readonly int ApiVersion = 1;
-    public static readonly InvokeMethodDelegate InvokeMethodDelegate = Marshalling.InvokeMethod;
+    private static readonly InvokeMethodDelegate InvokeMethodDelegate = Marshalling.InvokeMethod;
 
-    public enum AssemblyLoadStatus
+    internal enum AssemblyLoadStatus
     {
         Success, FileNotFound, FileLoadFailure, InvalidFilePath, InvalidAssembly, UnknownError
     }
@@ -28,7 +28,7 @@ public static class NativeInterop
     }
     
     [UnmanagedCallersOnly]
-    public static AssemblyLoadStatus InitializeAssembly(NativeString assemblyPathString, nint outAssemblyGuid, nint classHolderPtr)
+    internal static AssemblyLoadStatus InitializeAssembly(NativeString assemblyPathString, nint outAssemblyGuid, nint classHolderPtr)
     {
         try
         {
@@ -71,7 +71,7 @@ public static class NativeInterop
         }
         catch (Exception e)
         {
-            AssemblyLoadErrorLookup.TryGetValue(e.GetType(), out var loadStatus);
+            var loadStatus = AssemblyLoadErrorLookup.GetValueOrDefault(e.GetType(), AssemblyLoadStatus.UnknownError);
             Logger.Log(Severity.Error, "Loading assembly error: {0}", e);
             return loadStatus;
         }
@@ -80,7 +80,7 @@ public static class NativeInterop
     }
     
     [UnmanagedCallersOnly]
-    public static Bool32 UnloadAssembly(nint assemblyGuidPtr)
+    internal static Bool32 UnloadAssembly(nint assemblyGuidPtr)
     {
         bool result = true;
 
@@ -112,9 +112,9 @@ public static class NativeInterop
                 TypeInterface.RemoveUnusedObjects();
             }
         }
-        catch (Exception err)
+        catch (Exception e)
         {
-            Logger.Log(Severity.Error, "Error unloading assembly: {0}", err);
+            Logger.Log(Severity.Error, "Error unloading assembly: {0}", e);
 
             result = false;
         }
@@ -123,7 +123,7 @@ public static class NativeInterop
     }
 
     [UnmanagedCallersOnly]
-    public static unsafe void AddMethodToCache(nint assemblyGuidPtr, nint methodGuidPtr, nint methodInfoPtr)
+    internal static unsafe void AddMethodToCache(nint assemblyGuidPtr, nint methodGuidPtr, nint methodInfoPtr)
     {
         Guid assemblyGuid = Marshal.PtrToStructure<Guid>(assemblyGuidPtr);
         Guid methodGuid = Marshal.PtrToStructure<Guid>(methodGuidPtr);
@@ -134,7 +134,7 @@ public static class NativeInterop
     }
 
     [UnmanagedCallersOnly]
-    public static unsafe void AddObjectToCache(nint assemblyGuidPtr, nint objectGuidPtr, nint objectPtr, nint outManagedObjectPtr)
+    internal static unsafe void AddObjectToCache(nint assemblyGuidPtr, nint objectGuidPtr, nint objectPtr, nint outManagedObjectPtr)
     {
         Guid assemblyGuid = Marshal.PtrToStructure<Guid>(assemblyGuidPtr);
         Guid objectGuid = Marshal.PtrToStructure<Guid>(objectGuidPtr);
@@ -234,7 +234,7 @@ public static class NativeInterop
         return managedClass;
     }
 
-    public static void FreeObject(ManagedObject obj)
+    private static void FreeObject(ManagedObject obj)
     {
         if (!ManagedObjectCache.Instance.RemoveObject(obj.guid))
         {
@@ -243,7 +243,7 @@ public static class NativeInterop
     }
 
     [DllImport(NativeMethods.DllName)]
-    private static extern void ManagedClass_Create(ref Guid assemblyGuid, nint classHolderPtr, int typeHash, nint typeNamePtr, [Out] out ManagedClass result);
+    private static extern void ManagedClass_Create([In] ref Guid assemblyGuid, nint classHolderPtr, int typeHash, nint typeNamePtr, [Out] out ManagedClass result);
 
     [DllImport(NativeMethods.DllName)]
     private static extern void NativeInterop_SetInvokeMethodFunction([In] ref Guid assemblyGuid, nint classHolderPtr, nint invokeMethodPtr);

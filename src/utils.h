@@ -4,22 +4,16 @@
 
 #if NETLM_PLATFORM_WINDOWS
 #define NETLM_STR(str) L##str
+#define NETLM_UTF8(str) Utils::WideStringToUTF8String(str)
 #else
 #define NETLM_STR(str) str
+#define NETLM_UTF8(str) str
 #endif
 
 namespace netlm {
 	class Utils {
 	public:
 		Utils() = delete;
-
-		static inline int Strncasecmp(const char* s1, const char* s2, std::size_t n) {
-#ifdef _MSC_VER
-			return _strnicmp(s1, s2, n);
-#else
-			return strncasecmp(s1, s2, n);
-#endif
-		}
 
 #if NETLM_PLATFORM_WINDOWS
 		/// Converts the specified UTF-8 string to a wide string.

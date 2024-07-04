@@ -115,6 +115,7 @@ internal static class TypeUtils
 	    [typeof(float)] = ValueType.Float,
 	    [typeof(double)] = ValueType.Double,
 	    [typeof(Delegate)] = ValueType.Function,
+	    [typeof(MulticastDelegate)] = ValueType.Function,
 	    // std::string
 	    [typeof(string)] = ValueType.String,
 	    // std::vector

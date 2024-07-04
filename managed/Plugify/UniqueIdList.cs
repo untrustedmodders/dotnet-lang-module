@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace Plugify;
 
-public class UniqueIdList<T>
+internal class UniqueIdList<T>
 {
 	private readonly Dictionary<int, WeakReference> _objects = new();
 

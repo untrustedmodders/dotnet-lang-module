@@ -13,7 +13,7 @@ internal static class TypeInterface
 	private static readonly UniqueIdList<PropertyInfo> CachedProperties = new();
 	private static readonly UniqueIdList<Attribute> CachedAttributes = new();
 
-	public static void RemoveUnusedObjects()
+	internal static void RemoveUnusedObjects()
 	{
 		CachedTypes.RemoveUnusedObjects();
 		CachedMethods.RemoveUnusedObjects();
