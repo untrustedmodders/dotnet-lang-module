@@ -1,8 +1,7 @@
 #include "method_info.h"
 #include "type.h"
 #include "attribute.h"
-
-#include "interop/managed_functions.h"
+#include "managed_functions.h"
 
 using namespace netlm;
 
@@ -22,7 +21,7 @@ Type& MethodInfo::GetReturnType() {
 	return *_returnType;
 }
 
-const std::vector<std::unique_ptr<Type>>& MethodInfo::GetParameterTypes() {
+const std::vector<Type>& MethodInfo::GetParameterTypes() {
 	if (_parameterTypes.empty()) {
 		int32_t parameterCount;
 		Managed.GetMethodInfoParameterTypesFptr(_handle, nullptr, &parameterCount);
@@ -32,8 +31,7 @@ const std::vector<std::unique_ptr<Type>>& MethodInfo::GetParameterTypes() {
 		_parameterTypes.reserve(parameterTypes.size());
 
 		for (TypeId parameterType : parameterTypes) {
-			std::unique_ptr<Type>& type = _parameterTypes.emplace_back();
-			type->_id = parameterType;
+			_parameterTypes.emplace_back(parameterType);
 		}
 	}
 
@@ -49,6 +47,19 @@ std::vector<Attribute> MethodInfo::GetAttributes() const {
 	Managed.GetMethodInfoAttributesFptr(_handle, nullptr, &attributeCount);
 	std::vector<ManagedHandle> attributeHandles(static_cast<size_t>(attributeCount));
 	Managed.GetMethodInfoAttributesFptr(_handle, attributeHandles.data(), &attributeCount);
+
+	std::vector<Attribute> result(attributeHandles.size());
+	for (size_t i = 0; i < attributeHandles.size(); i++)
+		result[i]._handle = attributeHandles[i];
+
+	return result;
+}
+
+std::vector<Attribute> MethodInfo::GetReturnAttributes() const {
+	int32_t attributeCount;
+	Managed.GetMethodInfoReturnAttributesFptr(_handle, nullptr, &attributeCount);
+	std::vector<ManagedHandle> attributeHandles(static_cast<size_t>(attributeCount));
+	Managed.GetMethodInfoReturnAttributesFptr(_handle, attributeHandles.data(), &attributeCount);
 
 	std::vector<Attribute> result(attributeHandles.size());
 	for (size_t i = 0; i < attributeHandles.size(); i++)

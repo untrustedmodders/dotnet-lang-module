@@ -1,13 +1,16 @@
 #pragma once
 
 #include <cstring>
+#include <plugify/method.h>
 
 #if NETLM_PLATFORM_WINDOWS
 #define NETLM_STR(str) L##str
 #define NETLM_UTF8(str) Utils::WideStringToUTF8String(str)
+#define NETLM_WIDE(str) Utils::UTF8StringToWideString(str)
 #else
 #define NETLM_STR(str) str
 #define NETLM_UTF8(str) str
+#define NETLM_WIDE(str) str
 #endif
 
 namespace netlm {

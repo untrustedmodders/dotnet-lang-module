@@ -1,7 +1,8 @@
-using System;
 using System.Runtime.InteropServices;
 
 namespace Plugify;
+
+using static ManagedHost;
 
 internal static class GarbageCollector
 {
@@ -17,7 +18,7 @@ internal static class GarbageCollector
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, "Error collecting garbage: {0}", e);
+			HandleException(e);
 		}
 	}
 
@@ -30,7 +31,7 @@ internal static class GarbageCollector
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, "Error waiting for pending finalizers: {0}", e);
+			HandleException(e);
 		}
 	}
 }

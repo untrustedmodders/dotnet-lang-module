@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Plugify;
+using ValueType = Plugify.ValueType;
 
 namespace CSharpTest
 {
@@ -18,7 +19,7 @@ namespace CSharpTest
             return true;
         }
 
-        [return: MarshalAs(UnmanagedType.I1)]
+        [return: Marshal(ValueType.Char8)]
         public static char NoParamReturnChar8()
         {
             Console.WriteLine("NoParamReturnChar8");
@@ -115,7 +116,7 @@ namespace CSharpTest
             return new bool[] { true, false };
         }
 
-        [return: MarshalAs(UnmanagedType.I1)]
+        [return: Marshal(ValueType.ArrayChar8)]
         public static char[] NoParamReturnArrayChar8()
         {
             Console.WriteLine("NoParamReturnArrayChar8");

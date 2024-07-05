@@ -1,143 +1,69 @@
 #include "assembly.h"
-#include "class.h"
-#include "module.h"
 
-#include "interop/managed_functions.h"
+#if NETLM_PLATFORM_WINDOWS
+#include <windows.h>
+#elif NETLM_PLATFORM_LINUX
+#include <dlfcn.h>
+#elif NETLM_PLATFORM_APPLE
+#include <dlfcn.h>
+#else
+#error "Platform is not supported!"
+#endif
 
 using namespace netlm;
 
-std::string lastError;
+thread_local static std::string lastError;
 
-std::unique_ptr<Assembly> Assembly::LoadFromPath(const std::filesystem::path& assemblyPath) {
-	std::error_code ec;
-	auto absolutePath= fs::absolute(assemblyPath, ec);
-	if (ec) {
-		lastError = std::format("Invalid file path: {}", assemblyPath.string());
-		return nullptr;
+std::unique_ptr<Assembly> Assembly::LoadFromPath(const fs::path& assemblyPath) {
+#if NETLM_PLATFORM_WINDOWS
+	void* handle = static_cast<void*>(LoadLibraryW(assemblyPath.c_str()));
+#elif NETLM_PLATFORM_LINUX || NETLM_PLATFORM_APPLE
+	void* handle = dlopen(assemblyPath.string().c_str(), RTLD_LAZY | RTLD_NODELETE);
+#else
+	void* handle = nullptr;
+#endif
+	if (handle) {
+#if NETLM_PLATFORM_WINDOWS
+		GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, assemblyPath.filename().c_str(), reinterpret_cast<HMODULE*>(&handle));
+#endif
+		return std::unique_ptr<Assembly>(new Assembly(handle));
 	}
-
-	auto assembly = std::unique_ptr<Assembly>(new Assembly);
-
-	auto path = String::New(absolutePath.c_str());
-	auto status = Managed.InitializeAssemblyFptr(path, &assembly->_guid, &assembly->_classObjectHolder);
-	String::Free(path);
-
-	if (status != AssemblyLoadStatus::Success) {
-		switch (status) {
-			case AssemblyLoadStatus::FileNotFound:
-				lastError = "File not found";
-				break;
-			case AssemblyLoadStatus::FileLoadFailure:
-				lastError = "File load failure";
-				break;
-			case AssemblyLoadStatus::InvalidFilePath:
-				lastError = "Invalid file path";
-				break;
-			case AssemblyLoadStatus::InvalidAssembly:
-				lastError = "Invalid assembly";
-				break;
-			case AssemblyLoadStatus::UnknownError:
-				lastError = "Unknown error";
-				break;
-		}
-		return nullptr;
+#if NETLM_PLATFORM_WINDOWS
+	uint32_t errorCode = GetLastError();
+	if (errorCode != 0) {
+		LPSTR messageBuffer = nullptr;
+		size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+									 NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPSTR>(&messageBuffer), 0, NULL);
+		lastError = std::string(messageBuffer, size);
+		LocalFree(messageBuffer);
 	}
-
-	//auto name = Managed.GetAssemblyNameFptr(&assembly->_guid);
-	//assembly->_name = name;
-	//String::Free(name);
-
-	assembly->_loadStatus = status;
-
-	// MOVE TO CLASS
-
-	int32_t typeCount = 0;
-	Managed.GetAssemblyTypesFptr(&assembly->_guid, nullptr, &typeCount);
-	std::vector<TypeId> typeIds(static_cast<size_t>(typeCount));
-	Managed.GetAssemblyTypesFptr(&assembly->_guid, typeIds.data(), &typeCount);
-
-	for (auto typeId : typeIds) {
-		assembly->_classObjectHolder._types.emplace_back(typeId);
-	}
-
-	return assembly;
+#elif NETLM_PLATFORM_LINUX || NETLM_PLATFORM_APPLE
+	lastError = dlerror();
+#endif
+	return nullptr;
 }
 
-const std::string& Assembly::GetError() {
+std::string Assembly::GetError() {
 	return lastError;
 }
 
-Assembly::Assembly()
-	: _guid{0, 0},
-	  _classObjectHolder(this) {
+Assembly::Assembly(void* handle) : _handle{handle} {
 }
 
 Assembly::~Assembly() {
-	if (!Unload()) {
-		assert("Failed to unload assembly");
-	}
-}
-
-bool Assembly::Unload() {
-	if (!IsLoaded()) {
-		return true;
-	}
-
-#ifndef NDEBUG
-	// Sanity check - ensure all owned classes, methods, objects etc will not be dangling
-
-	for (const auto& [_, classObject] : _classObjectHolder._classObjects) {
-		if (!classObject) {
-			continue;
-		}
-	}
+#if NETLM_PLATFORM_WINDOWS
+	FreeLibrary(static_cast<HMODULE>(_handle));
+#elif NETLM_PLATFORM_LINUX || NETLM_PLATFORM_APPLE
+	dlclose(_handle);
 #endif
-
-	Bool32 result = Managed.UnloadAssemblyFptr(&_guid);
-	return bool(result);
 }
 
-ClassHolder::ClassHolder(Assembly* ownerAssembly)
-	: _ownerAssembly(ownerAssembly),
-	  _invokeMethodFunction(nullptr) {
-}
-
-bool ClassHolder::CheckAssemblyLoaded() const {
-	if (_ownerAssembly) {
-		return _ownerAssembly->IsLoaded();
-	}
-
-	return false;
-}
-
-Class* ClassHolder::GetOrCreateClassObject(int32_t typeHash, const char* typeName) {
-	auto it = _classObjects.find(typeHash);
-
-	if (it != _classObjects.end()) {
-		return std::get<std::unique_ptr<Class>>(*it).get();
-	}
-
-	it = _classObjects.emplace(typeHash, std::make_unique<Class>(this, typeHash, typeName)).first;
-
-	return std::get<std::unique_ptr<Class>>(*it).get();
-}
-
-Class* ClassHolder::FindClassByName(std::string_view typeName) const {
-	for (const auto& [_, classPtr] : _classObjects) {
-		if (classPtr->GetName() == typeName) {
-			return classPtr.get();
-		}
-	}
-
+void* Assembly::GetFunction(const char* functionName) const {
+#if NETLM_PLATFORM_WINDOWS
+	return reinterpret_cast<void*>(GetProcAddress(static_cast<HMODULE>(_handle), functionName));
+#elif NETLM_PLATFORM_LINUX || NETLM_PLATFORM_APPLE
+	return dlsym(_handle, functionName);
+#else
 	return nullptr;
-}
-
-Class* ClassHolder::FindClassBySubclass(Class* subClass) const {
-	for (const auto& [_, classPtr] : _classObjects) {
-		if (classPtr->GetType().IsSubclassOf(subClass->GetType())) {
-			return classPtr.get();
-		}
-	}
-
-	return nullptr;
+#endif
 }

@@ -1,0 +1,14 @@
+# IDEs
+.idea
+.vscode
+.vs
+*.DotSettings.user
+
+# CMake
+CMakeUserPresets.json
+
+# Build results
+/build
+obj/
+bin/
+cmake-build-debug/

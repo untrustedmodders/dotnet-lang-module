@@ -29,22 +29,32 @@ char_t* Memory::StringToCoTaskMemAuto(string_view_t string) {
 
 #if NETLM_PLATFORM_WINDOWS
 	auto* buffer = static_cast<char_t*>(CoTaskMemAlloc(size));
-
-	if (buffer != nullptr)
-	{
-		//memset(buffer, 0xCE, size);
-		//wcscpy(buffer, string.data());
-		wcscpy_s(buffer, length, string.data());
-	}
 #else
 	auto* buffer = static_cast<char_t*>(AllocHGlobal(size));
+#endif
 
 	if (buffer != nullptr)
 	{
-		//memset(buffer, 0, size);
-		strncpy(buffer, string.data(), length);
+		memcpy(buffer, string.data(), size);
 	}
+
+	return buffer;
+}
+
+char* Memory::StringToHGlobalAnsi(std::string_view string) {
+	size_t length = string.length() + 1;
+	size_t size = length * sizeof(char);
+
+#if NETLM_PLATFORM_WINDOWS
+	auto* buffer = static_cast<char*>(CoTaskMemAlloc(size));
+#else
+	auto* buffer = static_cast<char*>(AllocHGlobal(size));
 #endif
+
+	if (buffer != nullptr)
+	{
+		memcpy(buffer, string.data(), size);
+	}
 
 	return buffer;
 }

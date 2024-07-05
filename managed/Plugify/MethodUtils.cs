@@ -1,15 +1,8 @@
 ﻿using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.InteropServices;
 
 namespace Plugify;
 
-[StructLayout(LayoutKind.Sequential)]
-public struct ManagedMethod
-{
-    public Guid guid;
-}
-    
 public static class MethodUtils
 {
     private static readonly MethodInfo FuncInvoke = typeof(Func<object[], object>).GetMethod("Invoke");

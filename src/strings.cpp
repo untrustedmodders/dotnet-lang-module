@@ -71,6 +71,8 @@ size_t String::Size() const {
 
 #if NETLM_PLATFORM_WINDOWS
 
+// Not used on Unix
+
 String String::New(std::wstring_view string) {
 	String result;
 	result.Assign(string);

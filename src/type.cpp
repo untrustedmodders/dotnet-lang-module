@@ -1,7 +1,6 @@
 #include "type.h"
 #include "attribute.h"
-
-#include "interop/managed_functions.h"
+#include "managed_functions.h"
 
 using namespace netlm;
 
@@ -191,6 +190,19 @@ Type& Type::GetElementType() {
 	return *_elementType;
 }
 
-bool Type::operator==(const Type& other) const {
-	return _id == other._id;
+// TODO: Cache methods
+
+ManagedObject Type::CreateInstanceInternal(const void** parameters, size_t length) {
+	ManagedObject result;
+	result._handle = Managed.CreateObjectFptr(_id, false, parameters, static_cast<int32_t>(length));
+	result._type = this;
+	return result;
+}
+
+void Type::InvokeStaticMethodInternal(ManagedHandle methodId, const void** parameters, size_t length) const {
+	Managed.InvokeStaticMethodFptr(_id, methodId, parameters, static_cast<int32_t>(length));
+}
+
+void Type::InvokeStaticMethodRetInternal(ManagedHandle methodId, const void** parameters, size_t length, void* resultStorage) const {
+	Managed.InvokeStaticMethodRetFptr(_id, methodId, parameters, static_cast<int32_t>(length), resultStorage);
 }

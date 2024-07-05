@@ -1,44 +1,99 @@
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 
 namespace Plugify;
 
+using static ManagedHost;
+
 internal static class TypeInterface 
 {
-	private static readonly UniqueIdList<Type> CachedTypes = new();
-	private static readonly UniqueIdList<MethodInfo> CachedMethods = new();
-	private static readonly UniqueIdList<FieldInfo> CachedFields = new();
-	private static readonly UniqueIdList<PropertyInfo> CachedProperties = new();
-	private static readonly UniqueIdList<Attribute> CachedAttributes = new();
-
-	internal static void RemoveUnusedObjects()
+	internal static readonly UniqueIdList<Type> CachedTypes = new();
+	internal static readonly UniqueIdList<MethodInfo> CachedMethods = new();
+	internal static readonly UniqueIdList<FieldInfo> CachedFields = new();
+	internal static readonly UniqueIdList<PropertyInfo> CachedProperties = new();
+	internal static readonly UniqueIdList<Attribute> CachedAttributes = new();
+	
+	internal static Type? FindType(string? typeName)
 	{
-		CachedTypes.RemoveUnusedObjects();
-		CachedMethods.RemoveUnusedObjects();
-		CachedFields.RemoveUnusedObjects();
-		CachedProperties.RemoveUnusedObjects();
-		CachedAttributes.RemoveUnusedObjects();
+		var type = Type.GetType(typeName!,
+			(name) => AssemblyLoader.ResolveAssembly(null, name),
+			(assembly, name, ignore) => assembly != null ? assembly.GetType(name, false, ignore) : Type.GetType(name, false, ignore));
+
+		return type;
 	}
+
+	internal static object? CreateInstance(Type type, params object?[]? arguments)
+	{
+		return type.Assembly.CreateInstance(type.FullName ?? string.Empty, false, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, arguments!, null, null);
+	}
+
+	/*internal static unsafe T? FindSuitableMethod<T>(string? methodName, ManagedType* parameterTypes, int parameterCount, ReadOnlySpan<T> methods) where T : MethodBase
+	{
+		if (methodName == null)
+			return null;
+
+		T? result = null;
+
+		foreach (var methodInfo in methods)
+		{
+			var parameters = methodInfo.GetParameters();
+
+			if (parameters.Length != parameterCount)
+				continue;
+
+			// Check if the method name matches the signature of methodInfo, if so we ignore the automatic type checking
+			if (methodName == methodInfo.ToString())
+			{
+				result = methodInfo;
+				break;
+			}
+
+			if (methodInfo.Name != methodName)
+				continue;
+
+			int matchingTypes = 0;
+
+			for (int i = 0; i < parameters.Length; i++)
+			{
+				ManagedType paramType = new ManagedType(parameters[i].ParameterType);
+
+				if (paramType == parameterTypes[i])
+				{
+					matchingTypes++;
+				}
+			}
+
+			if (matchingTypes == parameterCount)
+			{
+				result = methodInfo;
+				break;
+			}
+		}
+
+		return result;
+	}*/
 	
 	[UnmanagedCallersOnly]
-	private static unsafe void GetAssemblyTypes(nint assemblyGuidPtr, int* outTypeArrayPtr, int* outTypeCount)
+	private static unsafe void GetAssemblyTypes(int assemblyId, int* outTypeArrayPtr, int* outTypeCount)
 	{
 		try
 		{
-			Guid assemblyGuid = Marshal.PtrToStructure<Guid>(assemblyGuidPtr);
-
-			AssemblyInstance? assemblyInstance = AssemblyCache.Instance.Get(assemblyGuid);
-            if (assemblyInstance == null)
-            {
-                Logger.Log(Severity.Warning, "Failed to get assembly types: {0} not found", assemblyGuid);
+			if (!AssemblyLoader.TryGetAssembly(assemblyId, out var assembly))
+			{
+				LogMessage($"Couldn't get types for assembly '{assemblyId}', assembly not found.", MessageLevel.Error);
 				return;
-            }
+			}
 
-			Type[]? assemblyTypes = assemblyInstance.Assembly?.GetTypes();
+			if (assembly == null)
+			{
+				LogMessage($"Couldn't get types for assembly '{assemblyId}', assembly was null.", MessageLevel.Error);
+				return;
+			}
+			
+			Type[] assemblyTypes = assembly.GetTypes();
 
-			if (assemblyTypes == null || assemblyTypes.Length == 0)
+			if (assemblyTypes.Length == 0)
 			{
 				*outTypeCount = 0;
 				return;
@@ -56,7 +111,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -69,7 +124,7 @@ internal static class TypeInterface
 
 			if (type == null)
 			{
-				Logger.Log(Severity.Error, "Failed to find type with name '{0}'.", name);
+				LogMessage($"Failed to find type with name '{name}'.", MessageLevel.Error);
 				return;
 			}
 
@@ -77,7 +132,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -93,7 +148,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return NativeString.Null();
 		}
 	}
@@ -110,7 +165,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return NativeString.Null();
 		}
 	}
@@ -133,7 +188,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -149,7 +204,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return -1;
 		}
 	}
@@ -166,7 +221,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return false;
 		}
 	}
@@ -183,7 +238,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return false;
 		}
 	}
@@ -200,7 +255,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return false;
 		}
 	}
@@ -217,7 +272,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return false;
 		}
 	}
@@ -234,7 +289,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return false;
 		}
 	}
@@ -256,7 +311,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -288,7 +343,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -320,7 +375,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -352,7 +407,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 	
@@ -376,7 +431,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -400,7 +455,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -424,7 +479,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -440,7 +495,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return false;
 		}
 	}
@@ -474,7 +529,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -486,11 +541,11 @@ internal static class TypeInterface
 			if (!CachedTypes.TryGetValue(typeId, out var type))
 				return ManagedType.Invalid;
 
-			return new ManagedType(type);
+			return new ManagedType(type, type.GetCustomAttributes(false));
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return ManagedType.Invalid;
 		}
 	}
@@ -507,7 +562,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return NativeString.Null();
 		}
 	}
@@ -524,7 +579,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -555,7 +610,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -587,7 +642,39 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
+		}
+	}
+
+	[UnmanagedCallersOnly]
+	private static unsafe void GetMethodInfoReturnAttributes(int methodId, int* outAttributeArrayPtr, int* outAttributeCount)
+	{
+		try
+		{
+			if (!CachedMethods.TryGetValue(methodId, out var methodInfo))
+				return;
+
+			var attributes = methodInfo.ReturnTypeCustomAttributes.GetCustomAttributes(false).ToImmutableArray();
+
+			if (attributes.Length == 0)
+			{
+				*outAttributeCount = 0;
+				return;
+			}
+
+			*outAttributeCount = attributes.Length;
+
+			if (outAttributeArrayPtr == null)
+				return;
+
+			for (int i = 0; i < attributes.Length; i++)
+			{
+				outAttributeArrayPtr[i] = CachedAttributes.Add((Attribute) attributes[i]);
+			}
+		}
+		catch (Exception e)
+		{
+			HandleException(e);
 		}
 	}
 
@@ -635,7 +722,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return TypeAccessibility.Public;
 		}
 	}
@@ -652,7 +739,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return NativeString.Null();
 		}
 	}
@@ -669,7 +756,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -685,7 +772,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return TypeAccessibility.Public;
 		}
 	}
@@ -718,7 +805,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -734,7 +821,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 			return NativeString.Null();
 		}
 	}
@@ -751,7 +838,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -783,7 +870,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -800,15 +887,15 @@ internal static class TypeInterface
 
 			if (fieldInfo == null)
 			{
-				Logger.Log(Severity.Error, "Failed to find field with name '{0}' in attribute {1}.", fieldName, targetType.FullName ?? targetType.Name);
+				LogMessage($"Failed to find field with name '{fieldName}' in attribute {targetType.FullName}.", MessageLevel.Error);
 				return;
 			}
 			
-			Marshalling.Assign(fieldInfo.FieldType, fieldInfo.GetValue(attribute), outValue);
+			Marshalling.MarshalReturnValue(fieldInfo.GetValue(attribute), fieldInfo.FieldType, outValue);
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -824,7 +911,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 
@@ -838,7 +925,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 
 		return false;
@@ -854,7 +941,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 
 		return false;
@@ -870,7 +957,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 
 		return false;
@@ -896,7 +983,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
         
@@ -920,7 +1007,7 @@ internal static class TypeInterface
 		}
 		catch (Exception e)
 		{
-			Logger.Log(Severity.Error, e.ToString());
+			HandleException(e);
 		}
 	}
 }

@@ -23,6 +23,11 @@ if(UNIX AND NOT APPLE)
 endif()
 
 #
+# CPPtrace
+#
+include(cmake/cpptrace.cmake)
+
+#
 # Dyncall
 #
 include(cmake/dyncall.cmake)
@@ -45,7 +50,7 @@ set(NETLM_PCH_FILE "src/pch.h")
 
 add_library(${PROJECT_NAME} SHARED ${NETLM_SOURCES})
 
-set(NETLM_LINK_LIBRARIES plugify::plugify plugify::plugify-function asmjit::asmjit dyncall_s)
+set(NETLM_LINK_LIBRARIES plugify::plugify plugify::plugify-function asmjit::asmjit cpptrace::cpptrace dyncall_s)
 
 if(NOT COMPILER_SUPPORTS_FORMAT)
     set(NETLM_LINK_LIBRARIES ${NETLM_LINK_LIBRARIES} fmt::fmt-header-only)

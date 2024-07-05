@@ -1,7 +1,6 @@
 #include "attribute.h"
 #include "type.h"
-
-#include "interop/managed_functions.h"
+#include "managed_functions.h"
 
 using namespace netlm;
 

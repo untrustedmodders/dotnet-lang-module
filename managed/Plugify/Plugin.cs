@@ -2,17 +2,17 @@
 
 public class Plugin : IEquatable<Plugin>, IComparable<Plugin>
 {
-	public long Id { get; private set; } = -1;
-	public string Name { get; private set; } = "";
-	public string FullName { get; private set; } = "";
-	public string Description { get; private set; } = "";
-	public string Version { get; private set; } = "";
-	public string Author { get; private set; } = "";
-	public string Website { get; private set; } = "";
-	public string BaseDir { get; private set; } = "";
-	public string[] Dependencies { get; private set; } = [];
+	public long Id { get; set; } = -1;
+	public string Name { get; set; } = "";
+	public string FullName { get; set; } = "";
+	public string Description { get; set; } = "";
+	public string Version { get; set; } = "";
+	public string Author { get; set; } = "";
+	public string Website { get; set; } = "";
+	public string BaseDir { get; set; } = "";
+	public string[] Dependencies { get; set; } = [];
 
-	public string FindResource(string path)
+	public string? FindResource(string path)
 	{
 		return NativeMethods.FindPluginResource(Name, path);
 	}

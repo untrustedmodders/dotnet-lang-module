@@ -1,15 +1,12 @@
 #include "module.h"
-#include "library.h"
-#include "memory.h"
 #include "assembly.h"
-#include "class.h"
-#include "object.h"
+#include "managed_assembly.h"
+#include "managed_functions.h"
+#include "method_info.h"
+#include "attribute.h"
+#include "type.h"
+#include "memory.h"
 #include "utils.h"
-
-#include "interop/managed_functions.h"
-#include "interop/managed_guid.h"
-#include "interop/managed_type.h"
-#include "strings.h"
 
 #include <module_export.h>
 
@@ -30,126 +27,21 @@
 using namespace plugify;
 using namespace netlm;
 
-namespace {
-	hostfxr_initialize_for_runtime_config_fn hostfxr_initialize_for_runtime_config;
-	hostfxr_get_runtime_delegate_fn hostfxr_get_runtime_delegate;
-	hostfxr_set_runtime_property_value_fn hostfxr_set_runtime_property_value;
-	hostfxr_close_fn hostfxr_close;
-	hostfxr_set_error_writer_fn hostfxr_set_error_writer;
-
-	load_assembly_and_get_function_pointer_fn load_assembly_and_get_function_pointer;
-	//get_function_pointer_fn get_function_pointer;
-	//load_assembly_fn load_assembly;
-}
-
-extern const char* hostfxr_str_error(int32_t error);
-
-void netlm::HandleDeleter::operator()(hostfxr_handle handle) const noexcept {
-	hostfxr_close(handle);
-}
-
 InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> provider, const IModule& module) {
 	if (!(_provider = provider.lock())) {
 		return ErrorData{ "Provider not exposed" };
 	}
 
-	std::error_code ec;
-
-	fs::path hostPath(module.GetBaseDir() / "dotnet/host/fxr/8.0.3/" NETLM_LIBRARY_PREFIX "hostfxr" NETLM_LIBRARY_SUFFIX);
-	if (!fs::exists(hostPath, ec)) {
-		return ErrorData{std::format("Host '{}' has not been found", hostPath.string())};
+	if (!_host.Initialize({
+		.hostfxrPath = module.GetBaseDir() / "dotnet/host/fxr/8.0.3/" NETLM_LIBRARY_PREFIX "hostfxr" NETLM_LIBRARY_SUFFIX,
+		.rootDirectory = module.GetBaseDir() / "api",
+		.messageCallback = MessageCallback,
+		.exceptionCallback = ExceptionCallback,
+	})) {
+		return ErrorData{ "Could not initialize hostfxr environment" };
 	}
 
-	if (!LoadHostFXR(hostPath)) {
-		return ErrorData{ std::format("Failed to load host assembly: {}", Library::GetError()) };
-	}
-
-	fs::path configPath(module.GetBaseDir() / "api/Plugify.runtimeconfig.json");
-	if (!fs::exists(configPath, ec)) {
-		return ErrorData{ std::format("Config '{}' has not been found", configPath.string()) };
-	}
-
-	auto fatal = InitializeRuntimeHost(configPath);
-	if (!fatal.empty()) {
-		return ErrorData{ std::move(fatal) };
-	}
-
-	fs::path assemblyPath(module.GetBaseDir() / "api/Plugify.dll");
-	if (!fs::exists(assemblyPath, ec)) {
-		return ErrorData{ std::format("Assembly '{}' has not been found", assemblyPath.string()) };
-	}
-
-	Managed.InitializeAssemblyFptr = GetDelegate<InitializeAssemblyFn>(assemblyPath.c_str(), NETLM_STR("Plugify.NativeInterop, Plugify"), NETLM_STR("InitializeAssembly"));
-	if (Managed.InitializeAssemblyFptr == nullptr) {
-		return ErrorData{ "InitializeAssembly could not be found in Plugify.dll! Ensure .NET libraries are properly compiled." };
-	}
-
-	Managed.UnloadAssemblyFptr = GetDelegate<UnloadAssemblyFn>(assemblyPath.c_str(), NETLM_STR("Plugify.NativeInterop, Plugify"), NETLM_STR("UnloadAssembly"));
-	if (Managed.UnloadAssemblyFptr == nullptr) {
-		return ErrorData{ "UnloadAssembly could not be found in Plugify.dll! Ensure .NET libraries are properly compiled." };
-	}
-
-	// Helpers
-	Managed.GetAssemblyNameFptr = GetDelegate<GetAssemblyNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.NativeInterop, Plugify"), NETLM_STR("GetAssemblyName"));
-	Managed.GetAssemblyTypesFptr = GetDelegate<GetAssemblyTypesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAssemblyTypes"));
-	Managed.GetTypeIdFptr = GetDelegate<GetTypeIdFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeId"));
-	Managed.GetFullTypeNameFptr = GetDelegate<GetFullTypeNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFullTypeName"));
-	Managed.GetAssemblyQualifiedNameFptr = GetDelegate<GetAssemblyQualifiedNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAssemblyQualifiedName"));
-	Managed.GetBaseTypeFptr = GetDelegate<GetBaseTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetBaseType"));
-	Managed.GetTypeSizeFptr = GetDelegate<GetTypeSizeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeSize"));
-	Managed.IsTypeSubclassOfFptr = GetDelegate<IsTypeSubclassOfFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeSubclassOf"));
-	Managed.IsTypeAssignableToFptr = GetDelegate<IsTypeAssignableToFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeAssignableTo"));
-	Managed.IsTypeAssignableFromFptr = GetDelegate<IsTypeAssignableFromFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeAssignableFrom"));
-	Managed.IsTypeSZArrayFptr = GetDelegate<IsTypeSZArrayFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeSZArray"));
-	Managed.IsTypeByRefFptr = GetDelegate<IsTypeByRefFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeByRef"));
-	Managed.GetElementTypeFptr = GetDelegate<GetElementTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetElementType"));
-	Managed.GetTypeMethodsFptr = GetDelegate<GetTypeMethodsFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeMethods"));
-	Managed.GetTypeFieldsFptr = GetDelegate<GetTypeFieldsFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeFields"));
-	Managed.GetTypePropertiesFptr = GetDelegate<GetTypePropertiesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeProperties"));
-	Managed.GetTypeMethodFptr = GetDelegate<GetTypeMethodFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeMethod"));
-	Managed.GetTypeFieldFptr = GetDelegate<GetTypeFieldFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeField"));
-	Managed.GetTypePropertyFptr = GetDelegate<GetTypePropertyFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeProperty"));
-	Managed.HasTypeAttributeFptr = GetDelegate<HasTypeAttributeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("HasTypeAttribute"));
-	Managed.GetTypeAttributesFptr = GetDelegate<GetTypeAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeAttributes"));
-	Managed.GetTypeManagedTypeFptr = GetDelegate<GetTypeManagedTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeManagedType"));
-
-	Managed.GetMethodInfoNameFptr = GetDelegate<GetMethodInfoNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoName"));
-	Managed.GetMethodInfoReturnTypeFptr = GetDelegate<GetMethodInfoReturnTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoReturnType"));
-	Managed.GetMethodInfoParameterTypesFptr = GetDelegate<GetMethodInfoParameterTypesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoParameterTypes"));
-	Managed.GetMethodInfoAccessibilityFptr = GetDelegate<GetMethodInfoAccessibilityFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoAccessibility"));
-	Managed.GetMethodInfoAttributesFptr = GetDelegate<GetMethodInfoAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoAttributes"));
-
-	Managed.GetFieldInfoNameFptr = GetDelegate<GetFieldInfoNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoName"));
-	Managed.GetFieldInfoTypeFptr = GetDelegate<GetFieldInfoTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoType"));
-	Managed.GetFieldInfoAccessibilityFptr = GetDelegate<GetFieldInfoAccessibilityFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoAccessibility"));
-	Managed.GetFieldInfoAttributesFptr = GetDelegate<GetFieldInfoAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoAttributes"));
-
-	Managed.GetPropertyInfoNameFptr = GetDelegate<GetPropertyInfoNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetPropertyInfoName"));
-	Managed.GetPropertyInfoTypeFptr = GetDelegate<GetPropertyInfoTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetPropertyInfoType"));
-	Managed.GetPropertyInfoAttributesFptr = GetDelegate<GetPropertyInfoAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetPropertyInfoAttributes"));
-
-	Managed.GetAttributeFieldValueFptr = GetDelegate<GetAttributeFieldValueFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAttributeFieldValue"));
-	Managed.GetAttributeTypeFptr = GetDelegate<GetAttributeTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAttributeType"));
-
-	Managed.CollectGarbageFptr = GetDelegate<CollectGarbageFn>(assemblyPath.c_str(), NETLM_STR("Plugify.GarbageCollector, Plugify"), NETLM_STR("CollectGarbage"));
-	Managed.WaitForPendingFinalizersFptr = GetDelegate<WaitForPendingFinalizersFn>(assemblyPath.c_str(), NETLM_STR("Plugify.GarbageCollector, Plugify"), NETLM_STR("WaitForPendingFinalizers"));
-
-	Managed.IsClassFptr = GetDelegate<IsClassFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsClass"));
-	Managed.IsEnumFptr = GetDelegate<IsEnumFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsEnum"));
-	Managed.IsValueTypeFptr = GetDelegate<IsValueTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsValueType"));
-	Managed.GetEnumNamesFptr = GetDelegate<GetEnumNamesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetEnumNames"));
-	Managed.GetEnumValuesFptr = GetDelegate<GetEnumValuesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetEnumValues"));
-
-	// Call the Initialize method in the NativeInterop class directly,
-	// to load all the classes and methods into the class object holder
-
-	auto rootAssembly = Assembly::LoadFromPath(assemblyPath);
-	if (!rootAssembly) {
-		return ErrorData{ Assembly::GetError() };
-	}
-	_rootAssembly = std::move(rootAssembly);
-
-	_basePluginClassPtr = _rootAssembly->GetClassObjectHolder().FindClassByName("Plugify.Plugin");
+	_alc = _host.CreateAssemblyLoadContext("PlugifyContext");
 
 	_provider->Log(LOG_PREFIX "Inited!", Severity::Debug);
 
@@ -159,88 +51,27 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 }
 
 void DotnetLanguageModule::Shutdown() {
-	_provider->Log(LOG_PREFIX "Shutting down .NET runtime", Severity::Debug);
-
 	_scripts.clear();
 	_nativesMap.clear();
-	_exportMethods.clear();
 	_functions.clear();
-	_rootAssembly.reset();
-	_ctx.reset();
-	_dll.reset();
+
+	_host.UnloadAssemblyLoadContext(_alc);
+	_host.Shutdown();
 	_rt.reset();
-
-	_provider->Log(LOG_PREFIX "Shut down .NET runtime", Severity::Debug);
 	_provider.reset();
-}
-
-bool DotnetLanguageModule::LoadHostFXR(const fs::path& hostPath) {
-	_provider->Log(std::format("Loading hostfxr from: {}", hostPath.string()), Severity::Debug);
-
-	_dll = Library::LoadFromPath(hostPath);
-	if (!_dll) {
-		return false;
-	}
-
-	hostfxr_initialize_for_runtime_config = _dll->GetFunction<hostfxr_initialize_for_runtime_config_fn>("hostfxr_initialize_for_runtime_config");
-	hostfxr_get_runtime_delegate = _dll->GetFunction<hostfxr_get_runtime_delegate_fn>("hostfxr_get_runtime_delegate");
-	hostfxr_set_runtime_property_value = _dll->GetFunction<hostfxr_set_runtime_property_value_fn>("hostfxr_set_runtime_property_value");
-	hostfxr_close = _dll->GetFunction<hostfxr_close_fn>("hostfxr_close");
-	hostfxr_set_error_writer = _dll->GetFunction<hostfxr_set_error_writer_fn>("hostfxr_set_error_writer");
-
-	_provider->Log("Loaded hostfxr functions", Severity::Debug);
-
-	return hostfxr_initialize_for_runtime_config &&
-		   hostfxr_get_runtime_delegate &&
-		   hostfxr_set_runtime_property_value &&
-		   hostfxr_close &&
-		   hostfxr_set_error_writer;
-}
-
-std::string DotnetLanguageModule::InitializeRuntimeHost(const fs::path& configPath) {
-	hostfxr_handle cxt = nullptr;
-	int32_t result = hostfxr_initialize_for_runtime_config(configPath.c_str(), nullptr, &cxt);
-	std::unique_ptr<void, HandleDeleter> context(cxt);
-
-	if ((result < 0 || result > 2) || cxt == nullptr) {
-		return std::format("Failed to initialize hostfxr: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
-	}
-
-	// @TODO Add all necessary properties here
-	//hostfxr_set_runtime_property_value(cxt, NETLM_STR("APP_CONTEXT_BASE_DIRECTORY"), basePath.c_str());
-
-	result = hostfxr_get_runtime_delegate(cxt, hdt_load_assembly_and_get_function_pointer, reinterpret_cast<void**>(&load_assembly_and_get_function_pointer));
-	if (result != 0 || load_assembly_and_get_function_pointer == nullptr) {
-		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly_and_get_function_pointer failed: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
-	}
-	/*result = hostfxr_get_runtime_delegate(cxt, hdt_get_function_pointer, reinterpret_cast<void**>(&get_function_pointer));
-	if (result != 0 || get_function_pointer == nullptr) {
-		return std::format("hostfxr_get_runtime_delegate::hdt_get_function_pointer failed: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
-	}
-	result = hostfxr_get_runtime_delegate(cxt, hdt_load_assembly, reinterpret_cast<void**>(&load_assembly));
-	if (result != 0 || load_assembly == nullptr) {
-		return std::format("hostfxr_get_runtime_delegate::hdt_load_assembly failed: {:x} ({})", uint32_t(result), hostfxr_str_error(result));
-	}*/
-
-	_ctx = std::move(context);
-
-	hostfxr_set_error_writer(ErrorWriter);
-
-	return {};
 }
 
 LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 	fs::path assemblyPath(plugin.GetBaseDir() / plugin.GetDescriptor().entryPoint);
 
-	auto assembly = Assembly::LoadFromPath(assemblyPath);
+	ManagedAssembly& assembly = _alc.LoadAssembly(assemblyPath);
 	if (!assembly) {
-		return ErrorData{ Assembly::GetError() };
+		return ErrorData{ _alc.GetError() };
 	}
 
-	//Class* pluginClassPtr = assembly->GetClassObjectHolder().FindClassBySubclass(_basePluginClassPtr);
-	Class* pluginClassPtr = assembly->GetClassObjectHolder().FindClassByName("ExamplePlugin.ExamplePlugin");
-	if (!pluginClassPtr) {
-		return ErrorData{"Failed to find 'Plugin' class implementation"};
+	Type& pluginClassType = assembly.GetTypeByBaseType("Plugify.Plugin");
+	if (!pluginClassType) {
+		return ErrorData{"Failed to find 'Plugify.Plugin' class implementation"};
 	}
 
 	std::vector<std::string> methodErrors;
@@ -258,26 +89,44 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 			continue;
 		}
 
-		Class* classPtr = assembly->GetClassObjectHolder().FindClassByName(separated[size-2]);
-		if (!classPtr) {
+		Type& type = assembly.GetType(noNamespace ? separated[size-2] : std::string_view(separated[0].data(), separated[size-1].data() - 1));
+		if (!type) {
 			methodErrors.emplace_back(std::format("Failed to find class '{}'", method.funcName));
 			continue;
 		}
 
-		ManagedMethod* methodPtr = classPtr->GetMethod(separated[size-1].data());
-		if (!methodPtr) {
+		MethodInfo methodInfo = type.GetMethod(separated[size-1].data());
+		if (!methodInfo) {
 			methodErrors.emplace_back(std::format("Failed to find method '{}'", method.funcName));
 			continue;
 		}
 
-		const ValueType& returnType = methodPtr->returnType.type;
+		const ValueType& returnType = methodInfo.GetReturnType().GetManagedType().type;
 		const ValueType& methodReturnType = method.retType.type;
 		if (returnType != methodReturnType) {
+
+			if (returnType == plugify::ValueType::Char16) {
+				for (auto& attributes : methodInfo.GetReturnAttributes()) {
+					if (attributes.GetFieldValue<ValueType>("Value") == ValueType::Char8) {
+						goto next;
+					}
+				}
+			} else if (returnType == plugify::ValueType::ArrayChar16) {
+				for (auto& attributes : methodInfo.GetReturnAttributes()) {
+					if (attributes.GetFieldValue<ValueType>("Value") == ValueType::ArrayChar8) {
+						goto next;
+					}
+				}
+			}
+
 			methodErrors.emplace_back(std::format("Method '{}' has invalid return type '{}' when it should have '{}'", method.funcName, ValueTypeToString(methodReturnType), ValueTypeToString(returnType)));
 			continue;
 		}
 
-		size_t paramCount = methodPtr->parameterTypes.size();
+	next:
+		const auto& parameterTypes = methodInfo.GetParameterTypes();
+
+		size_t paramCount = parameterTypes.size();
 		if (paramCount != method.paramTypes.size()) {
 			methodErrors.emplace_back(std::format("Method '{}' has invalid parameter count {} when it should have {}", method.funcName, method.paramTypes.size(), paramCount));
 			continue;
@@ -286,29 +135,27 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		bool methodFail = false;
 
 		for (size_t i = 0; i < paramCount; ++i) {
-			const ValueType& paramType = methodPtr->parameterTypes[i].type;
+			const ValueType& paramType = parameterTypes[i].GetManagedType().type;
 			const ValueType& methodParamType = method.paramTypes[i].type;
 			if (paramType != methodParamType) {
 				methodFail = true;
 				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.funcName, ValueTypeToString(methodParamType), i, ValueTypeToString(paramType)));
 				continue;
 			}
-
 		}
 
 		if (methodFail)
 			continue;
 
-		auto exportMethod = std::make_unique<ExportMethod>(classPtr, methodPtr);
+		auto packed = (static_cast<int64_t>(type.GetTypeId()) << 32) | (static_cast<int64_t>(methodInfo.GetHandle()) & 0xFFFFFFFF);
 
-		Function function(_rt);
-		void* methodAddr = function.GetJitFunc(method, &InternalCall, exportMethod.get());
+		auto function = std::make_unique<Function>(_rt);
+		void* methodAddr = function->GetJitFunc(method, &InternalCall, reinterpret_cast<void*>(packed));
 		if (!methodAddr) {
-			methodErrors.emplace_back(std::format("Method JIT generation error: ", function.GetError()));
+			methodErrors.emplace_back(std::format("Method JIT generation error: ", function->GetError()));
 			continue;
 		}
-		_functions.emplace(exportMethod.get(), std::move(function));
-		_exportMethods.emplace_back(std::move(exportMethod));
+		_functions.emplace_back(std::move(function));
 
 		methods.emplace_back(method.name, methodAddr);
 	}
@@ -321,34 +168,12 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		return ErrorData{ std::format("Not found {} method function(s)", funcs) };
 	}
 
-	const auto [_, result] = _scripts.try_emplace(plugin.GetName(), plugin, std::move(assembly), pluginClassPtr->NewObject());
+	const auto [_, result] = _scripts.try_emplace(plugin.GetName(), plugin, pluginClassType);
 	if (!result) {
 		return ErrorData{ std::format("Plugin name duplicate") };
 	}
 
 	return LoadResultData{ std::move(methods) };
-}
-
-template<typename T>
-T DotnetLanguageModule::GetDelegate(const char_t* assemblyPath, const char_t* typeName, const char_t* methodName, const char_t* delegateTypeName) const {
-	_provider->Log(std::format("Loading .NET assembly: {}\tType Name: {}\tMethod Name: {}", NETLM_UTF8(assemblyPath), NETLM_UTF8(typeName), NETLM_UTF8(methodName)), Severity::Verbose);
-
-	T delegatePtr = nullptr;
-
-	int32_t result = load_assembly_and_get_function_pointer(
-			assemblyPath,
-			typeName,
-			methodName,
-			delegateTypeName,
-			nullptr,
-			reinterpret_cast<void**>(&delegatePtr));
-
-	if (result != 0) {
-		_provider->Log(std::format("Failed to load assembly and get function pointer: {:x} ({})", uint32_t(result), hostfxr_str_error(result)), Severity::Error);
-		return nullptr;
-	}
-
-	return delegatePtr;
 }
 
 void DotnetLanguageModule::OnPluginStart(const IPlugin& plugin) {
@@ -389,11 +214,13 @@ ScriptInstance* DotnetLanguageModule::FindScript(const std::string& name) {
 
 // C++ to C#
 void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret) {
-	const auto& [classPtr, methodPtr] = *reinterpret_cast<ExportMethod*>(data);
+	auto combined = reinterpret_cast<int64_t>(data);
+	auto typeId = static_cast<int32_t>((combined >> 32) & 0xFFFFFFFF);
+	auto methodId = static_cast<int32_t>(combined & 0xFFFFFFFF);
 
 	bool hasRet = ValueTypeIsHiddenObjectParam(method->retType.type);
 
-	std::vector<void*> args;
+	std::vector<const void*> args;
 	args.reserve(hasRet ? count - 1 : count);
 
 	for (uint8_t i = hasRet, j = 0; i < count; ++i, ++j) {
@@ -510,7 +337,13 @@ void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* dat
 		}
 	}
 
-	classPtr->InvokeStaticMethod(methodPtr, args.data(), retPtr);
+	Type type(typeId);
+
+	if (method->retType.type != ValueType::Void) {
+		type.InvokeStaticMethodRetInternal(methodId, args.data(), args.size(), retPtr);
+	} else {
+		type.InvokeStaticMethodInternal(methodId, args.data(), args.size());
+	}
 
 	if (hasRet) {
 		ret->SetReturnPtr(retPtr);
@@ -519,39 +352,75 @@ void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* dat
 
 /*_________________________________________________*/
 
-ScriptInstance::ScriptInstance(const IPlugin& plugin, std::unique_ptr<Assembly> assembly, std::unique_ptr<Object> instance)
-	: _plugin{plugin},
-	  _assembly{std::move(assembly)},
-	  _instance{std::move(instance)} {
+void DotnetLanguageModule::ExceptionCallback(const std::string& message) {
+	if (!g_netlm._provider)
+		return;
 
+	g_netlm._provider->Log(std::format(LOG_PREFIX "[Exception] {}", message), Severity::Error);
+
+	std::stringstream stream;
+	cpptrace::generate_trace().print(stream);
+	g_netlm._provider->Log(stream.str(), Severity::Debug);
+}
+
+void DotnetLanguageModule::MessageCallback(const std::string& message, MessageLevel level) {
+	if (!g_netlm._provider)
+		return;
+
+	plugify::Severity severity;
+	switch (level) {
+		case MessageLevel::Info:
+			severity = Severity::Info;
+			break;
+		case MessageLevel::Warning:
+			severity = Severity::Warning;
+			break;
+		case MessageLevel::Error:
+			severity = Severity::Error;
+			break;
+		default:
+			return;
+	}
+
+	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", message), severity);
+}
+
+/*_________________________________________________*/
+
+ScriptInstance::ScriptInstance(const IPlugin& plugin, Type& type) : _plugin{plugin}, _instance{type.CreateInstance()} {
 	const auto& desc = plugin.GetDescriptor();
 	std::vector<std::string> deps;
 	deps.reserve(desc.dependencies.size());
 	for (const auto& dependency : desc.dependencies) {
 		deps.emplace_back(dependency.name);
 	}
-	_instance->InvokeMethodByName<void>("set_Id", plugin.GetId());
-	_instance->InvokeMethodByName<void>("set_Name", plugin.GetName());
-	_instance->InvokeMethodByName<void>("set_FullName", plugin.GetFriendlyName());
-	_instance->InvokeMethodByName<void>("set_Description", desc.description);
-	_instance->InvokeMethodByName<void>("set_Version", desc.versionName);
-	_instance->InvokeMethodByName<void>("set_Author", desc.createdBy);
-	_instance->InvokeMethodByName<void>("set_Website", desc.createdByURL);
-	_instance->InvokeMethodByName<void>("set_BaseDir", plugin.GetBaseDir().string());
-	_instance->InvokeMethodByName<void>("set_Dependencies", deps);
+
+	_instance.SetPropertyValue("Id", plugin.GetId());
+	_instance.SetPropertyValue("Name", plugin.GetName());
+	_instance.SetPropertyValue("FullName", plugin.GetFriendlyName());
+	_instance.SetPropertyValue("Description", desc.description);
+	_instance.SetPropertyValue("Version", desc.versionName);
+	_instance.SetPropertyValue("Author", desc.createdBy);
+	_instance.SetPropertyValue("Website", desc.createdByURL);
+	_instance.SetPropertyValue("BaseDir", plugin.GetBaseDir().string());
+	_instance.SetPropertyValue("Dependencies", deps);
 }
 
+ScriptInstance::~ScriptInstance() {
+	_instance.Destroy();
+};
+
 void ScriptInstance::InvokeOnStart() const {
-	ManagedMethod* onStartMethod = _instance->GetClass()->GetMethod("OnStart");
+	ManagedHandle onStartMethod = _instance.GetType().GetMethod("OnStart");
 	if (onStartMethod) {
-		_instance->InvokeMethod<void>(onStartMethod);
+		_instance.InvokeMethodInternal(onStartMethod, nullptr, 0);
 	}
 }
 
 void ScriptInstance::InvokeOnEnd() const {
-	ManagedMethod* onEndMethod = _instance->GetClass()->GetMethod("OnEnd");
+	ManagedHandle onEndMethod = _instance.GetType().GetMethod("OnEnd");
 	if (onEndMethod) {
-		_instance->InvokeMethod<void>(onEndMethod);
+		_instance.InvokeMethodInternal(onEndMethod, nullptr, 0);
 	}
 }
 
@@ -560,35 +429,30 @@ namespace netlm {
 }
 
 extern "C" {
-	NETLM_EXPORT void* GetMethodPtr(const char_t* methodName) {
-		return g_netlm.GetNativeMethod(NETLM_UTF8(methodName));
+	NETLM_EXPORT void* GetMethodPtr(const char* methodName) {
+		return g_netlm.GetNativeMethod(methodName);
 	}
 
-	NETLM_EXPORT const char_t* GetBaseDir() {
-		auto source = g_netlm.GetProvider()->GetBaseDir();
-		return Memory::StringToCoTaskMemAuto(source.c_str());
+	NETLM_EXPORT const char* GetBaseDir() {
+		return Memory::StringToHGlobalAnsi(g_netlm.GetProvider()->GetBaseDir().string());
 	}
 
-	NETLM_EXPORT bool IsModuleLoaded(const char_t* moduleName, int version, bool minimum) {
+	NETLM_EXPORT bool IsModuleLoaded(const char* moduleName, int version, bool minimum) {
 		auto requiredVersion = (version >= 0 && version != INT_MAX) ? std::make_optional(version) : std::nullopt;
-		return g_netlm.GetProvider()->IsModuleLoaded(NETLM_UTF8(moduleName), requiredVersion, minimum);
+		return g_netlm.GetProvider()->IsModuleLoaded(moduleName, requiredVersion, minimum);
 	}
 
-	NETLM_EXPORT bool IsPluginLoaded(const char_t* pluginName, int version, bool minimum) {
+	NETLM_EXPORT bool IsPluginLoaded(const char* pluginName, int version, bool minimum) {
 		auto requiredVersion = (version >= 0 && version != INT_MAX) ? std::make_optional(version) : std::nullopt;
-		return g_netlm.GetProvider()->IsPluginLoaded(NETLM_UTF8(pluginName), requiredVersion, minimum);
+		return g_netlm.GetProvider()->IsPluginLoaded(pluginName, requiredVersion, minimum);
 	}
 
-	NETLM_EXPORT void Log(Severity severity, const char_t* funcName, uint32_t line, const char_t* message) {
-		g_netlm.GetProvider()->Log(std::format(LOG_PREFIX "{}:{}: {}", NETLM_UTF8(funcName), line, NETLM_UTF8(message)), severity);
-	}
-
-	NETLM_EXPORT const char_t* FindPluginResource(const char_t* pluginName, const char_t* path) {
-		ScriptInstance* script = g_netlm.FindScript(NETLM_UTF8(pluginName));
+	NETLM_EXPORT const char* FindPluginResource(const char* pluginName, const char* path) {
+		ScriptInstance* script = g_netlm.FindScript(pluginName);
 		if (script) {
 			auto resource = script->GetPlugin().FindResource(path);
 			if (resource.has_value()) {
-				return Memory::StringToCoTaskMemAuto(resource->c_str());
+				return Memory::StringToHGlobalAnsi(resource->string());
 			}
 		}
 		return nullptr;
@@ -599,39 +463,26 @@ extern "C" {
 	NETLM_EXPORT std::string* AllocateString() {
 		return static_cast<std::string*>(malloc(sizeof(std::string)));
 	}
-	NETLM_EXPORT void* CreateString(const char_t* source) {
-#if NETLM_PLATFORM_WINDOWS
-		auto output = new std::string();
-		if (source == nullptr) {
-			Utils::WideStringToUTF8String(*output, source);
-		}
-		return output;
-#else
+	NETLM_EXPORT void* CreateString(const char* source) {
 		return source == nullptr ? new std::string() : new std::string(source);
-#endif
 	}
-	NETLM_EXPORT const char_t* GetStringData(std::string* string) {
-#if NETLM_PLATFORM_WINDOWS
-		auto str = Utils::UTF8StringToWideString(*string);
-		return Memory::StringToCoTaskMemAuto(str);
-#else
-		return Memory::StringToCoTaskMemAuto(string->c_str());
-#endif
+	NETLM_EXPORT const char* GetStringData(std::string* string) {
+		return Memory::StringToHGlobalAnsi(*string);
 	}
 	NETLM_EXPORT int GetStringLength(std::string* string) {
 		return static_cast<int>(string->length());
 	}
-	NETLM_EXPORT void ConstructString(std::string* string, const char_t* source) {
+	NETLM_EXPORT void ConstructString(std::string* string, const char* source) {
 		if (source == nullptr)
 			std::construct_at(string, std::string());
 		else
-			std::construct_at(string, NETLM_UTF8(source));
+			std::construct_at(string, source);
 	}
-	NETLM_EXPORT void AssignString(std::string* string, const char_t* source) {
+	NETLM_EXPORT void AssignString(std::string* string, const char* source) {
 		if (source == nullptr)
 			string->clear();
 		else
-			string->assign(NETLM_UTF8(source));
+			string->assign(source);
 	}
 	NETLM_EXPORT void FreeString(std::string* string) {
 		string->~basic_string();
@@ -913,16 +764,10 @@ extern "C" {
 		}
 	}
 
-	NETLM_EXPORT void GetVectorDataString(std::vector<std::string>* vector, char_t* arr[]) {
+	NETLM_EXPORT void GetVectorDataString(std::vector<std::string>* vector, char* arr[]) {
 		for (size_t i = 0; i < vector->size(); ++i) {
-			const auto& source = (*vector)[i];
 			Memory::FreeCoTaskMem(arr[i]);
-#if NETLM_PLATFORM_WINDOWS
-			auto str = Utils::UTF8StringToWideString(source);
-			arr[i] = Memory::StringToCoTaskMemAuto(str);
-#else
-			arr[i] = Memory::StringToCoTaskMemAuto(string.c_str());
-#endif
+			arr[i] = Memory::StringToHGlobalAnsi((*vector)[i]);
 		}
 	}
 
@@ -1236,153 +1081,5 @@ extern "C" {
 
 	NETLM_EXPORT ILanguageModule* GetLanguageModule() {
 		return &g_netlm;
-	}
-}
-
-void DotnetLanguageModule::ErrorWriter(const char_t* message) {
-	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", NETLM_UTF8(message)), Severity::Error);
-}
-
-// https://github.com/dotnet/runtime/blob/main/docs/design/features/host-error-codes.md
-const char* hostfxr_str_error(int32_t error) {
-	switch (static_cast<StatusCode>(error)) {
-		case Success:
-			return "Operation was successful";
-		case Success_HostAlreadyInitialized:
-			return "Initialization was successful, but another host context is already initialized.";
-		case Success_DifferentRuntimeProperties:
-			return "Initialization was successful, but another host context is already initialized and the requested context specified some runtime properties which are not the same to the already initialized context";
-		case InvalidArgFailure:
-			return "One of the specified arguments for the operation is invalid";
-		case CoreHostLibLoadFailure:
-			return "There was a failure loading a dependent library";
-		case CoreHostLibMissingFailure:
-			return "One of the dependent libraries is missing";
-		case CoreHostEntryPointFailure:
-			return "One of the dependent libraries is missing a required entry point.";
-		case CoreHostCurHostFindFailure:
-			return "Either the location of the current module could not be determined or the location is not in the right place relative to other expected components";
-		case CoreClrResolveFailure:
-			return "Failed to resolve the coreclr library";
-		case CoreClrBindFailure:
-			return "The loaded coreclr library does not have one of the required entry points";
-		case CoreClrInitFailure:
-			return "The call to coreclr_initialize failed";
-		case CoreClrExeFailure:
-			return "The call to coreclr_execute_assembly failed";
-		case ResolverInitFailure:
-			return "Initialization of the hostpolicy dependency resolver failed";
-		case ResolverResolveFailure:
-			return "Resolution of dependencies in hostpolicy failed";
-		case LibHostCurExeFindFailure:
-			return "Failure to determine the location of the current executable";
-		case LibHostInitFailure:
-			return "Initialization of the hostpolicy library failed";
-		case LibHostExecModeFailure:
-			return "Execution of the hostpolicy mode failed";
-		case LibHostSdkFindFailure:
-			return "Failure to find the requested SDK";
-		case LibHostInvalidArgs:
-			return "Arguments to hostpolicy are invalid";
-		case InvalidConfigFile:
-			return "The .runtimeconfig.json file is invalid";
-		case AppArgNotRunnable:
-			return "Used internally when the command line for dotnet.exe does not contain path to the application to run";
-		case AppHostExeNotBoundFailure:
-			return "apphost failed to determine which application to run";
-		case FrameworkMissingFailure:
-			return "It was not possible to find a compatible framework version";
-		case HostApiFailed:
-			return "hostpolicy could not calculate NATIVE_DLL_SEARCH_DIRECTORIES";
-		case HostApiBufferTooSmall:
-			return "Buffer specified to an API is not big enough to fit the requested value";
-		case LibHostUnknownCommand:
-			return "Returned by hostpolicy if corehost_main_with_output_buffer is called with unsupported host commands";
-		case LibHostAppRootFindFailure:
-			return "Returned by apphost if the imprinted application path does not exist";
-		case SdkResolverResolveFailure:
-			return "Returned from hostfxr_resolve_sdk2 when it failed to find matching SDK";
-		case FrameworkCompatFailure:
-			return "During processing of .runtimeconfig.json there were two framework references to the same framework which were not compatible";
-		case FrameworkCompatRetry:
-			return "Error used internally if the processing of framework references from .runtimeconfig.json reached a point where it needs to reprocess another already processed framework reference";
-		//case AppHostExeNotBundle:
-		//	return "Error reading the bundle footer metadata from a single-file apphost";
-		case BundleExtractionFailure:
-			return "Error extracting single-file apphost bundle";
-		case BundleExtractionIOError:
-			return "Error reading or writing files during single-file apphost bundle extraction";
-		case LibHostDuplicateProperty:
-			return "The .runtimeconfig.json specified by the app contains a runtime property which is also produced by the hosting layer";
-		case HostApiUnsupportedVersion:
-			return "Feature which requires certain version of the hosting layer binaries was used on a version which does not support it";
-		case HostInvalidState:
-			return "Error code returned by the hosting APIs in hostfxr if the current state is incompatible with the requested operation";
-		case HostPropertyNotFound:
-			return "Property requested by hostfxr_get_runtime_property_value does not exist";
-		case CoreHostIncompatibleConfig:
-			return "Error returned by hostfxr_initialize_for_runtime_config if the component being initialized requires framework which is not available or incompatible with the frameworks loaded by the runtime already in the process";
-		case HostApiUnsupportedScenario:
-			return "Error returned by hostfxr_get_runtime_delegate when hostfxr does not currently support requesting the given delegate type using the given context";
-		case HostFeatureDisabled:
-			return "Error returned by hostfxr_get_runtime_delegate when managed feature support for native host is disabled";
-		default:
-			return "Unknown error";
-	}
-}
-
-extern "C" {
-	NETLM_EXPORT void NativeInterop_SetInvokeMethodFunction(ManagedGuid* /*assemblyGuid*/, ClassHolder* classHolder, ClassHolder::InvokeMethodFunction invokeMethodFptr) {
-		assert(classHolder != nullptr);
-
-		classHolder->SetInvokeMethodFunction(invokeMethodFptr);
-
-		// @TODO: Store the assembly guid somewhere
-	}
-
-	NETLM_EXPORT void ManagedClass_Create(ManagedGuid* assemblyGuid, ClassHolder* classHolder, int32_t typeHash, const char* typeName, ManagedClass* outManagedClass) {
-		assert(assemblyGuid != nullptr);
-		assert(classHolder != nullptr);
-
-		Class* classObject = classHolder->GetOrCreateClassObject(typeHash, typeName);
-
-		*outManagedClass = ManagedClass{typeHash, classObject, *assemblyGuid};
-	}
-
-	NETLM_EXPORT void ManagedClass_AddMethod(ManagedClass managedClass, const char* methodName, ManagedGuid guid, ManagedType returnType, uint32_t numParameters, const ManagedType* parameterTypes) {
-		if (!managedClass.classObject || !methodName) {
-			return;
-		}
-
-		ManagedMethod methodObject;
-		methodObject.guid = guid;
-		methodObject.returnType = returnType;
-
-		if (numParameters != 0) {
-			methodObject.parameterTypes.assign(parameterTypes, parameterTypes + numParameters);
-		}
-
-		if (managedClass.classObject->HasMethod(methodName)) {
-			g_netlm.GetProvider()->Log(std::format("Class '{}' already has a method named '{}'!", managedClass.classObject->GetName(), methodName), Severity::Error);
-			return;
-		}
-
-		managedClass.classObject->AddMethod(methodName, std::move(methodObject));
-	}
-
-	NETLM_EXPORT void ManagedClass_SetNewObjectFunction(ManagedClass managedClass, Class::NewObjectFunction newObjectFptr) {
-		if (!managedClass.classObject) {
-			return;
-		}
-
-		managedClass.classObject->SetNewObjectFunction(newObjectFptr);
-	}
-
-	NETLM_EXPORT void ManagedClass_SetFreeObjectFunction(ManagedClass managedClass, Class::FreeObjectFunction freeObjectFptr) {
-		if (!managedClass.classObject) {
-			return;
-		}
-
-		managedClass.classObject->SetFreeObjectFunction(freeObjectFptr);
 	}
 }

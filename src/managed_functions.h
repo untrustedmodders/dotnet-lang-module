@@ -1,31 +1,39 @@
 #pragma once
 
-#include "../core.h"
+#include "core.h"
 
 namespace netlm {
 	class String;
-	class ClassHolder;
-	class Class;
-	struct ManagedGuid;
-	struct ManagedType;
-	struct ManagedObject;
-	struct ManagedMethod;
 	enum class AssemblyLoadStatus;
 	enum class GCCollectionMode;
+	struct ManagedType;
+	class ManagedObject;
 
-	using InitializeAssemblyFn = AssemblyLoadStatus(*)(String, ManagedGuid *, ClassHolder *);
-	using UnloadAssemblyFn = Bool32(*)(ManagedGuid *);
-	using GetAssemblyNameFn = String(*)(ManagedGuid *);
-
-	//using AddMethodToCacheFn = void(*)(ManagedGuid *, ManagedGuid *, void *);
-	//using AddObjectToCacheFn = void(*)(ManagedGuid *, ManagedGuid *, void *, ManagedObject *);
+	using SetInternalCallsFn = void(*)(void*, int32_t);
+	using CreateAssemblyLoadContextFn = int32_t(*)(String);
+	using UnloadAssemblyLoadContextFn = void(*)(int32_t);
+	using LoadManagedAssemblyFn = int32_t(*)(int32_t, String);
+	using GetLastLoadStatusFn = AssemblyLoadStatus(*)();
+	using GetAssemblyNameFn = String(*)(int32_t);
 
 	using CollectGarbageFn = void(*)(int32_t, GCCollectionMode, Bool32, Bool32);
 	using WaitForPendingFinalizersFn = void(*)();
 
+	using CreateObjectFn = void*(*)(TypeId, Bool32, const void**, int32_t);
+	using InvokeMethodFn = void(*)(void*, ManagedHandle, const void**, int32_t);
+	using InvokeMethodRetFn = void(*)(void*, ManagedHandle, const void**, int32_t, void*);
+	using InvokeStaticMethodFn = void (*)(TypeId, ManagedHandle, const void**, int32_t);
+	using InvokeStaticMethodRetFn = void (*)(TypeId, ManagedHandle, const void**, int32_t, void*);
+	using SetFieldValueFn = void(*)(void*, String, void*);
+	using GetFieldValueFn = void(*)(void*, String, void*);
+	using GetFieldPointerFn = void(*)(void*, String, void**);
+	using SetPropertyValueFn = void(*)(void*, String, void*);
+	using GetPropertyValueFn = void(*)(void*, String, void*);
+	using DestroyObjectFn = void(*)(void*);
+
 #pragma region TypeInterface
 
-	using GetAssemblyTypesFn = void(*)(ManagedGuid*, TypeId*, int32_t*);
+	using GetAssemblyTypesFn = void(*)(int32_t, TypeId*, int32_t*);
 	using GetTypeIdFn = void (*)(String, TypeId*);
 	using GetFullTypeNameFn = String(*)(TypeId);
 	using GetAssemblyQualifiedNameFn = String(*)(TypeId);
@@ -55,6 +63,7 @@ namespace netlm {
 	using GetMethodInfoParameterTypesFn = void(*)(ManagedHandle, TypeId*, int32_t*);
 	using GetMethodInfoAccessibilityFn = TypeAccessibility(*)(ManagedHandle);
 	using GetMethodInfoAttributesFn = void(*)(ManagedHandle, TypeId*, int32_t*);
+	using GetMethodInfoReturnAttributesFn = void(*)(ManagedHandle, TypeId*, int32_t*);
 #pragma endregion
 
 #pragma region FieldInfo
@@ -75,23 +84,37 @@ namespace netlm {
 	using GetAttributeTypeFn = void(*)(ManagedHandle, TypeId*);
 #pragma endregion
 
+#pragma region Other
 	using IsClassFn = bool(*)(TypeId);
 	using IsEnumFn = bool(*)(TypeId);
 	using IsValueTypeFn = bool(*)(TypeId);
 	using GetEnumNamesFn = void(*)(TypeId, String*, int32_t*);
 	using GetEnumValuesFn = void(*)(TypeId, int32_t*, int32_t*);
-
+#pragma endregion
+	
 	struct ManagedFunctions {
-		InitializeAssemblyFn InitializeAssemblyFptr;
-		UnloadAssemblyFn UnloadAssemblyFptr;
+		SetInternalCallsFn SetInternalCallsFptr;
+		LoadManagedAssemblyFn LoadManagedAssemblyFptr;
+		UnloadAssemblyLoadContextFn UnloadAssemblyLoadContextFptr;
+		GetLastLoadStatusFn GetLastLoadStatusFptr;
 		GetAssemblyNameFn GetAssemblyNameFptr;
-
-		//AddMethodToCacheFn AddMethodToCacheFptr;
-		//AddObjectToCacheFn AddObjectToCacheFptr;
 
 		CollectGarbageFn CollectGarbageFptr;
 		WaitForPendingFinalizersFn WaitForPendingFinalizersFptr;
 
+		CreateObjectFn CreateObjectFptr;
+		CreateAssemblyLoadContextFn CreateAssemblyLoadContextFptr;
+		InvokeMethodFn InvokeMethodFptr;
+		InvokeMethodRetFn InvokeMethodRetFptr;
+		InvokeStaticMethodFn InvokeStaticMethodFptr;
+		InvokeStaticMethodRetFn InvokeStaticMethodRetFptr;
+		SetFieldValueFn SetFieldValueFptr;
+		GetFieldValueFn GetFieldValueFptr;
+		GetFieldPointerFn GetFieldPointerFptr;
+		SetPropertyValueFn SetPropertyValueFptr;
+		GetPropertyValueFn GetPropertyValueFptr;
+		DestroyObjectFn DestroyObjectFptr;
+		
 #pragma region TypeInterface
 		GetAssemblyTypesFn GetAssemblyTypesFptr;
 		GetTypeIdFn GetTypeIdFptr;
@@ -123,6 +146,7 @@ namespace netlm {
 		GetMethodInfoParameterTypesFn GetMethodInfoParameterTypesFptr;
 		GetMethodInfoAccessibilityFn GetMethodInfoAccessibilityFptr;
 		GetMethodInfoAttributesFn GetMethodInfoAttributesFptr;
+		GetMethodInfoReturnAttributesFn GetMethodInfoReturnAttributesFptr;
 #pragma endregion
 
 #pragma region FieldInfo
@@ -143,11 +167,13 @@ namespace netlm {
 		GetAttributeTypeFn GetAttributeTypeFptr;
 #pragma endregion
 
+#pragma region Other
 		IsClassFn IsClassFptr;
 		IsEnumFn IsEnumFptr;
 		IsValueTypeFn IsValueTypeFptr;
 		GetEnumNamesFn GetEnumNamesFptr;
 		GetEnumValuesFn GetEnumValuesFptr;
+#pragma endregion
 	};
 
 	inline ManagedFunctions Managed;

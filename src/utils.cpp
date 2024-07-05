@@ -5,7 +5,8 @@
 using namespace netlm;
 
 #if NETLM_PLATFORM_WINDOWS
-#include <windows.h>
+
+#include <Windows.h>
 
 std::wstring Utils::UTF8StringToWideString(std::string_view str){
 	std::wstring ret;

@@ -13,17 +13,17 @@ public static class NativeMethods
 	#region Core functions
 
 	[DllImport(DllName)]
-	public static extern nint GetMethodPtr(/*[MarshalAs(UnmanagedType.LPStr)]*/ string methodName);
+	public static extern nint GetMethodPtr([MarshalAs(UnmanagedType.LPStr)] string methodName);
 	[DllImport(DllName)]
-	//[return: MarshalAs(UnmanagedType.LPStr)]
+	[return: MarshalAs(UnmanagedType.LPStr)]
 	public static extern string GetBaseDir();
 	[DllImport(DllName)]
-	public static extern bool IsModuleLoaded(/*[MarshalAs(UnmanagedType.LPStr)]*/ string moduleName, int version, bool minimum);
+	public static extern bool IsModuleLoaded([MarshalAs(UnmanagedType.LPStr)] string moduleName, int version, bool minimum);
 	[DllImport(DllName)]
-	public static extern bool IsPluginLoaded(/*[MarshalAs(UnmanagedType.LPStr)]*/ string pluginName, int version, bool minimum);
+	public static extern bool IsPluginLoaded([MarshalAs(UnmanagedType.LPStr)] string pluginName, int version, bool minimum);
 	[DllImport(DllName)]
-	//[return: MarshalAs(UnmanagedType.LPStr)]
-	public static extern string? FindPluginResource(/*[MarshalAs(UnmanagedType.LPStr)]*/ string pluginName, /*[MarshalAs(UnmanagedType.LPStr)]*/ string path);
+	[return: MarshalAs(UnmanagedType.LPStr)]
+	public static extern string? FindPluginResource([MarshalAs(UnmanagedType.LPStr)] string pluginName, [MarshalAs(UnmanagedType.LPStr)] string path);
 
 	#endregion
 	
@@ -33,20 +33,20 @@ public static class NativeMethods
 	public static extern nint AllocateString();
 
 	[DllImport(DllName)]
-	public static extern nint CreateString(/*[MarshalAs(UnmanagedType.LPStr)] */string? source);
+	public static extern nint CreateString([MarshalAs(UnmanagedType.LPStr)] string? source);
 
 	[DllImport(DllName)]
-	//[return: MarshalAs(UnmanagedType.LPStr)]
+	[return: MarshalAs(UnmanagedType.LPStr)]
 	public static extern string GetStringData(nint ptr);
 
 	[DllImport(DllName)]
 	public static extern int GetStringLength(nint ptr);
 
 	[DllImport(DllName)]
-	public static extern void ConstructString(nint ptr, /*[MarshalAs(UnmanagedType.LPStr)] */ string? source);
+	public static extern void ConstructString(nint ptr, [MarshalAs(UnmanagedType.LPStr)] string? source);
 
 	[DllImport(DllName)]
-	public static extern void AssignString(nint ptr, /*[MarshalAs(UnmanagedType.LPStr)] */ string? source);
+	public static extern void AssignString(nint ptr, [MarshalAs(UnmanagedType.LPStr)] string? source);
 
 	[DllImport(DllName)]
 	public static extern void FreeString(nint ptr);
