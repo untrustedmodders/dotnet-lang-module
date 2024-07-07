@@ -17,16 +17,14 @@ namespace netlm {
 		}
 
 		bool operator==(const Attribute& other) const { return _handle == other._handle; }
-
 		operator bool() const { return _handle != -1; }
-
 		ManagedHandle GetHandle() const { return _handle; }
 
 	private:
 		void GetFieldValue(std::string_view fieldName, void* valueVptr) const;
 
 	private:
-		ManagedHandle _handle{ -1 };
+		ManagedHandle _handle = -1;
 		std::unique_ptr<Type> _type;
 
 		friend class Type;

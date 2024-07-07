@@ -12,6 +12,10 @@ std::string MethodInfo::GetName() const {
 	return str;
 }
 
+void* MethodInfo::GetFunctionAddress() const {
+	return Managed.GetMethodInfoFunctionAddressFptr(_handle);
+}
+
 Type& MethodInfo::GetReturnType() {
 	if (!_returnType) {
 		_returnType = std::make_unique<Type>();

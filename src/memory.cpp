@@ -33,8 +33,7 @@ char_t* Memory::StringToCoTaskMemAuto(string_view_t string) {
 	auto* buffer = static_cast<char_t*>(AllocHGlobal(size));
 #endif
 
-	if (buffer != nullptr)
-	{
+	if (buffer != nullptr) {
 		memcpy(buffer, string.data(), size);
 	}
 
@@ -51,8 +50,7 @@ char* Memory::StringToHGlobalAnsi(std::string_view string) {
 	auto* buffer = static_cast<char*>(AllocHGlobal(size));
 #endif
 
-	if (buffer != nullptr)
-	{
+	if (buffer != nullptr) {
 		memcpy(buffer, string.data(), size);
 	}
 

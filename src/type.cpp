@@ -84,7 +84,7 @@ std::vector<PropertyInfo> Type::GetProperties() const {
 
 MethodInfo Type::GetMethod(std::string_view methodName) const {
 	auto name = String::New(methodName);
-	ManagedHandle handle;
+	ManagedHandle handle = -1;
 	Managed.GetTypeMethodFptr(_id, name, &handle);
 	String::Free(name);
 
@@ -96,7 +96,7 @@ MethodInfo Type::GetMethod(std::string_view methodName) const {
 
 FieldInfo Type::GetField(std::string_view fieldName) const {
 	auto name = String::New(fieldName);
-	ManagedHandle handle;
+	ManagedHandle handle = -1;
 	Managed.GetTypeFieldFptr(_id, name, &handle);
 	String::Free(name);
 
@@ -108,7 +108,7 @@ FieldInfo Type::GetField(std::string_view fieldName) const {
 
 PropertyInfo Type::GetProperty(std::string_view propertyName) const {
 	auto name = String::New(propertyName);
-	ManagedHandle handle;
+	ManagedHandle handle = -1;
 	Managed.GetTypePropertyFptr(_id, name, &handle);
 	String::Free(name);
 
@@ -192,10 +192,10 @@ Type& Type::GetElementType() {
 
 // TODO: Cache methods
 
-ManagedObject Type::CreateInstanceInternal(const void** parameters, size_t length) {
+ManagedObject Type::CreateInstanceInternal(const void** parameters, size_t length) const {
 	ManagedObject result;
 	result._handle = Managed.CreateObjectFptr(_id, false, parameters, static_cast<int32_t>(length));
-	result._type = this;
+	result._type = const_cast<Type*>(this);
 	return result;
 }
 

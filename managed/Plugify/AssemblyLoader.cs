@@ -1,5 +1,4 @@
-﻿using System.IO.MemoryMappedFiles;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 
@@ -20,7 +19,7 @@ public static class AssemblyLoader
 	private static readonly Dictionary<int, List<GCHandle>> AllocatedHandles = new();
 	private static AssemblyLoadStatus LastLoadStatus = AssemblyLoadStatus.Success;
 
-	private static readonly AssemblyLoadContext? CoralAssemblyLoadContext;
+	private static readonly AssemblyLoadContext? PlugifyAssemblyLoadContext;
 
 	static AssemblyLoader()
 	{
@@ -30,15 +29,15 @@ public static class AssemblyLoader
 		AssemblyLoadErrorLookup.Add(typeof(ArgumentNullException), AssemblyLoadStatus.InvalidFilePath);
 		AssemblyLoadErrorLookup.Add(typeof(ArgumentException), AssemblyLoadStatus.InvalidFilePath);
 
-		CoralAssemblyLoadContext = AssemblyLoadContext.GetLoadContext(typeof(AssemblyLoader).Assembly);
-		CoralAssemblyLoadContext!.Resolving += ResolveAssembly;
+		PlugifyAssemblyLoadContext = AssemblyLoadContext.GetLoadContext(typeof(AssemblyLoader).Assembly);
+		PlugifyAssemblyLoadContext!.Resolving += ResolveAssembly;
 
-		CacheCoralAssemblies();
+		CachePlugifyAssemblies();
 	}
 
-	private static void CacheCoralAssemblies()
+	private static void CachePlugifyAssemblies()
 	{
-		foreach (var assembly in CoralAssemblyLoadContext!.Assemblies)
+		foreach (var assembly in PlugifyAssemblyLoadContext!.Assemblies)
 		{
 			int assemblyId = assembly.GetName().Name!.GetHashCode();
 			AssemblyCache.Add(assemblyId, assembly);

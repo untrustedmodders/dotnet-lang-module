@@ -22,141 +22,124 @@ namespace cpp_test
 			return value;
 		}
 
-		private static nint NoParamReturnVoidPtr = nint.Zero;
-		internal static void NoParamReturnVoid()
+		internal static delegate* <void> NoParamReturnVoid = &___NoParamReturnVoid;
+		internal static delegate* unmanaged[Cdecl]<void> __NoParamReturnVoid;
+		private static void ___NoParamReturnVoid()
 		{
-			if (NoParamReturnVoidPtr == nint.Zero) NoParamReturnVoidPtr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnVoid");
-			var NoParamReturnVoidFunc = (delegate* unmanaged[Cdecl]<void>)NoParamReturnVoidPtr;
-			NoParamReturnVoidFunc();
+			__NoParamReturnVoid();
 		}
-		private static nint NoParamReturnBoolPtr = nint.Zero;
-		internal static bool NoParamReturnBool()
+		internal static delegate* <bool> NoParamReturnBool = &___NoParamReturnBool;
+		internal static delegate* unmanaged[Cdecl]<bool> __NoParamReturnBool;
+		private static bool ___NoParamReturnBool()
 		{
-			if (NoParamReturnBoolPtr == nint.Zero) NoParamReturnBoolPtr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnBool");
-			var NoParamReturnBoolFunc = (delegate* unmanaged[Cdecl]<bool>)NoParamReturnBoolPtr;
-			var __result = NoParamReturnBoolFunc();
+			var __result = __NoParamReturnBool();
 			return __result;
 		}
-		private static nint NoParamReturnChar8Ptr = nint.Zero;
-		internal static char NoParamReturnChar8()
+		internal static delegate* <char> NoParamReturnChar8 = &___NoParamReturnChar8;
+		internal static delegate* unmanaged[Cdecl]<sbyte> __NoParamReturnChar8;
+		private static char ___NoParamReturnChar8()
 		{
-			if (NoParamReturnChar8Ptr == nint.Zero) NoParamReturnChar8Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnChar8");
-			var NoParamReturnChar8Func = (delegate* unmanaged[Cdecl]<sbyte>)NoParamReturnChar8Ptr;
-			var __result = NoParamReturnChar8Func();
+			var __result = __NoParamReturnChar8();
 			return (char)__result;
 		}
-		private static nint NoParamReturnChar16Ptr = nint.Zero;
-		internal static char NoParamReturnChar16()
+		internal static delegate* <char> NoParamReturnChar16 = &___NoParamReturnChar16;
+		internal static delegate* unmanaged[Cdecl]<ushort> __NoParamReturnChar16;
+		private static char ___NoParamReturnChar16()
 		{
-			if (NoParamReturnChar16Ptr == nint.Zero) NoParamReturnChar16Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnChar16");
-			var NoParamReturnChar16Func = (delegate* unmanaged[Cdecl]<ushort>)NoParamReturnChar16Ptr;
-			var __result = NoParamReturnChar16Func();
+			var __result = __NoParamReturnChar16();
 			return (char)__result;
 		}
-		private static nint NoParamReturnInt8Ptr = nint.Zero;
-		internal static sbyte NoParamReturnInt8()
+		internal static delegate* <sbyte> NoParamReturnInt8 = &___NoParamReturnInt8;
+		internal static delegate* unmanaged[Cdecl]<sbyte> __NoParamReturnInt8;
+		private static sbyte ___NoParamReturnInt8()
 		{
-			if (NoParamReturnInt8Ptr == nint.Zero) NoParamReturnInt8Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnInt8");
-			var NoParamReturnInt8Func = (delegate* unmanaged[Cdecl]<sbyte>)NoParamReturnInt8Ptr;
-			var __result = NoParamReturnInt8Func();
+			var __result = __NoParamReturnInt8();
 			return __result;
 		}
-		private static nint NoParamReturnInt16Ptr = nint.Zero;
-		internal static short NoParamReturnInt16()
+		internal static delegate* <short> NoParamReturnInt16 = &___NoParamReturnInt16;
+		internal static delegate* unmanaged[Cdecl]<short> __NoParamReturnInt16;
+		private static short ___NoParamReturnInt16()
 		{
-			if (NoParamReturnInt16Ptr == nint.Zero) NoParamReturnInt16Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnInt16");
-			var NoParamReturnInt16Func = (delegate* unmanaged[Cdecl]<short>)NoParamReturnInt16Ptr;
-			var __result = NoParamReturnInt16Func();
+			var __result = __NoParamReturnInt16();
 			return __result;
 		}
-		private static nint NoParamReturnInt32Ptr = nint.Zero;
-		internal static int NoParamReturnInt32()
+		internal static delegate* <int> NoParamReturnInt32 = &___NoParamReturnInt32;
+		internal static delegate* unmanaged[Cdecl]<int> __NoParamReturnInt32;
+		private static int ___NoParamReturnInt32()
 		{
-			if (NoParamReturnInt32Ptr == nint.Zero) NoParamReturnInt32Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnInt32");
-			var NoParamReturnInt32Func = (delegate* unmanaged[Cdecl]<int>)NoParamReturnInt32Ptr;
-			var __result = NoParamReturnInt32Func();
+			var __result = __NoParamReturnInt32();
 			return __result;
 		}
-		private static nint NoParamReturnInt64Ptr = nint.Zero;
-		internal static long NoParamReturnInt64()
+		internal static delegate* <long> NoParamReturnInt64 = &___NoParamReturnInt64;
+		internal static delegate* unmanaged[Cdecl]<long> __NoParamReturnInt64;
+		private static long ___NoParamReturnInt64()
 		{
-			if (NoParamReturnInt64Ptr == nint.Zero) NoParamReturnInt64Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnInt64");
-			var NoParamReturnInt64Func = (delegate* unmanaged[Cdecl]<long>)NoParamReturnInt64Ptr;
-			var __result = NoParamReturnInt64Func();
+			var __result = __NoParamReturnInt64();
 			return __result;
 		}
-		private static nint NoParamReturnUInt8Ptr = nint.Zero;
-		internal static byte NoParamReturnUInt8()
+		internal static delegate* <byte> NoParamReturnUInt8 = &___NoParamReturnUInt8;
+		internal static delegate* unmanaged[Cdecl]<byte> __NoParamReturnUInt8;
+		private static byte ___NoParamReturnUInt8()
 		{
-			if (NoParamReturnUInt8Ptr == nint.Zero) NoParamReturnUInt8Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnUInt8");
-			var NoParamReturnUInt8Func = (delegate* unmanaged[Cdecl]<byte>)NoParamReturnUInt8Ptr;
-			var __result = NoParamReturnUInt8Func();
+			var __result = __NoParamReturnUInt8();
 			return __result;
 		}
-		private static nint NoParamReturnUInt16Ptr = nint.Zero;
-		internal static ushort NoParamReturnUInt16()
+		internal static delegate* <ushort> NoParamReturnUInt16 = &___NoParamReturnUInt16;
+		internal static delegate* unmanaged[Cdecl]<ushort> __NoParamReturnUInt16;
+		private static ushort ___NoParamReturnUInt16()
 		{
-			if (NoParamReturnUInt16Ptr == nint.Zero) NoParamReturnUInt16Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnUInt16");
-			var NoParamReturnUInt16Func = (delegate* unmanaged[Cdecl]<ushort>)NoParamReturnUInt16Ptr;
-			var __result = NoParamReturnUInt16Func();
+			var __result = __NoParamReturnUInt16();
 			return __result;
 		}
-		private static nint NoParamReturnUInt32Ptr = nint.Zero;
-		internal static uint NoParamReturnUInt32()
+		internal static delegate* <uint> NoParamReturnUInt32 = &___NoParamReturnUInt32;
+		internal static delegate* unmanaged[Cdecl]<uint> __NoParamReturnUInt32;
+		private static uint ___NoParamReturnUInt32()
 		{
-			if (NoParamReturnUInt32Ptr == nint.Zero) NoParamReturnUInt32Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnUInt32");
-			var NoParamReturnUInt32Func = (delegate* unmanaged[Cdecl]<uint>)NoParamReturnUInt32Ptr;
-			var __result = NoParamReturnUInt32Func();
+			var __result = __NoParamReturnUInt32();
 			return __result;
 		}
-		private static nint NoParamReturnUInt64Ptr = nint.Zero;
-		internal static ulong NoParamReturnUInt64()
+		internal static delegate* <ulong> NoParamReturnUInt64 = &___NoParamReturnUInt64;
+		internal static delegate* unmanaged[Cdecl]<ulong> __NoParamReturnUInt64;
+		private static ulong ___NoParamReturnUInt64()
 		{
-			if (NoParamReturnUInt64Ptr == nint.Zero) NoParamReturnUInt64Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnUInt64");
-			var NoParamReturnUInt64Func = (delegate* unmanaged[Cdecl]<ulong>)NoParamReturnUInt64Ptr;
-			var __result = NoParamReturnUInt64Func();
+			var __result = __NoParamReturnUInt64();
 			return __result;
 		}
-		private static nint NoParamReturnPtr64Ptr = nint.Zero;
-		internal static nint NoParamReturnPtr64()
+		internal static delegate* <nint> NoParamReturnPtr64 = &___NoParamReturnPtr64;
+		internal static delegate* unmanaged[Cdecl]<nint> __NoParamReturnPtr64;
+		private static nint ___NoParamReturnPtr64()
 		{
-			if (NoParamReturnPtr64Ptr == nint.Zero) NoParamReturnPtr64Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnPtr64");
-			var NoParamReturnPtr64Func = (delegate* unmanaged[Cdecl]<nint>)NoParamReturnPtr64Ptr;
-			var __result = NoParamReturnPtr64Func();
+			var __result = __NoParamReturnPtr64();
 			return __result;
 		}
-		private static nint NoParamReturnFloatPtr = nint.Zero;
-		internal static float NoParamReturnFloat()
+		internal static delegate* <float> NoParamReturnFloat = &___NoParamReturnFloat;
+		internal static delegate* unmanaged[Cdecl]<float> __NoParamReturnFloat;
+		private static float ___NoParamReturnFloat()
 		{
-			if (NoParamReturnFloatPtr == nint.Zero) NoParamReturnFloatPtr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnFloat");
-			var NoParamReturnFloatFunc = (delegate* unmanaged[Cdecl]<float>)NoParamReturnFloatPtr;
-			var __result = NoParamReturnFloatFunc();
+			var __result = __NoParamReturnFloat();
 			return __result;
 		}
-		private static nint NoParamReturnDoublePtr = nint.Zero;
-		internal static double NoParamReturnDouble()
+		internal static delegate* <double> NoParamReturnDouble = &___NoParamReturnDouble;
+		internal static delegate* unmanaged[Cdecl]<double> __NoParamReturnDouble;
+		private static double ___NoParamReturnDouble()
 		{
-			if (NoParamReturnDoublePtr == nint.Zero) NoParamReturnDoublePtr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnDouble");
-			var NoParamReturnDoubleFunc = (delegate* unmanaged[Cdecl]<double>)NoParamReturnDoublePtr;
-			var __result = NoParamReturnDoubleFunc();
+			var __result = __NoParamReturnDouble();
 			return __result;
 		}
-		private static nint NoParamReturnFunctionPtr = nint.Zero;
-		internal static nint NoParamReturnFunction()
+		internal static delegate* <nint> NoParamReturnFunction = &___NoParamReturnFunction;
+		internal static delegate* unmanaged[Cdecl]<nint> __NoParamReturnFunction;
+		private static nint ___NoParamReturnFunction()
 		{
-			if (NoParamReturnFunctionPtr == nint.Zero) NoParamReturnFunctionPtr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnFunction");
-			var NoParamReturnFunctionFunc = (delegate* unmanaged[Cdecl]<nint>)NoParamReturnFunctionPtr;
-			var __result = NoParamReturnFunctionFunc();
+			var __result = __NoParamReturnFunction();
 			return __result;
 		}
-		private static nint NoParamReturnStringPtr = nint.Zero;
-		internal static string NoParamReturnString()
+		internal static delegate* <string> NoParamReturnString = &___NoParamReturnString;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnString;
+		private static string ___NoParamReturnString()
 		{
 			var __output = NativeMethods.AllocateString();
 
-			if (NoParamReturnStringPtr == nint.Zero) NoParamReturnStringPtr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnString");
-			var NoParamReturnStringFunc = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnStringPtr;
-			NoParamReturnStringFunc(__output);
+			__NoParamReturnString(__output);
 
 			var output = NativeMethods.GetStringData(__output);
 
@@ -164,14 +147,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayBoolPtr = nint.Zero;
-		internal static bool[] NoParamReturnArrayBool()
+		internal static delegate* <bool[]> NoParamReturnArrayBool = &___NoParamReturnArrayBool;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayBool;
+		private static bool[] ___NoParamReturnArrayBool()
 		{
 			var __output = NativeMethods.AllocateVectorBool();
 
-			if (NoParamReturnArrayBoolPtr == nint.Zero) NoParamReturnArrayBoolPtr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayBool");
-			var NoParamReturnArrayBoolFunc = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayBoolPtr;
-			NoParamReturnArrayBoolFunc(__output);
+			__NoParamReturnArrayBool(__output);
 
 			var output = new bool[NativeMethods.GetVectorSizeBool(__output)];
 			NativeMethods.GetVectorDataBool(__output, output);
@@ -180,14 +162,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayChar8Ptr = nint.Zero;
-		internal static char[] NoParamReturnArrayChar8()
+		internal static delegate* <char[]> NoParamReturnArrayChar8 = &___NoParamReturnArrayChar8;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayChar8;
+		private static char[] ___NoParamReturnArrayChar8()
 		{
 			var __output = NativeMethods.AllocateVectorChar8();
 
-			if (NoParamReturnArrayChar8Ptr == nint.Zero) NoParamReturnArrayChar8Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayChar8");
-			var NoParamReturnArrayChar8Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayChar8Ptr;
-			NoParamReturnArrayChar8Func(__output);
+			__NoParamReturnArrayChar8(__output);
 
 			var output = new char[NativeMethods.GetVectorSizeChar8(__output)];
 			NativeMethods.GetVectorDataChar8(__output, output);
@@ -196,14 +177,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayChar16Ptr = nint.Zero;
-		internal static char[] NoParamReturnArrayChar16()
+		internal static delegate* <char[]> NoParamReturnArrayChar16 = &___NoParamReturnArrayChar16;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayChar16;
+		private static char[] ___NoParamReturnArrayChar16()
 		{
 			var __output = NativeMethods.AllocateVectorChar16();
 
-			if (NoParamReturnArrayChar16Ptr == nint.Zero) NoParamReturnArrayChar16Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayChar16");
-			var NoParamReturnArrayChar16Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayChar16Ptr;
-			NoParamReturnArrayChar16Func(__output);
+			__NoParamReturnArrayChar16(__output);
 
 			var output = new char[NativeMethods.GetVectorSizeChar16(__output)];
 			NativeMethods.GetVectorDataChar16(__output, output);
@@ -212,14 +192,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayInt8Ptr = nint.Zero;
-		internal static sbyte[] NoParamReturnArrayInt8()
+		internal static delegate* <sbyte[]> NoParamReturnArrayInt8 = &___NoParamReturnArrayInt8;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayInt8;
+		private static sbyte[] ___NoParamReturnArrayInt8()
 		{
 			var __output = NativeMethods.AllocateVectorInt8();
 
-			if (NoParamReturnArrayInt8Ptr == nint.Zero) NoParamReturnArrayInt8Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayInt8");
-			var NoParamReturnArrayInt8Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayInt8Ptr;
-			NoParamReturnArrayInt8Func(__output);
+			__NoParamReturnArrayInt8(__output);
 
 			var output = new sbyte[NativeMethods.GetVectorSizeInt8(__output)];
 			NativeMethods.GetVectorDataInt8(__output, output);
@@ -228,14 +207,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayInt16Ptr = nint.Zero;
-		internal static short[] NoParamReturnArrayInt16()
+		internal static delegate* <short[]> NoParamReturnArrayInt16 = &___NoParamReturnArrayInt16;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayInt16;
+		private static short[] ___NoParamReturnArrayInt16()
 		{
 			var __output = NativeMethods.AllocateVectorInt16();
 
-			if (NoParamReturnArrayInt16Ptr == nint.Zero) NoParamReturnArrayInt16Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayInt16");
-			var NoParamReturnArrayInt16Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayInt16Ptr;
-			NoParamReturnArrayInt16Func(__output);
+			__NoParamReturnArrayInt16(__output);
 
 			var output = new short[NativeMethods.GetVectorSizeInt16(__output)];
 			NativeMethods.GetVectorDataInt16(__output, output);
@@ -244,14 +222,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayInt32Ptr = nint.Zero;
-		internal static int[] NoParamReturnArrayInt32()
+		internal static delegate* <int[]> NoParamReturnArrayInt32 = &___NoParamReturnArrayInt32;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayInt32;
+		private static int[] ___NoParamReturnArrayInt32()
 		{
 			var __output = NativeMethods.AllocateVectorInt32();
 
-			if (NoParamReturnArrayInt32Ptr == nint.Zero) NoParamReturnArrayInt32Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayInt32");
-			var NoParamReturnArrayInt32Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayInt32Ptr;
-			NoParamReturnArrayInt32Func(__output);
+			__NoParamReturnArrayInt32(__output);
 
 			var output = new int[NativeMethods.GetVectorSizeInt32(__output)];
 			NativeMethods.GetVectorDataInt32(__output, output);
@@ -260,14 +237,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayInt64Ptr = nint.Zero;
-		internal static long[] NoParamReturnArrayInt64()
+		internal static delegate* <long[]> NoParamReturnArrayInt64 = &___NoParamReturnArrayInt64;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayInt64;
+		private static long[] ___NoParamReturnArrayInt64()
 		{
 			var __output = NativeMethods.AllocateVectorInt64();
 
-			if (NoParamReturnArrayInt64Ptr == nint.Zero) NoParamReturnArrayInt64Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayInt64");
-			var NoParamReturnArrayInt64Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayInt64Ptr;
-			NoParamReturnArrayInt64Func(__output);
+			__NoParamReturnArrayInt64(__output);
 
 			var output = new long[NativeMethods.GetVectorSizeInt64(__output)];
 			NativeMethods.GetVectorDataInt64(__output, output);
@@ -276,14 +252,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayUInt8Ptr = nint.Zero;
-		internal static byte[] NoParamReturnArrayUInt8()
+		internal static delegate* <byte[]> NoParamReturnArrayUInt8 = &___NoParamReturnArrayUInt8;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayUInt8;
+		private static byte[] ___NoParamReturnArrayUInt8()
 		{
 			var __output = NativeMethods.AllocateVectorUInt8();
 
-			if (NoParamReturnArrayUInt8Ptr == nint.Zero) NoParamReturnArrayUInt8Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayUInt8");
-			var NoParamReturnArrayUInt8Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayUInt8Ptr;
-			NoParamReturnArrayUInt8Func(__output);
+			__NoParamReturnArrayUInt8(__output);
 
 			var output = new byte[NativeMethods.GetVectorSizeUInt8(__output)];
 			NativeMethods.GetVectorDataUInt8(__output, output);
@@ -292,14 +267,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayUInt16Ptr = nint.Zero;
-		internal static ushort[] NoParamReturnArrayUInt16()
+		internal static delegate* <ushort[]> NoParamReturnArrayUInt16 = &___NoParamReturnArrayUInt16;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayUInt16;
+		private static ushort[] ___NoParamReturnArrayUInt16()
 		{
 			var __output = NativeMethods.AllocateVectorUInt16();
 
-			if (NoParamReturnArrayUInt16Ptr == nint.Zero) NoParamReturnArrayUInt16Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayUInt16");
-			var NoParamReturnArrayUInt16Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayUInt16Ptr;
-			NoParamReturnArrayUInt16Func(__output);
+			__NoParamReturnArrayUInt16(__output);
 
 			var output = new ushort[NativeMethods.GetVectorSizeUInt16(__output)];
 			NativeMethods.GetVectorDataUInt16(__output, output);
@@ -308,14 +282,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayUInt32Ptr = nint.Zero;
-		internal static uint[] NoParamReturnArrayUInt32()
+		internal static delegate* <uint[]> NoParamReturnArrayUInt32 = &___NoParamReturnArrayUInt32;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayUInt32;
+		private static uint[] ___NoParamReturnArrayUInt32()
 		{
 			var __output = NativeMethods.AllocateVectorUInt32();
 
-			if (NoParamReturnArrayUInt32Ptr == nint.Zero) NoParamReturnArrayUInt32Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayUInt32");
-			var NoParamReturnArrayUInt32Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayUInt32Ptr;
-			NoParamReturnArrayUInt32Func(__output);
+			__NoParamReturnArrayUInt32(__output);
 
 			var output = new uint[NativeMethods.GetVectorSizeUInt32(__output)];
 			NativeMethods.GetVectorDataUInt32(__output, output);
@@ -324,14 +297,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayUInt64Ptr = nint.Zero;
-		internal static ulong[] NoParamReturnArrayUInt64()
+		internal static delegate* <ulong[]> NoParamReturnArrayUInt64 = &___NoParamReturnArrayUInt64;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayUInt64;
+		private static ulong[] ___NoParamReturnArrayUInt64()
 		{
 			var __output = NativeMethods.AllocateVectorUInt64();
 
-			if (NoParamReturnArrayUInt64Ptr == nint.Zero) NoParamReturnArrayUInt64Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayUInt64");
-			var NoParamReturnArrayUInt64Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayUInt64Ptr;
-			NoParamReturnArrayUInt64Func(__output);
+			__NoParamReturnArrayUInt64(__output);
 
 			var output = new ulong[NativeMethods.GetVectorSizeUInt64(__output)];
 			NativeMethods.GetVectorDataUInt64(__output, output);
@@ -340,14 +312,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayPtr64Ptr = nint.Zero;
-		internal static nint[] NoParamReturnArrayPtr64()
+		internal static delegate* <nint[]> NoParamReturnArrayPtr64 = &___NoParamReturnArrayPtr64;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayPtr64;
+		private static nint[] ___NoParamReturnArrayPtr64()
 		{
 			var __output = NativeMethods.AllocateVectorIntPtr();
 
-			if (NoParamReturnArrayPtr64Ptr == nint.Zero) NoParamReturnArrayPtr64Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayPtr64");
-			var NoParamReturnArrayPtr64Func = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayPtr64Ptr;
-			NoParamReturnArrayPtr64Func(__output);
+			__NoParamReturnArrayPtr64(__output);
 
 			var output = new nint[NativeMethods.GetVectorSizeIntPtr(__output)];
 			NativeMethods.GetVectorDataIntPtr(__output, output);
@@ -356,14 +327,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayFloatPtr = nint.Zero;
-		internal static float[] NoParamReturnArrayFloat()
+		internal static delegate* <float[]> NoParamReturnArrayFloat = &___NoParamReturnArrayFloat;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayFloat;
+		private static float[] ___NoParamReturnArrayFloat()
 		{
 			var __output = NativeMethods.AllocateVectorFloat();
 
-			if (NoParamReturnArrayFloatPtr == nint.Zero) NoParamReturnArrayFloatPtr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayFloat");
-			var NoParamReturnArrayFloatFunc = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayFloatPtr;
-			NoParamReturnArrayFloatFunc(__output);
+			__NoParamReturnArrayFloat(__output);
 
 			var output = new float[NativeMethods.GetVectorSizeFloat(__output)];
 			NativeMethods.GetVectorDataFloat(__output, output);
@@ -372,14 +342,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayDoublePtr = nint.Zero;
-		internal static double[] NoParamReturnArrayDouble()
+		internal static delegate* <double[]> NoParamReturnArrayDouble = &___NoParamReturnArrayDouble;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayDouble;
+		private static double[] ___NoParamReturnArrayDouble()
 		{
 			var __output = NativeMethods.AllocateVectorDouble();
 
-			if (NoParamReturnArrayDoublePtr == nint.Zero) NoParamReturnArrayDoublePtr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayDouble");
-			var NoParamReturnArrayDoubleFunc = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayDoublePtr;
-			NoParamReturnArrayDoubleFunc(__output);
+			__NoParamReturnArrayDouble(__output);
 
 			var output = new double[NativeMethods.GetVectorSizeDouble(__output)];
 			NativeMethods.GetVectorDataDouble(__output, output);
@@ -388,14 +357,13 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnArrayStringPtr = nint.Zero;
-		internal static string[] NoParamReturnArrayString()
+		internal static delegate* <string[]> NoParamReturnArrayString = &___NoParamReturnArrayString;
+		internal static delegate* unmanaged[Cdecl]<nint, void> __NoParamReturnArrayString;
+		private static string[] ___NoParamReturnArrayString()
 		{
 			var __output = NativeMethods.AllocateVectorString();
 
-			if (NoParamReturnArrayStringPtr == nint.Zero) NoParamReturnArrayStringPtr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnArrayString");
-			var NoParamReturnArrayStringFunc = (delegate* unmanaged[Cdecl]<nint, void>)NoParamReturnArrayStringPtr;
-			NoParamReturnArrayStringFunc(__output);
+			__NoParamReturnArrayString(__output);
 
 			var output = new string[NativeMethods.GetVectorSizeString(__output)];
 			NativeMethods.GetVectorDataString(__output, output);
@@ -404,187 +372,168 @@ namespace cpp_test
 
 			return output;
 		}
-		private static nint NoParamReturnVector2Ptr = nint.Zero;
-		internal static Vector2 NoParamReturnVector2()
+		internal static delegate* <Vector2> NoParamReturnVector2 = &___NoParamReturnVector2;
+		internal static delegate* unmanaged[Cdecl]<Vector2> __NoParamReturnVector2;
+		private static Vector2 ___NoParamReturnVector2()
 		{
-			if (NoParamReturnVector2Ptr == nint.Zero) NoParamReturnVector2Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnVector2");
-			var NoParamReturnVector2Func = (delegate* unmanaged[Cdecl]<Vector2>)NoParamReturnVector2Ptr;
-			var __result = NoParamReturnVector2Func();
+			var __result = __NoParamReturnVector2();
 			return __result;
 		}
-		private static nint NoParamReturnVector3Ptr = nint.Zero;
-		internal static Vector3 NoParamReturnVector3()
+		internal static delegate* <Vector3> NoParamReturnVector3 = &___NoParamReturnVector3;
+		internal static delegate* unmanaged[Cdecl]<Vector3> __NoParamReturnVector3;
+		private static Vector3 ___NoParamReturnVector3()
 		{
-			if (NoParamReturnVector3Ptr == nint.Zero) NoParamReturnVector3Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnVector3");
-			var NoParamReturnVector3Func = (delegate* unmanaged[Cdecl]<Vector3>)NoParamReturnVector3Ptr;
-			var __result = NoParamReturnVector3Func();
+			var __result = __NoParamReturnVector3();
 			return __result;
 		}
-		private static nint NoParamReturnVector4Ptr = nint.Zero;
-		internal static Vector4 NoParamReturnVector4()
+		internal static delegate* <Vector4> NoParamReturnVector4 = &___NoParamReturnVector4;
+		internal static delegate* unmanaged[Cdecl]<Vector4> __NoParamReturnVector4;
+		private static Vector4 ___NoParamReturnVector4()
 		{
-			if (NoParamReturnVector4Ptr == nint.Zero) NoParamReturnVector4Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnVector4");
-			var NoParamReturnVector4Func = (delegate* unmanaged[Cdecl]<Vector4>)NoParamReturnVector4Ptr;
-			var __result = NoParamReturnVector4Func();
+			var __result = __NoParamReturnVector4();
 			return __result;
 		}
-		private static nint NoParamReturnMatrix4x4Ptr = nint.Zero;
-		internal static Matrix4x4 NoParamReturnMatrix4x4()
+		internal static delegate* <Matrix4x4> NoParamReturnMatrix4x4 = &___NoParamReturnMatrix4x4;
+		internal static delegate* unmanaged[Cdecl]<Matrix4x4> __NoParamReturnMatrix4x4;
+		private static Matrix4x4 ___NoParamReturnMatrix4x4()
 		{
-			if (NoParamReturnMatrix4x4Ptr == nint.Zero) NoParamReturnMatrix4x4Ptr = NativeMethods.GetMethodPtr("cpp_test.NoParamReturnMatrix4x4");
-			var NoParamReturnMatrix4x4Func = (delegate* unmanaged[Cdecl]<Matrix4x4>)NoParamReturnMatrix4x4Ptr;
-			var __result = NoParamReturnMatrix4x4Func();
+			var __result = __NoParamReturnMatrix4x4();
 			return __result;
 		}
-		private static nint Param1Ptr = nint.Zero;
-		internal static void Param1(int a)
+		internal static delegate* <int, void> Param1 = &___Param1;
+		internal static delegate* unmanaged[Cdecl]<int, void> __Param1;
+		private static void ___Param1(int a)
 		{
-			if (Param1Ptr == nint.Zero) Param1Ptr = NativeMethods.GetMethodPtr("cpp_test.Param1");
-			var Param1Func = (delegate* unmanaged[Cdecl]<int, void>)Param1Ptr;
-			Param1Func(a);
+			__Param1(a);
 		}
-		private static nint Param2Ptr = nint.Zero;
-		internal static void Param2(int a, float b)
+		internal static delegate* <int, float, void> Param2 = &___Param2;
+		internal static delegate* unmanaged[Cdecl]<int, float, void> __Param2;
+		private static void ___Param2(int a, float b)
 		{
-			if (Param2Ptr == nint.Zero) Param2Ptr = NativeMethods.GetMethodPtr("cpp_test.Param2");
-			var Param2Func = (delegate* unmanaged[Cdecl]<int, float, void>)Param2Ptr;
-			Param2Func(a, b);
+			__Param2(a, b);
 		}
-		private static nint Param3Ptr = nint.Zero;
-		internal static void Param3(int a, float b, double c)
+		internal static delegate* <int, float, double, void> Param3 = &___Param3;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, void> __Param3;
+		private static void ___Param3(int a, float b, double c)
 		{
-			if (Param3Ptr == nint.Zero) Param3Ptr = NativeMethods.GetMethodPtr("cpp_test.Param3");
-			var Param3Func = (delegate* unmanaged[Cdecl]<int, float, double, void>)Param3Ptr;
-			Param3Func(a, b, c);
+			__Param3(a, b, c);
 		}
-		private static nint Param4Ptr = nint.Zero;
-		internal static void Param4(int a, float b, double c, Vector4 d)
+		internal static delegate* <int, float, double, Vector4, void> Param4 = &___Param4;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, void> __Param4;
+		private static void ___Param4(int a, float b, double c, Vector4 d)
 		{
-			if (Param4Ptr == nint.Zero) Param4Ptr = NativeMethods.GetMethodPtr("cpp_test.Param4");
-			var Param4Func = (delegate* unmanaged[Cdecl]<int, float, double, Vector4, void>)Param4Ptr;
-			Param4Func(a, b, c, d);
+			__Param4(a, b, c, d);
 		}
-		private static nint Param5Ptr = nint.Zero;
-		internal static void Param5(int a, float b, double c, Vector4 d, long[] e)
+		internal static delegate* <int, float, double, Vector4, long[], void> Param5 = &___Param5;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, void> __Param5;
+		private static void ___Param5(int a, float b, double c, Vector4 d, long[] e)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 
-			if (Param5Ptr == nint.Zero) Param5Ptr = NativeMethods.GetMethodPtr("cpp_test.Param5");
-			var Param5Func = (delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, void>)Param5Ptr;
-			Param5Func(a, b, c, d, __e);
+			__Param5(a, b, c, d, __e);
 
 			NativeMethods.DeleteVectorInt64(__e);
 
 		}
-		private static nint Param6Ptr = nint.Zero;
-		internal static void Param6(int a, float b, double c, Vector4 d, long[] e, char f)
+		internal static delegate* <int, float, double, Vector4, long[], char, void> Param6 = &___Param6;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, void> __Param6;
+		private static void ___Param6(int a, float b, double c, Vector4 d, long[] e, char f)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 
-			if (Param6Ptr == nint.Zero) Param6Ptr = NativeMethods.GetMethodPtr("cpp_test.Param6");
-			var Param6Func = (delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, void>)Param6Ptr;
-			Param6Func(a, b, c, d, __e, __f);
+			__Param6(a, b, c, d, __e, __f);
 
 			NativeMethods.DeleteVectorInt64(__e);
 
 		}
-		private static nint Param7Ptr = nint.Zero;
-		internal static void Param7(int a, float b, double c, Vector4 d, long[] e, char f, string g)
+		internal static delegate* <int, float, double, Vector4, long[], char, string, void> Param7 = &___Param7;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, void> __Param7;
+		private static void ___Param7(int a, float b, double c, Vector4 d, long[] e, char f, string g)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			if (Param7Ptr == nint.Zero) Param7Ptr = NativeMethods.GetMethodPtr("cpp_test.Param7");
-			var Param7Func = (delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, void>)Param7Ptr;
-			Param7Func(a, b, c, d, __e, __f, __g);
+			__Param7(a, b, c, d, __e, __f, __g);
 
 			NativeMethods.DeleteVectorInt64(__e);
 			NativeMethods.DeleteString(__g);
 
 		}
-		private static nint Param8Ptr = nint.Zero;
-		internal static void Param8(int a, float b, double c, Vector4 d, long[] e, char f, string g, float h)
+		internal static delegate* <int, float, double, Vector4, long[], char, string, float, void> Param8 = &___Param8;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, float, void> __Param8;
+		private static void ___Param8(int a, float b, double c, Vector4 d, long[] e, char f, string g, float h)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			if (Param8Ptr == nint.Zero) Param8Ptr = NativeMethods.GetMethodPtr("cpp_test.Param8");
-			var Param8Func = (delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, float, void>)Param8Ptr;
-			Param8Func(a, b, c, d, __e, __f, __g, h);
+			__Param8(a, b, c, d, __e, __f, __g, h);
 
 			NativeMethods.DeleteVectorInt64(__e);
 			NativeMethods.DeleteString(__g);
 
 		}
-		private static nint Param9Ptr = nint.Zero;
-		internal static void Param9(int a, float b, double c, Vector4 d, long[] e, char f, string g, float h, short k)
+		internal static delegate* <int, float, double, Vector4, long[], char, string, float, short, void> Param9 = &___Param9;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, float, short, void> __Param9;
+		private static void ___Param9(int a, float b, double c, Vector4 d, long[] e, char f, string g, float h, short k)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			if (Param9Ptr == nint.Zero) Param9Ptr = NativeMethods.GetMethodPtr("cpp_test.Param9");
-			var Param9Func = (delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, float, short, void>)Param9Ptr;
-			Param9Func(a, b, c, d, __e, __f, __g, h, k);
+			__Param9(a, b, c, d, __e, __f, __g, h, k);
 
 			NativeMethods.DeleteVectorInt64(__e);
 			NativeMethods.DeleteString(__g);
 
 		}
-		private static nint Param10Ptr = nint.Zero;
-		internal static void Param10(int a, float b, double c, Vector4 d, long[] e, char f, string g, float h, short k, nint l)
+		internal static delegate* <int, float, double, Vector4, long[], char, string, float, short, nint, void> Param10 = &___Param10;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, float, short, nint, void> __Param10;
+		private static void ___Param10(int a, float b, double c, Vector4 d, long[] e, char f, string g, float h, short k, nint l)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			if (Param10Ptr == nint.Zero) Param10Ptr = NativeMethods.GetMethodPtr("cpp_test.Param10");
-			var Param10Func = (delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, float, short, nint, void>)Param10Ptr;
-			Param10Func(a, b, c, d, __e, __f, __g, h, k, l);
+			__Param10(a, b, c, d, __e, __f, __g, h, k, l);
 
 			NativeMethods.DeleteVectorInt64(__e);
 			NativeMethods.DeleteString(__g);
 
 		}
-		private static nint ParamRef1Ptr = nint.Zero;
-		internal static void ParamRef1(ref int a)
+		internal static delegate* <ref int, void> ParamRef1 = &___ParamRef1;
+		internal static delegate* unmanaged[Cdecl]<ref int, void> __ParamRef1;
+		private static void ___ParamRef1(ref int a)
 		{
-			if (ParamRef1Ptr == nint.Zero) ParamRef1Ptr = NativeMethods.GetMethodPtr("cpp_test.ParamRef1");
-			var ParamRef1Func = (delegate* unmanaged[Cdecl]<ref int, void>)ParamRef1Ptr;
-			ParamRef1Func(ref a);
+			__ParamRef1(ref a);
 		}
-		private static nint ParamRef2Ptr = nint.Zero;
-		internal static void ParamRef2(ref int a, ref float b)
+		internal static delegate* <ref int, ref float, void> ParamRef2 = &___ParamRef2;
+		internal static delegate* unmanaged[Cdecl]<ref int, ref float, void> __ParamRef2;
+		private static void ___ParamRef2(ref int a, ref float b)
 		{
-			if (ParamRef2Ptr == nint.Zero) ParamRef2Ptr = NativeMethods.GetMethodPtr("cpp_test.ParamRef2");
-			var ParamRef2Func = (delegate* unmanaged[Cdecl]<ref int, ref float, void>)ParamRef2Ptr;
-			ParamRef2Func(ref a, ref b);
+			__ParamRef2(ref a, ref b);
 		}
-		private static nint ParamRef3Ptr = nint.Zero;
-		internal static void ParamRef3(ref int a, ref float b, ref double c)
+		internal static delegate* <ref int, ref float, ref double, void> ParamRef3 = &___ParamRef3;
+		internal static delegate* unmanaged[Cdecl]<ref int, ref float, ref double, void> __ParamRef3;
+		private static void ___ParamRef3(ref int a, ref float b, ref double c)
 		{
-			if (ParamRef3Ptr == nint.Zero) ParamRef3Ptr = NativeMethods.GetMethodPtr("cpp_test.ParamRef3");
-			var ParamRef3Func = (delegate* unmanaged[Cdecl]<ref int, ref float, ref double, void>)ParamRef3Ptr;
-			ParamRef3Func(ref a, ref b, ref c);
+			__ParamRef3(ref a, ref b, ref c);
 		}
-		private static nint ParamRef4Ptr = nint.Zero;
-		internal static void ParamRef4(ref int a, ref float b, ref double c, ref Vector4 d)
+		internal static delegate* <ref int, ref float, ref double, ref Vector4, void> ParamRef4 = &___ParamRef4;
+		internal static delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, void> __ParamRef4;
+		private static void ___ParamRef4(ref int a, ref float b, ref double c, ref Vector4 d)
 		{
-			if (ParamRef4Ptr == nint.Zero) ParamRef4Ptr = NativeMethods.GetMethodPtr("cpp_test.ParamRef4");
-			var ParamRef4Func = (delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, void>)ParamRef4Ptr;
-			ParamRef4Func(ref a, ref b, ref c, ref d);
+			__ParamRef4(ref a, ref b, ref c, ref d);
 		}
-		private static nint ParamRef5Ptr = nint.Zero;
-		internal static void ParamRef5(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e)
+		internal static delegate* <ref int, ref float, ref double, ref Vector4, ref long[], void> ParamRef5 = &___ParamRef5;
+		internal static delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, void> __ParamRef5;
+		private static void ___ParamRef5(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 
-			if (ParamRef5Ptr == nint.Zero) ParamRef5Ptr = NativeMethods.GetMethodPtr("cpp_test.ParamRef5");
-			var ParamRef5Func = (delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, void>)ParamRef5Ptr;
-			ParamRef5Func(ref a, ref b, ref c, ref d, __e);
+			__ParamRef5(ref a, ref b, ref c, ref d, __e);
 
 			Array.Resize(ref e, NativeMethods.GetVectorSizeInt64(__e));
 			NativeMethods.GetVectorDataInt64(__e, e);
@@ -592,15 +541,14 @@ namespace cpp_test
 			NativeMethods.DeleteVectorInt64(__e);
 
 		}
-		private static nint ParamRef6Ptr = nint.Zero;
-		internal static void ParamRef6(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, ref char f)
+		internal static delegate* <ref int, ref float, ref double, ref Vector4, ref long[], ref char, void> ParamRef6 = &___ParamRef6;
+		internal static delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, ref sbyte, void> __ParamRef6;
+		private static void ___ParamRef6(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, ref char f)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 
-			if (ParamRef6Ptr == nint.Zero) ParamRef6Ptr = NativeMethods.GetMethodPtr("cpp_test.ParamRef6");
-			var ParamRef6Func = (delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, ref sbyte, void>)ParamRef6Ptr;
-			ParamRef6Func(ref a, ref b, ref c, ref d, __e, ref __f);
+			__ParamRef6(ref a, ref b, ref c, ref d, __e, ref __f);
 
 			Array.Resize(ref e, NativeMethods.GetVectorSizeInt64(__e));
 			NativeMethods.GetVectorDataInt64(__e, e);
@@ -609,16 +557,15 @@ namespace cpp_test
 			NativeMethods.DeleteVectorInt64(__e);
 
 		}
-		private static nint ParamRef7Ptr = nint.Zero;
-		internal static void ParamRef7(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, ref char f, ref string g)
+		internal static delegate* <ref int, ref float, ref double, ref Vector4, ref long[], ref char, ref string, void> ParamRef7 = &___ParamRef7;
+		internal static delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, ref sbyte, nint, void> __ParamRef7;
+		private static void ___ParamRef7(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, ref char f, ref string g)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			if (ParamRef7Ptr == nint.Zero) ParamRef7Ptr = NativeMethods.GetMethodPtr("cpp_test.ParamRef7");
-			var ParamRef7Func = (delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, ref sbyte, nint, void>)ParamRef7Ptr;
-			ParamRef7Func(ref a, ref b, ref c, ref d, __e, ref __f, __g);
+			__ParamRef7(ref a, ref b, ref c, ref d, __e, ref __f, __g);
 
 			Array.Resize(ref e, NativeMethods.GetVectorSizeInt64(__e));
 			NativeMethods.GetVectorDataInt64(__e, e);
@@ -629,16 +576,15 @@ namespace cpp_test
 			NativeMethods.DeleteString(__g);
 
 		}
-		private static nint ParamRef8Ptr = nint.Zero;
-		internal static void ParamRef8(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, ref char f, ref string g, ref float h)
+		internal static delegate* <ref int, ref float, ref double, ref Vector4, ref long[], ref char, ref string, ref float, void> ParamRef8 = &___ParamRef8;
+		internal static delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, ref sbyte, nint, ref float, void> __ParamRef8;
+		private static void ___ParamRef8(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, ref char f, ref string g, ref float h)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			if (ParamRef8Ptr == nint.Zero) ParamRef8Ptr = NativeMethods.GetMethodPtr("cpp_test.ParamRef8");
-			var ParamRef8Func = (delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, ref sbyte, nint, ref float, void>)ParamRef8Ptr;
-			ParamRef8Func(ref a, ref b, ref c, ref d, __e, ref __f, __g, ref h);
+			__ParamRef8(ref a, ref b, ref c, ref d, __e, ref __f, __g, ref h);
 
 			Array.Resize(ref e, NativeMethods.GetVectorSizeInt64(__e));
 			NativeMethods.GetVectorDataInt64(__e, e);
@@ -649,16 +595,15 @@ namespace cpp_test
 			NativeMethods.DeleteString(__g);
 
 		}
-		private static nint ParamRef9Ptr = nint.Zero;
-		internal static void ParamRef9(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, ref char f, ref string g, ref float h, ref short k)
+		internal static delegate* <ref int, ref float, ref double, ref Vector4, ref long[], ref char, ref string, ref float, ref short, void> ParamRef9 = &___ParamRef9;
+		internal static delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, ref sbyte, nint, ref float, ref short, void> __ParamRef9;
+		private static void ___ParamRef9(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, ref char f, ref string g, ref float h, ref short k)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			if (ParamRef9Ptr == nint.Zero) ParamRef9Ptr = NativeMethods.GetMethodPtr("cpp_test.ParamRef9");
-			var ParamRef9Func = (delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, ref sbyte, nint, ref float, ref short, void>)ParamRef9Ptr;
-			ParamRef9Func(ref a, ref b, ref c, ref d, __e, ref __f, __g, ref h, ref k);
+			__ParamRef9(ref a, ref b, ref c, ref d, __e, ref __f, __g, ref h, ref k);
 
 			Array.Resize(ref e, NativeMethods.GetVectorSizeInt64(__e));
 			NativeMethods.GetVectorDataInt64(__e, e);
@@ -669,16 +614,15 @@ namespace cpp_test
 			NativeMethods.DeleteString(__g);
 
 		}
-		private static nint ParamRef10Ptr = nint.Zero;
-		internal static void ParamRef10(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, ref char f, ref string g, ref float h, ref short k, ref nint l)
+		internal static delegate* <ref int, ref float, ref double, ref Vector4, ref long[], ref char, ref string, ref float, ref short, ref nint, void> ParamRef10 = &___ParamRef10;
+		internal static delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, ref sbyte, nint, ref float, ref short, ref nint, void> __ParamRef10;
+		private static void ___ParamRef10(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, ref char f, ref string g, ref float h, ref short k, ref nint l)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			if (ParamRef10Ptr == nint.Zero) ParamRef10Ptr = NativeMethods.GetMethodPtr("cpp_test.ParamRef10");
-			var ParamRef10Func = (delegate* unmanaged[Cdecl]<ref int, ref float, ref double, ref Vector4, nint, ref sbyte, nint, ref float, ref short, ref nint, void>)ParamRef10Ptr;
-			ParamRef10Func(ref a, ref b, ref c, ref d, __e, ref __f, __g, ref h, ref k, ref l);
+			__ParamRef10(ref a, ref b, ref c, ref d, __e, ref __f, __g, ref h, ref k, ref l);
 
 			Array.Resize(ref e, NativeMethods.GetVectorSizeInt64(__e));
 			NativeMethods.GetVectorDataInt64(__e, e);
@@ -689,8 +633,9 @@ namespace cpp_test
 			NativeMethods.DeleteString(__g);
 
 		}
-		private static nint ParamRefVectorsPtr = nint.Zero;
-		internal static void ParamRefVectors(ref bool[] p1, ref char[] p2, ref char[] p3, ref sbyte[] p4, ref short[] p5, ref int[] p6, ref long[] p7, ref byte[] p8, ref ushort[] p9, ref uint[] p10, ref ulong[] p11, ref nint[] p12, ref float[] p13, ref double[] p14, ref string[] p15)
+		internal static delegate* <ref bool[], ref char[], ref char[], ref sbyte[], ref short[], ref int[], ref long[], ref byte[], ref ushort[], ref uint[], ref ulong[], ref nint[], ref float[], ref double[], ref string[], void> ParamRefVectors = &___ParamRefVectors;
+		internal static delegate* unmanaged[Cdecl]<nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, void> __ParamRefVectors;
+		private static void ___ParamRefVectors(ref bool[] p1, ref char[] p2, ref char[] p3, ref sbyte[] p4, ref short[] p5, ref int[] p6, ref long[] p7, ref byte[] p8, ref ushort[] p9, ref uint[] p10, ref ulong[] p11, ref nint[] p12, ref float[] p13, ref double[] p14, ref string[] p15)
 		{
 			var __p1 = NativeMethods.CreateVectorBool(p1, p1.Length);
 			var __p2 = NativeMethods.CreateVectorChar8(p2, p2.Length);
@@ -708,9 +653,7 @@ namespace cpp_test
 			var __p14 = NativeMethods.CreateVectorDouble(p14, p14.Length);
 			var __p15 = NativeMethods.CreateVectorString(p15, p15.Length);
 
-			if (ParamRefVectorsPtr == nint.Zero) ParamRefVectorsPtr = NativeMethods.GetMethodPtr("cpp_test.ParamRefVectors");
-			var ParamRefVectorsFunc = (delegate* unmanaged[Cdecl]<nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, nint, void>)ParamRefVectorsPtr;
-			ParamRefVectorsFunc(__p1, __p2, __p3, __p4, __p5, __p6, __p7, __p8, __p9, __p10, __p11, __p12, __p13, __p14, __p15);
+			__ParamRefVectors(__p1, __p2, __p3, __p4, __p5, __p6, __p7, __p8, __p9, __p10, __p11, __p12, __p13, __p14, __p15);
 
 			Array.Resize(ref p1, NativeMethods.GetVectorSizeBool(__p1));
 			NativeMethods.GetVectorDataBool(__p1, p1);
@@ -760,14 +703,13 @@ namespace cpp_test
 			NativeMethods.DeleteVectorString(__p15);
 
 		}
-		private static nint ParamAllPrimitivesPtr = nint.Zero;
-		internal static long ParamAllPrimitives(bool p1, char p2, sbyte p3, short p4, int p5, long p6, byte p7, ushort p8, uint p9, ulong p10, nint p11, float p12, double p13)
+		internal static delegate* <bool, char, sbyte, short, int, long, byte, ushort, uint, ulong, nint, float, double, long> ParamAllPrimitives = &___ParamAllPrimitives;
+		internal static delegate* unmanaged[Cdecl]<bool, ushort, sbyte, short, int, long, byte, ushort, uint, ulong, nint, float, double, long> __ParamAllPrimitives;
+		private static long ___ParamAllPrimitives(bool p1, char p2, sbyte p3, short p4, int p5, long p6, byte p7, ushort p8, uint p9, ulong p10, nint p11, float p12, double p13)
 		{
 			var __p2 = Convert.ToUInt16(p2);
 
-			if (ParamAllPrimitivesPtr == nint.Zero) ParamAllPrimitivesPtr = NativeMethods.GetMethodPtr("cpp_test.ParamAllPrimitives");
-			var ParamAllPrimitivesFunc = (delegate* unmanaged[Cdecl]<bool, ushort, sbyte, short, int, long, byte, ushort, uint, ulong, nint, float, double, long>)ParamAllPrimitivesPtr;
-			var __result = ParamAllPrimitivesFunc(p1, __p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13);
+			var __result = __ParamAllPrimitives(p1, __p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13);
 			return __result;
 		}
 	}

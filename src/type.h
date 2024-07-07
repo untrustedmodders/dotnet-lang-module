@@ -51,9 +51,7 @@ namespace netlm {
 		Type& GetElementType();
 
 		bool operator==(const Type& other) const { return _id == other._id; }
-
 		operator bool() const { return _id != -1; }
-
 		TypeId GetTypeId() const { return _id; }
 
 	public:
@@ -64,7 +62,7 @@ namespace netlm {
 			ManagedObject result;
 
 			if constexpr (argumentCount > 0) {
-				const void* argumentsValues[] = { (void*) &arguments ... };
+				const void* argumentsValues[] = { &arguments ... };
 				result = CreateInstanceInternal(argumentsValues, argumentCount);
 			} else {
 				result = CreateInstanceInternal(nullptr, 0);
@@ -74,43 +72,52 @@ namespace netlm {
 		}
 
 		template<typename TReturn, typename... TArgs>
-		TReturn InvokeStaticMethod(std::string_view methodName, TArgs&&... parameters) {
-			constexpr size_t parameterCount = sizeof...(parameters);
+		TReturn InvokeStaticMethod(std::string_view methodName, TArgs&&... parameters) const {
+			MethodInfo methodInfo = GetMethod(methodName);
+			return InvokeStaticMethodRaw<TReturn, TArgs...>(methodInfo, std::forward<TArgs>(parameters)...);
+		}
 
-			MethodInfo method = GetMethod(methodName);
+		template<typename... TArgs>
+		void InvokeStaticMethod(std::string_view methodName, TArgs&&... parameters) const {
+			MethodInfo methodInfo = GetMethod(methodName);
+			InvokeStaticMethodRaw<TArgs...>(methodInfo, std::forward<TArgs>(parameters)...);
+		}
+
+		template<typename TReturn, typename... TArgs>
+		TReturn InvokeStaticMethodRaw(const MethodInfo& methodInfo, TArgs&&... parameters) const {
+			constexpr size_t parameterCount = sizeof...(parameters);
 
 			TReturn result;
 
 			if constexpr (parameterCount > 0) {
-				const void* parameterValues[] = { (void*) &parameters ... };
-				InvokeStaticMethodRetInternal(method._handle, parameterValues, parameterCount, &result);
+				const void* parameterValues[] = { &parameters ... };
+				InvokeStaticMethodRetInternal(methodInfo._handle, parameterValues, parameterCount, &result);
 			} else {
-				InvokeStaticMethodRetInternal(method._handle, nullptr, 0, &result);
+				InvokeStaticMethodRetInternal(methodInfo._handle, nullptr, 0, &result);
 			}
 
 			return result;
 		}
 
 		template<typename... TArgs>
-		void InvokeStaticMethod(std::string_view methodName, TArgs&&... parameters) {
+		void InvokeStaticMethodRaw(const MethodInfo& methodInfo, TArgs&&... parameters) const {
 			constexpr size_t parameterCount = sizeof...(parameters);
 
-			MethodInfo method = GetMethod(methodName);
-
 			if constexpr (parameterCount > 0) {
-				const void* parameterValues[] = { (void*) &parameters ... };
-				InvokeStaticMethodInternal(method._handle, parameterValues, parameterCount);
+				const void* parameterValues[] = { &parameters ... };
+				InvokeStaticMethodInternal(methodInfo._handle, parameterValues, parameterCount);
 			} else {
-				InvokeStaticMethodInternal(method._handle, nullptr, 0);
+				InvokeStaticMethodInternal(methodInfo._handle, nullptr, 0);
 			}
 		}
 
-		ManagedObject CreateInstanceInternal(const void** arguments, size_t length);
+	//private:
+		ManagedObject CreateInstanceInternal(const void** arguments, size_t length) const;
 		void InvokeStaticMethodInternal(ManagedHandle methodId, const void** parameters, size_t length) const;
 		void InvokeStaticMethodRetInternal(ManagedHandle methodId, const void** parameters, size_t length, void* resultStorage) const;
 
 	private:
-		TypeId _id{ -1 };
+		TypeId _id = -1;
 		std::unique_ptr<Type> _baseType;
 		std::unique_ptr<Type> _elementType;
 

@@ -9,7 +9,7 @@ namespace netlm {
 	struct ManagedType;
 	class ManagedObject;
 
-	using SetInternalCallsFn = void(*)(void*, int32_t);
+	using SetInternalCallsFn = void(*)(InternalCall*, int32_t);
 	using CreateAssemblyLoadContextFn = int32_t(*)(String);
 	using UnloadAssemblyLoadContextFn = void(*)(int32_t);
 	using LoadManagedAssemblyFn = int32_t(*)(int32_t, String);
@@ -59,6 +59,7 @@ namespace netlm {
 
 #pragma region MethodInfo
 	using GetMethodInfoNameFn = String(*)(ManagedHandle);
+	using GetMethodInfoFunctionAddressFn = void*(*)(ManagedHandle);
 	using GetMethodInfoReturnTypeFn = void(*)(ManagedHandle, TypeId*);
 	using GetMethodInfoParameterTypesFn = void(*)(ManagedHandle, TypeId*, int32_t*);
 	using GetMethodInfoAccessibilityFn = TypeAccessibility(*)(ManagedHandle);
@@ -142,6 +143,7 @@ namespace netlm {
 
 #pragma region MethodInfo
 		GetMethodInfoNameFn GetMethodInfoNameFptr;
+		GetMethodInfoFunctionAddressFn GetMethodInfoFunctionAddressFptr;
 		GetMethodInfoReturnTypeFn GetMethodInfoReturnTypeFptr;
 		GetMethodInfoParameterTypesFn GetMethodInfoParameterTypesFptr;
 		GetMethodInfoAccessibilityFn GetMethodInfoAccessibilityFptr;

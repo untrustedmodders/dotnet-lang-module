@@ -16,6 +16,10 @@ namespace netlm {
 		~ScriptInstance();
 
 		const plugify::IPlugin& GetPlugin() const { return _plugin; }
+		const ManagedObject& GetManagedObject() const { return _instance; }
+
+		bool operator==(const ScriptInstance& other) const { return _instance == other._instance; }
+		operator bool() const { return _instance; }
 
 	private:
 		void InvokeOnStart() const;
@@ -28,7 +32,8 @@ namespace netlm {
 		friend class DotnetLanguageModule;
 	};
 
-	using ScriptMap = std::unordered_map<std::string, ScriptInstance>;
+	using ScriptMap = std::map<plugify::UniqueId, ScriptInstance>;
+	using FunctionList = std::vector<std::unique_ptr<plugify::Function>>;
 
 	class DotnetLanguageModule final : public plugify::ILanguageModule {
 	public:
@@ -43,26 +48,26 @@ namespace netlm {
 		void OnMethodExport(const plugify::IPlugin& plugin) override;
 
 		const ScriptMap& GetScripts() const { return _scripts; }
-		ScriptInstance* FindScript(const std::string& name);
+		ScriptInstance* FindScript(plugify::UniqueId pluginId);
 
 		const std::shared_ptr<plugify::IPlugifyProvider>& GetProvider() { return _provider; }
-		void* GetNativeMethod(const std::string& methodName) const;
 
 	private:
 		static void ExceptionCallback(const std::string& message);
 		static void MessageCallback(const std::string& message, MessageLevel level);
+		static void CheckAllocations();
 
 		static void InternalCall(const plugify::Method* method, void* data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret);
 
 	private:
 		std::shared_ptr<plugify::IPlugifyProvider> _provider;
 		std::shared_ptr<asmjit::JitRuntime> _rt;
+
 		HostInstance _host;
 		AssemblyLoadContext _alc;
 
 		ScriptMap _scripts;
-		std::unordered_map<std::string, void*> _nativesMap;
-		std::vector<std::unique_ptr<plugify::Function>> _functions;
+		FunctionList _functions;
 	};
 
 	extern DotnetLanguageModule g_netlm;

@@ -4,7 +4,7 @@
 
 using namespace netlm;
 
-ManagedAssembly& AssemblyLoadContext::LoadAssembly(const std::filesystem::path& assemblyPath) {
+ManagedAssembly& AssemblyLoadContext::LoadAssembly(const fs::path& assemblyPath, int64_t assemblyKey) {
 	std::error_code ec;
 	auto absolutePath= fs::absolute(assemblyPath, ec);
 	if (ec) {
@@ -37,7 +37,17 @@ ManagedAssembly& AssemblyLoadContext::LoadAssembly(const std::filesystem::path& 
 			break;
 	}
 
-	auto& assembly = *_loadedAssemblies.emplace_back(std::make_unique<ManagedAssembly>());
+	if (assemblyKey == -1) {
+		assemblyKey = static_cast<int64_t>(assemblyId);
+	}
+
+	auto [it, result] = _loadedAssemblies.try_emplace(assemblyKey);
+	if (!result) {
+		_error = "Assembly key duplicate";
+		return InvalidAssembly;
+	}
+
+	auto& assembly = std::get<ManagedAssembly>(*it);
 
 	assembly._assemblyId = assemblyId;
 	assembly._loadStatus = loadStatus;
@@ -58,13 +68,11 @@ ManagedAssembly& AssemblyLoadContext::LoadAssembly(const std::filesystem::path& 
 	return assembly;
 }
 
-ManagedAssembly& AssemblyLoadContext::FindAssembly(const std::string& assemblyName) {
-	auto it = std::find_if(_loadedAssemblies.begin(), _loadedAssemblies.end(), [&assemblyName](const auto& assembly) {
-		return assembly->_name == assemblyName;
-	});
+ManagedAssembly& AssemblyLoadContext::FindAssembly(int64_t assemblyId) {
+	auto it = _loadedAssemblies.find(assemblyId);
 
 	if (it != _loadedAssemblies.end()) {
-		return *it->get();
+		return std::get<ManagedAssembly>(*it);
 	}
 
 	return InvalidAssembly;
@@ -73,7 +81,7 @@ ManagedAssembly& AssemblyLoadContext::FindAssembly(const std::string& assemblyNa
 void ManagedAssembly::AddInternalCall(std::string_view className, std::string_view variableName, void* functionPtr) {
 	assert(functionPtr != nullptr);
 
-	std::string assemblyQualifiedName(std::format("{}+{}, {}", className, variableName, _name));
+	std::string assemblyQualifiedName(std::format("{}@{}, {}", className, variableName, _name));
 
 	const auto& name = _internalCallNameStorage.emplace_back(NETLM_WIDE(assemblyQualifiedName));
 
@@ -82,6 +90,9 @@ void ManagedAssembly::AddInternalCall(std::string_view className, std::string_vi
 
 void ManagedAssembly::UploadInternalCalls() {
 	Managed.SetInternalCallsFptr(_internalCalls.data(), static_cast<int32_t>(_internalCalls.size()));
+
+	_internalCalls.clear();
+	_internalCallNameStorage.clear();
 }
 
 Type& ManagedAssembly::GetType(std::string_view className) {

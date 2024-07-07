@@ -34,7 +34,7 @@ internal static class InternalCallsManager
 					continue;
 				}
 
-				var fieldNameStart = name.IndexOf('+');
+				var fieldNameStart = name.IndexOf('@');
 				var fieldNameEnd = name.IndexOf(",", fieldNameStart, StringComparison.CurrentCulture);
 				var fieldName = name.Substring(fieldNameStart + 1, fieldNameEnd - fieldNameStart - 1);
 				var containingTypeName = name.Remove(fieldNameStart, fieldNameEnd - fieldNameStart);

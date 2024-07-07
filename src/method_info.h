@@ -10,6 +10,7 @@ namespace netlm {
 	class MethodInfo {
 	public:
 		std::string GetName() const;
+		void* GetFunctionAddress() const;
 
 		Type& GetReturnType();
 		const std::vector<Type>& GetParameterTypes();
@@ -20,13 +21,11 @@ namespace netlm {
 		std::vector<Attribute> GetReturnAttributes() const;
 
 		bool operator==(const MethodInfo& other) const { return _handle == other._handle; }
-
 		operator bool() const { return _handle != -1; }
-
 		ManagedHandle GetHandle() const { return _handle; }
 
 	private:
-		ManagedHandle _handle{ -1 };
+		ManagedHandle _handle = -1;
 		std::unique_ptr<Type> _returnType;
 		std::vector<Type> _parameterTypes;
 

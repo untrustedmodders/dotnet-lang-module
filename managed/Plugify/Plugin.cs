@@ -14,7 +14,7 @@ public class Plugin : IEquatable<Plugin>, IComparable<Plugin>
 
 	public string? FindResource(string path)
 	{
-		return NativeMethods.FindPluginResource(Name, path);
+		return NativeMethods.FindPluginResource(Id, path);
 	}
 
 	public static bool operator ==(Plugin lhs, Plugin rhs)

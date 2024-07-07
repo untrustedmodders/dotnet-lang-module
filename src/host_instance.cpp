@@ -270,6 +270,7 @@ void HostInstance::LoadManagedFunctions(const fs::path& assemblyPath) {
 	Managed.InvokeStaticMethodRetFptr = GetDelegate<InvokeStaticMethodRetFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("InvokeStaticMethodRet"));
 
 	Managed.GetMethodInfoNameFptr = GetDelegate<GetMethodInfoNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoName"));
+	Managed.GetMethodInfoFunctionAddressFptr = GetDelegate<GetMethodInfoFunctionAddressFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoFunctionAddress"));
 	Managed.GetMethodInfoReturnTypeFptr = GetDelegate<GetMethodInfoReturnTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoReturnType"));
 	Managed.GetMethodInfoParameterTypesFptr = GetDelegate<GetMethodInfoParameterTypesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoParameterTypes"));
 	Managed.GetMethodInfoAccessibilityFptr = GetDelegate<GetMethodInfoAccessibilityFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoAccessibility"));

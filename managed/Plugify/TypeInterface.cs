@@ -568,6 +568,23 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
+	private static unsafe nint GetMethodInfoFunctionAddress(int methodId)
+	{
+		try
+		{
+			if (!CachedMethods.TryGetValue(methodId, out var methodInfo))
+				return nint.Zero;
+
+			return methodInfo.MethodHandle.GetFunctionPointer();
+		}
+		catch (Exception e)
+		{
+			HandleException(e);
+			return nint.Zero;
+		}
+	}
+
+	[UnmanagedCallersOnly]
 	private static unsafe void GetMethodInfoReturnType(int methodId, int* outReturnType)
 	{
 		try

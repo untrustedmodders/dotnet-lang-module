@@ -11,63 +11,71 @@ namespace netlm {
 	class ManagedObject {
 	public:
 		template<typename TReturn, typename... TArgs>
-		TReturn InvokeMethod(std::string_view methodName, TArgs&&... parameters) {
-			constexpr size_t parameterCount = sizeof...(parameters);
+		TReturn InvokeMethod(std::string_view methodName, TArgs&&... parameters) const {
+			MethodInfo methodInfo = GetType().GetMethod(methodName);
+			return InvokeMethodRaw<TReturn, TArgs...>(methodInfo, std::forward<TArgs>(parameters)...);
+		}
 
-			MethodInfo method = GetType().GetMethod(methodName);
+		template<typename... TArgs>
+		void InvokeMethod(std::string_view methodName, TArgs&&... parameters) const {
+			MethodInfo methodInfo = GetType().GetMethod(methodName);
+			InvokeMethodRaw<TArgs...>(methodInfo, std::forward<TArgs>(parameters)...);
+		}
+
+		template<typename TReturn, typename... TArgs>
+		TReturn InvokeMethodRaw(const MethodInfo& methodInfo, TArgs&&... parameters) const {
+			constexpr size_t parameterCount = sizeof...(parameters);
 
 			TReturn result;
 
 			if constexpr (parameterCount > 0) {
-				const void* parameterValues[] = { (void*) &parameters ... };
-				InvokeMethodRetInternal(method._handle, parameterValues, parameterCount, &result);
+				const void* parameterValues[] = { &parameters ... };
+				InvokeMethodRetInternal(methodInfo._handle, parameterValues, parameterCount, &result);
 			} else {
-				InvokeMethodRetInternal(method._handle, nullptr, nullptr, 0, &result);
+				InvokeMethodRetInternal(methodInfo._handle, nullptr, nullptr, 0, &result);
 			}
 
 			return result;
 		}
 
 		template<typename... TArgs>
-		void InvokeMethod(std::string_view methodName, TArgs&&... parameters) {
+		void InvokeMethodRaw(const MethodInfo& methodInfo, TArgs&&... parameters) const {
 			constexpr size_t parameterCount = sizeof...(parameters);
 
-			MethodInfo method = GetType().GetMethod(methodName);
-
 			if constexpr (parameterCount > 0) {
-				const void* parameterValues[] = { (void*) &parameters ... };
-				InvokeMethodInternal(method._handle, parameterValues, parameterCount);
+				const void* parameterValues[] = { &parameters ... };
+				InvokeMethodInternal(methodInfo._handle, parameterValues, parameterCount);
 			} else {
-				InvokeMethodInternal(method._handle, nullptr, 0);
+				InvokeMethodInternal(methodInfo._handle, nullptr, 0);
 			}
 		}
 
 		template<typename TValue>
-		void SetFieldValue(std::string_view fieldName, TValue inValue) {
+		void SetFieldValue(std::string_view fieldName, TValue inValue) const {
 			SetFieldValueRaw(fieldName, &inValue);
 		}
 
 		template<typename TReturn>
-		TReturn GetFieldValue(std::string_view fieldName) {
+		TReturn GetFieldValue(std::string_view fieldName) const {
 			TReturn result;
 			GetFieldValueRaw(fieldName, &result);
 			return result;
 		}
 
 		template<typename TReturnPointer>
-		TReturnPointer* GetFieldPointer(std::string_view fieldName) {
+		TReturnPointer* GetFieldPointer(std::string_view fieldName) const {
 			TReturnPointer* result = nullptr;
 			GetFieldPointerRaw(fieldName, (void**) &result);
 			return result;
 		}
 
 		template<typename TValue>
-		void SetPropertyValue(std::string_view propertyName, TValue inValue) {
+		void SetPropertyValue(std::string_view propertyName, TValue inValue) const {
 			SetPropertyValueRaw(propertyName, &inValue);
 		}
 
 		template<typename TReturn>
-		TReturn GetPropertyValue(std::string_view propertyName) {
+		TReturn GetPropertyValue(std::string_view propertyName) const {
 			TReturn result;
 			GetPropertyValueRaw(propertyName, &result);
 			return result;
@@ -83,6 +91,11 @@ namespace netlm {
 
 		void Destroy();
 
+		bool operator==(const ManagedObject& other) const { return _handle == other._handle; }
+		operator bool() const { return _handle != nullptr; }
+		//void* GetHandle() const { return _handle; }
+
+	//private:
 		void InvokeMethodInternal(ManagedHandle methodId, const void** parameters, size_t length) const;
 		void InvokeMethodRetInternal(ManagedHandle methodId, const void** parameters, size_t length, void* resultStorage) const;
 
@@ -94,4 +107,4 @@ namespace netlm {
 		friend class ManagedAssembly;
 		friend class Type;
 	};
-}// namespace Coral
+}

@@ -19,7 +19,7 @@ namespace netlm {
 		fs::path rootDirectory;
 		
 		MessageCallbackFn messageCallback;
-		MessageLevel messageFilter{ MessageLevel::All };
+		MessageLevel messageFilter = MessageLevel::All;
 
 		ExceptionCallbackFn exceptionCallback;
 	};
@@ -41,6 +41,7 @@ namespace netlm {
 	private:
 		bool LoadHostFXR();
 		bool InitializeRuntimeHost();
+
 		void LoadManagedFunctions(const fs::path& assemblyPath);
 
 		void* GetDelegate(const char_t* assemblyPath, const char_t* typeName, const char_t* methodName, const char_t* delegateType = NETLM_UNMANAGED_CALLERS_ONLY) const;

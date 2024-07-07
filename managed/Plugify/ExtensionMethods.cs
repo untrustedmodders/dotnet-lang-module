@@ -1,5 +1,3 @@
-using System;
-
 namespace Plugify;
 
 public static class ExtensionMethods

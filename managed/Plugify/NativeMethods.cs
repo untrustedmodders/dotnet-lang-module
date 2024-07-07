@@ -13,8 +13,6 @@ public static class NativeMethods
 	#region Core functions
 
 	[DllImport(DllName)]
-	public static extern nint GetMethodPtr([MarshalAs(UnmanagedType.LPStr)] string methodName);
-	[DllImport(DllName)]
 	[return: MarshalAs(UnmanagedType.LPStr)]
 	public static extern string GetBaseDir();
 	[DllImport(DllName)]
@@ -23,7 +21,7 @@ public static class NativeMethods
 	public static extern bool IsPluginLoaded([MarshalAs(UnmanagedType.LPStr)] string pluginName, int version, bool minimum);
 	[DllImport(DllName)]
 	[return: MarshalAs(UnmanagedType.LPStr)]
-	public static extern string? FindPluginResource([MarshalAs(UnmanagedType.LPStr)] string pluginName, [MarshalAs(UnmanagedType.LPStr)] string path);
+	public static extern string? FindPluginResource(long pluginId, [MarshalAs(UnmanagedType.LPStr)] string path);
 
 	#endregion
 	

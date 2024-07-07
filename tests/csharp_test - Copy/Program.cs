@@ -1,13 +1,17 @@
 ﻿using System.Numerics;
 using Plugify;
 using static cpp_test.cpp_test;
+using static SampleApp.SampleApp;
 
 namespace ExamplePlugin
 {
     public class ExamplePlugin : Plugin
     {
-        public void OnStart()
-        { 
+        public unsafe void OnStart()
+        {
+	        MyExportFunction(1, "example string from C#");
+	        
+	        
 	        float epsilon = 0.0001f; // Define a suitable epsilon value
 	        double epsilonD = 0.0001; // Define a suitable epsilon value for doubles
 

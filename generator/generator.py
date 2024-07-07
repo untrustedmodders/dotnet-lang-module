@@ -773,7 +773,6 @@ def gen_wrapper_delegate(prototype):
 def gen_params_string(method, param_gen: ParamGen):
     def gen_param(param):
         if param_gen == ParamGen.Types:
-            #return f'(delegate* unmanaged[Cdecl]<{gen_types_string(param['prototype'])}>)'
             type = convert_type(param['type'], 'ref' in param and param['ref'] is True)
             if param['type'] == 'function':
                 type = generate_name(param['prototype']['name'])
@@ -809,18 +808,15 @@ def gen_params_string(method, param_gen: ParamGen):
         elif param_gen == ParamGen.WrapperNames:
             type = convert_wtype(param['type'], 'ref' in param and param['ref'] is True)
             if 'delegate' in type and 'prototype' in param:
-                # type = f'delegate* unmanaged[Cdecl]<{gen_types_string(param['prototype'])}>'
                 type = generate_name(param['prototype']['name'])
             return f'{type} @__{generate_name(param["name"])}'
         elif param_gen == ParamGen.WrapperTypes:
             type = convert_wtype(param['type'], 'ref' in param and param['ref'] is True)
             if 'delegate' in type and 'prototype' in param:
-                #type = f'delegate* unmanaged[Cdecl]<{gen_types_string(param['prototype'])}>'
                 type = generate_name(param['prototype']['name'])
             return f'{type} {generate_name(param["name"])}'
         type = convert_type(param['type'], 'ref' in param and param['ref'] is True)
         if 'delegate' in type and 'prototype' in param:
-            #type = f'delegate* unmanaged[Cdecl]<{gen_types_string(param['prototype'])}>'
             type = generate_name(param['prototype']['name'])
         return f'{type} {generate_name(param["name"])}'
         
@@ -847,7 +843,7 @@ def gen_params_string(method, param_gen: ParamGen):
     return output_string
 
 
-def gen_types_string(method):
+def gen_ctypes_string(method):
     output_string = ''
     ret_type = method['retType']
     obj_return = is_obj_return(ret_type['type']) 
@@ -866,6 +862,21 @@ def gen_types_string(method):
         output_string += 'void'
     else:
         output_string += f'{convert_ctype(ret_type["type"])}'
+    return output_string
+
+
+def gen_types_string(method):
+    output_string = ''
+    ret_type = method['retType']
+    if method['paramTypes']:
+        it = iter(method['paramTypes'])
+        param = next(it)
+        output_string += convert_type(param['type'], 'ref' in param and param['ref'] is True)
+        for p in it:
+            output_string += f', {convert_type(p["type"], "ref" in p and p["ref"] is True)}'
+    if output_string != '':
+        output_string += ', '
+    output_string += f'{convert_type(ret_type["type"])}'
     return output_string
     
 
@@ -1138,12 +1149,13 @@ def main(manifest_path, output_dir, override):
     content += '\t\t}\n\n'
     
     for method in pplugin['exportedMethods']:
-        content += f'\t\tprivate static nint {method["name"]}Ptr = nint.Zero;\n'
+        content += f'\t\tinternal static delegate* <{gen_types_string(method)}> {method["name"]} = &___{method["name"]};\n'
+        content += f'\t\tinternal static delegate* unmanaged[Cdecl]<{gen_ctypes_string(method)}> __{method["name"]};\n'
 
         ret_type = method['retType']
         return_type = convert_type(ret_type['type'], 'ref' in ret_type and ret_type['ref'] is True)
-        content += (f'\t\tinternal static {return_type} '
-                    f'{method["name"]}({gen_params_string(method, ParamGen.TypesNames)})\n')
+        content += (f'\t\tprivate static {return_type} '
+                    f'___{method["name"]}({gen_params_string(method, ParamGen.TypesNames)})\n')
         content += '\t\t{\n'
 
         for attribute in method['paramTypes']:
@@ -1179,15 +1191,12 @@ def main(manifest_path, output_dir, override):
         params = gen_paramscast_string(method)
         if params != '':
             content += f'{params}\n'
-        
-        content += f'\t\t\tif ({method["name"]}Ptr == nint.Zero) {method["name"]}Ptr = NativeMethods.GetMethodPtr("{plugin_name}.{method["name"]}");\n'
-        content += f'\t\t\tvar {method["name"]}Func = (delegate* unmanaged[Cdecl]<{gen_types_string(method)}>){method["name"]}Ptr;\n'
-        
+
         is_obj_ret = is_obj_return(ret_type['type'])
         if not is_obj_ret and ret_type['type'] != 'void':
-            content += f'\t\t\tvar __result = {method["name"]}Func({gen_params_string(method, ParamGen.CastNames)});\n'
+            content += f'\t\t\tvar __result = __{method["name"]}({gen_params_string(method, ParamGen.CastNames)});\n'
         else:
-            content += f'\t\t\t{method["name"]}Func({gen_params_string(method, ParamGen.CastNames)});\n'
+            content += f'\t\t\t__{method["name"]}({gen_params_string(method, ParamGen.CastNames)});\n'
             
         params = gen_paramscast_assign_string(method)
         if params != '':

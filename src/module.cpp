@@ -52,11 +52,13 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 
 void DotnetLanguageModule::Shutdown() {
 	_scripts.clear();
-	_nativesMap.clear();
 	_functions.clear();
 
 	_host.UnloadAssemblyLoadContext(_alc);
 	_host.Shutdown();
+
+	CheckAllocations();
+
 	_rt.reset();
 	_provider.reset();
 }
@@ -64,7 +66,7 @@ void DotnetLanguageModule::Shutdown() {
 LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 	fs::path assemblyPath(plugin.GetBaseDir() / plugin.GetDescriptor().entryPoint);
 
-	ManagedAssembly& assembly = _alc.LoadAssembly(assemblyPath);
+	ManagedAssembly& assembly = _alc.LoadAssembly(assemblyPath, plugin.GetId());
 	if (!assembly) {
 		return ErrorData{ _alc.GetError() };
 	}
@@ -84,7 +86,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		auto separated = Utils::Split(method.funcName, ".");
 		size_t size = separated.size();
 		bool noNamespace = (size == 2);
-		if (size != 3 && noNamespace) {
+		if (size != 3 && !noNamespace) {
 			methodErrors.emplace_back(std::format("Invalid function format: '{}'. Please provide name in that format: 'Namespace.Class.Method' or 'Namespace.MyParentClass+MyNestedClass.Method' or 'Class.Method'", method.funcName));
 			continue;
 		}
@@ -95,7 +97,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 			continue;
 		}
 
-		MethodInfo methodInfo = type.GetMethod(separated[size-1].data());
+		MethodInfo methodInfo = type.GetMethod(separated[size-1]);
 		if (!methodInfo) {
 			methodErrors.emplace_back(std::format("Failed to find method '{}'", method.funcName));
 			continue;
@@ -105,21 +107,21 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		const ValueType& methodReturnType = method.retType.type;
 		if (returnType != methodReturnType) {
 
-			if (returnType == plugify::ValueType::Char16) {
-				for (auto& attributes : methodInfo.GetReturnAttributes()) {
+			// Adjust char return
+			if (returnType == plugify::ValueType::Char16)
+				for (auto& attributes: methodInfo.GetReturnAttributes()) {
 					if (attributes.GetFieldValue<ValueType>("Value") == ValueType::Char8) {
 						goto next;
 					}
 				}
-			} else if (returnType == plugify::ValueType::ArrayChar16) {
-				for (auto& attributes : methodInfo.GetReturnAttributes()) {
+			else if (returnType == plugify::ValueType::ArrayChar16)
+				for (auto& attributes: methodInfo.GetReturnAttributes()) {
 					if (attributes.GetFieldValue<ValueType>("Value") == ValueType::ArrayChar8) {
 						goto next;
 					}
 				}
-			}
 
-			methodErrors.emplace_back(std::format("Method '{}' has invalid return type '{}' when it should have '{}'", method.funcName, ValueTypeToString(methodReturnType), ValueTypeToString(returnType)));
+			methodErrors.emplace_back(std::format("Method '{}' has invalid return type '{}' when it should have '{}'", method.funcName, ValueUtils::ToString(methodReturnType), ValueUtils::ToString(returnType)));
 			continue;
 		}
 
@@ -139,7 +141,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 			const ValueType& methodParamType = method.paramTypes[i].type;
 			if (paramType != methodParamType) {
 				methodFail = true;
-				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.funcName, ValueTypeToString(methodParamType), i, ValueTypeToString(paramType)));
+				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.funcName, ValueUtils::ToString(methodParamType), i, ValueUtils::ToString(paramType)));
 				continue;
 			}
 		}
@@ -168,45 +170,85 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		return ErrorData{ std::format("Not found {} method function(s)", funcs) };
 	}
 
-	const auto [_, result] = _scripts.try_emplace(plugin.GetName(), plugin, pluginClassType);
+	const auto [_, result] = _scripts.try_emplace(plugin.GetId(), plugin, pluginClassType);
 	if (!result) {
-		return ErrorData{ std::format("Plugin name duplicate") };
+		return ErrorData{ std::format("Plugin key duplicate") };
 	}
 
 	return LoadResultData{ std::move(methods) };
 }
 
 void DotnetLanguageModule::OnPluginStart(const IPlugin& plugin) {
-	ScriptInstance* script = FindScript(plugin.GetName());
+	ScriptInstance* script = FindScript(plugin.GetId());
 	if (script) {
 		script->InvokeOnStart();
 	}
 }
 
 void DotnetLanguageModule::OnPluginEnd(const IPlugin& plugin) {
-	ScriptInstance* script = FindScript(plugin.GetName());
+	ScriptInstance* script = FindScript(plugin.GetId());
 	if (script) {
 		script->InvokeOnEnd();
 	}
 }
 
-void* DotnetLanguageModule::GetNativeMethod(const std::string& methodName) const {
-	if (const auto it = _nativesMap.find(methodName); it != _nativesMap.end()) {
-		return std::get<void*>(*it);
-	}
-	_provider->Log(std::format(LOG_PREFIX "GetNativeMethod failed to find: '{}'", methodName), Severity::Fatal);
-	return nullptr;
-}
-
 void DotnetLanguageModule::OnMethodExport(const IPlugin& plugin) {
+	const auto& pluginId = plugin.GetId();
 	const auto& pluginName = plugin.GetName();
-	for (const auto& [name, addr] : plugin.GetMethods()) {
-		_nativesMap.try_emplace(std::format("{}.{}", pluginName, name), addr);
+	auto className = std::format("{}.{}", pluginName, pluginName);
+
+	ScriptInstance* script = FindScript(pluginId);
+	if (script) {
+		// Add as C# calls (direct)
+		auto& ownerAssembly = _alc.GetLoadedAssemblies()[pluginId];
+
+		for (const auto& [name, _] : plugin.GetMethods()) {
+			void* addr = nullptr;
+
+			const auto& exportedMethods = plugin.GetDescriptor().exportedMethods;
+			for (auto& method : exportedMethods) {
+				if (method.name == name) {
+					auto separated= Utils::Split(method.funcName, ".");
+					size_t size = separated.size();
+
+					bool noNamespace = (size == 2);
+					assert(size == 3 || noNamespace);
+					Type& type = ownerAssembly.GetType(noNamespace ? separated[size-2] : std::string_view(separated[0].data(), separated[size-1].data() - 1));
+					assert(type);
+					MethodInfo methodInfo = type.GetMethod(separated[size-1]);
+					assert(methodInfo);
+
+					addr = methodInfo.GetFunctionAddress();
+					break;
+				}
+			}
+
+			for (auto& [id, assembly] : _alc.GetLoadedAssemblies()) {
+				// No self export
+				if (id == pluginId)
+					continue;
+
+				assembly.AddInternalCall(className, name, addr);
+			}
+		}
+
+	} else {
+		// Add as C++ calls
+		for (const auto& [name, addr] : plugin.GetMethods()) {
+			auto variableName = std::format("__{}", name);
+			for (auto& [_, assembly] : _alc.GetLoadedAssemblies()) {
+				assembly.AddInternalCall(className, variableName, addr);
+			}
+		}
+	}
+
+	for (auto& [id, assembly] : _alc.GetLoadedAssemblies()) {
+		assembly.UploadInternalCalls();
 	}
 }
 
-ScriptInstance* DotnetLanguageModule::FindScript(const std::string& name) {
-	auto it = _scripts.find(name);
+ScriptInstance* DotnetLanguageModule::FindScript(UniqueId pluginId) {
+	auto it = _scripts.find(pluginId);
 	if (it != _scripts.end())
 		return &std::get<ScriptInstance>(*it);
 	return nullptr;
@@ -218,16 +260,15 @@ void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* dat
 	auto typeId = static_cast<int32_t>((combined >> 32) & 0xFFFFFFFF);
 	auto methodId = static_cast<int32_t>(combined & 0xFFFFFFFF);
 
-	bool hasRet = ValueTypeIsHiddenObjectParam(method->retType.type);
+	bool hasRet = ValueUtils::IsHiddenParam(method->retType.type);
 
 	std::vector<const void*> args;
 	args.reserve(hasRet ? count - 1 : count);
 
 	for (uint8_t i = hasRet, j = 0; i < count; ++i, ++j) {
-		void* arg;
 		const auto& param = method->paramTypes[j];
 		if (param.ref) {
-			arg = p->GetArgument<void*>(i);
+			args.emplace_back(p->GetArgument<void*>(i));
 		} else {
 			switch (param.type) {
 				// Value types
@@ -245,7 +286,7 @@ void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* dat
 				case ValueType::Pointer:
 				case ValueType::Float:
 				case ValueType::Double:
-					arg = p->GetArgumentPtr(i);
+					args.emplace_back(p->GetArgumentPtr(i));
 					break;
 				// Ref types
 				case ValueType::Function:
@@ -269,7 +310,7 @@ void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* dat
 				case ValueType::ArrayFloat:
 				case ValueType::ArrayDouble:
 				case ValueType::ArrayString:
-					arg = p->GetArgument<void*>(i);
+					args.emplace_back(p->GetArgument<void*>(i));
 					break;
 				default:
 					std::puts(LOG_PREFIX "Unsupported types!\n");
@@ -277,7 +318,6 @@ void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* dat
 					break;
 			}
 		}
-		args.push_back(arg);
 	}
 
 	void* retPtr = hasRet ? p->GetArgument<void*>(0) : ret->GetReturnPtr();
@@ -385,6 +425,29 @@ void DotnetLanguageModule::MessageCallback(const std::string& message, MessageLe
 	g_netlm._provider->Log(std::format(LOG_PREFIX "{}", message), severity);
 }
 
+extern std::map<type_index, int32_t> g_numberOfMalloc;
+extern std::map<type_index, int32_t> g_numberOfAllocs;
+extern std::string_view GetTypeName(type_index type);
+
+void DotnetLanguageModule::CheckAllocations() {
+	for (const auto& [type, count] : g_numberOfMalloc) {
+		if (count > 0) {
+			auto typeName = GetTypeName(type);
+			g_netlm._provider->Log(std::format(LOG_PREFIX "Memory leaks detected: {} allocations. Related to Create{}. You should use Delete{}!", count, typeName, typeName), Severity::Error);
+		}
+	}
+
+	for (auto [type, count] : g_numberOfAllocs) {
+		if (count > 0) {
+			auto typeName = GetTypeName(type);
+			g_netlm._provider->Log(std::format(LOG_PREFIX "Memory leaks detected: {} allocations. Related to Allocate{}. You should use Free{}!", count, typeName, typeName), Severity::Error);
+		}
+	}
+
+	g_numberOfMalloc.clear();
+	g_numberOfAllocs.clear();
+}
+
 /*_________________________________________________*/
 
 ScriptInstance::ScriptInstance(const IPlugin& plugin, Type& type) : _plugin{plugin}, _instance{type.CreateInstance()} {
@@ -411,16 +474,16 @@ ScriptInstance::~ScriptInstance() {
 };
 
 void ScriptInstance::InvokeOnStart() const {
-	ManagedHandle onStartMethod = _instance.GetType().GetMethod("OnStart");
+	MethodInfo onStartMethod = _instance.GetType().GetMethod("OnStart");
 	if (onStartMethod) {
-		_instance.InvokeMethodInternal(onStartMethod, nullptr, 0);
+		_instance.InvokeMethodRaw(onStartMethod);
 	}
 }
 
 void ScriptInstance::InvokeOnEnd() const {
-	ManagedHandle onEndMethod = _instance.GetType().GetMethod("OnEnd");
+	MethodInfo onEndMethod = _instance.GetType().GetMethod("OnEnd");
 	if (onEndMethod) {
-		_instance.InvokeMethodInternal(onEndMethod, nullptr, 0);
+		_instance.InvokeMethodRaw(onEndMethod);
 	}
 }
 
@@ -429,10 +492,6 @@ namespace netlm {
 }
 
 extern "C" {
-	NETLM_EXPORT void* GetMethodPtr(const char* methodName) {
-		return g_netlm.GetNativeMethod(methodName);
-	}
-
 	NETLM_EXPORT const char* GetBaseDir() {
 		return Memory::StringToHGlobalAnsi(g_netlm.GetProvider()->GetBaseDir().string());
 	}
@@ -447,8 +506,8 @@ extern "C" {
 		return g_netlm.GetProvider()->IsPluginLoaded(pluginName, requiredVersion, minimum);
 	}
 
-	NETLM_EXPORT const char* FindPluginResource(const char* pluginName, const char* path) {
-		ScriptInstance* script = g_netlm.FindScript(pluginName);
+	NETLM_EXPORT const char* FindPluginResource(UniqueId pluginId, const char* path) {
+		ScriptInstance* script = g_netlm.FindScript(pluginId);
 		if (script) {
 			auto resource = script->GetPlugin().FindResource(path);
 			if (resource.has_value()) {
@@ -456,627 +515,6 @@ extern "C" {
 			}
 		}
 		return nullptr;
-	}
-
-	// String Functions
-
-	NETLM_EXPORT std::string* AllocateString() {
-		return static_cast<std::string*>(malloc(sizeof(std::string)));
-	}
-	NETLM_EXPORT void* CreateString(const char* source) {
-		return source == nullptr ? new std::string() : new std::string(source);
-	}
-	NETLM_EXPORT const char* GetStringData(std::string* string) {
-		return Memory::StringToHGlobalAnsi(*string);
-	}
-	NETLM_EXPORT int GetStringLength(std::string* string) {
-		return static_cast<int>(string->length());
-	}
-	NETLM_EXPORT void ConstructString(std::string* string, const char* source) {
-		if (source == nullptr)
-			std::construct_at(string, std::string());
-		else
-			std::construct_at(string, source);
-	}
-	NETLM_EXPORT void AssignString(std::string* string, const char* source) {
-		if (source == nullptr)
-			string->clear();
-		else
-			string->assign(source);
-	}
-	NETLM_EXPORT void FreeString(std::string* string) {
-		string->~basic_string();
-		free(string);
-	}
-	NETLM_EXPORT void DeleteString(std::string* string) {
-		delete string;
-	}
-
-	// CreateVector Functions
-
-	NETLM_EXPORT std::vector<bool>* CreateVectorBool(bool* arr, int len) {
-		return len == 0 ? new std::vector<bool>() : new std::vector<bool>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<char>* CreateVectorChar8(char* arr, int len) {
-		return len == 0 ? new std::vector<char>() : new std::vector<char>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<char16_t>* CreateVectorChar16(char16_t* arr, int len) {
-		return len == 0 ? new std::vector<char16_t>() : new std::vector<char16_t>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<int8_t>* CreateVectorInt8(int8_t* arr, int len) {
-		return len == 0 ? new std::vector<int8_t>() : new std::vector<int8_t>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<int16_t>* CreateVectorInt16(int16_t* arr, int len) {
-		return len == 0 ? new std::vector<int16_t>() : new std::vector<int16_t>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<int32_t>* CreateVectorInt32(int32_t* arr, int len) {
-		return len == 0 ? new std::vector<int32_t>() : new std::vector<int32_t>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<int64_t>* CreateVectorInt64(int64_t* arr, int len) {
-		return len == 0 ? new std::vector<int64_t>() : new std::vector<int64_t>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<uint8_t>* CreateVectorUInt8(uint8_t* arr, int len) {
-		return len == 0 ? new std::vector<uint8_t>() : new std::vector<uint8_t>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<uint16_t>* CreateVectorUInt16(uint16_t* arr, int len) {
-		return len == 0 ? new std::vector<uint16_t>() : new std::vector<uint16_t>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<uint32_t>* CreateVectorUInt32(uint32_t* arr, int len) {
-		return len == 0 ? new std::vector<uint32_t>() : new std::vector<uint32_t>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<uint64_t>* CreateVectorUInt64(uint64_t* arr, int len) {
-		return len == 0 ? new std::vector<uint64_t>() : new std::vector<uint64_t>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<uintptr_t>* CreateVectorIntPtr(uintptr_t* arr, int len) {
-		return len == 0 ? new std::vector<uintptr_t>() : new std::vector<uintptr_t>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<float>* CreateVectorFloat(float* arr, int len) {
-		return len == 0 ? new std::vector<float>() : new std::vector<float>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<double>* CreateVectorDouble(double* arr, int len) {
-		return len == 0 ? new std::vector<double>() : new std::vector<double>(arr, arr + len);
-	}
-
-	NETLM_EXPORT std::vector<std::string>* CreateVectorString(char* arr[], int len) {
-		return len == 0 ? new std::vector<std::string>() : new std::vector<std::string>(arr, arr + len);
-	}
-
-	// AllocateVector Functions
-
-	NETLM_EXPORT std::vector<bool>* AllocateVectorBool() {
-		return static_cast<std::vector<bool>*>(malloc(sizeof(std::vector<bool>)));
-	}
-
-	NETLM_EXPORT std::vector<char>* AllocateVectorChar8() {
-		return static_cast<std::vector<char>*>(malloc(sizeof(std::vector<char>)));
-	}
-
-	NETLM_EXPORT std::vector<char16_t>* AllocateVectorChar16() {
-		return static_cast<std::vector<char16_t>*>(malloc(sizeof(std::vector<char16_t>)));
-	}
-
-	NETLM_EXPORT std::vector<int8_t>* AllocateVectorInt8() {
-		return static_cast<std::vector<int8_t>*>(malloc(sizeof(std::vector<int8_t>)));
-	}
-
-	NETLM_EXPORT std::vector<int16_t>* AllocateVectorInt16() {
-		return static_cast<std::vector<int16_t>*>(malloc(sizeof(std::vector<int16_t>)));
-	}
-
-	NETLM_EXPORT std::vector<int32_t>* AllocateVectorInt32() {
-		return static_cast<std::vector<int32_t>*>(malloc(sizeof(std::vector<int32_t>)));
-	}
-
-	NETLM_EXPORT std::vector<int64_t>* AllocateVectorInt64() {
-		return static_cast<std::vector<int64_t>*>(malloc(sizeof(std::vector<int64_t>)));
-	}
-
-	NETLM_EXPORT std::vector<uint8_t>* AllocateVectorUInt8() {
-		return static_cast<std::vector<uint8_t>*>(malloc(sizeof(std::vector<uint8_t>)));
-	}
-
-	NETLM_EXPORT std::vector<uint16_t>* AllocateVectorUInt16() {
-		return static_cast<std::vector<uint16_t>*>(malloc(sizeof(std::vector<uint16_t>)));
-	}
-
-	NETLM_EXPORT std::vector<uint32_t>* AllocateVectorUInt32() {
-		return static_cast<std::vector<uint32_t>*>(malloc(sizeof(std::vector<uint32_t>)));
-	}
-
-	NETLM_EXPORT std::vector<uint64_t>* AllocateVectorUInt64() {
-		return static_cast<std::vector<uint64_t>*>(malloc(sizeof(std::vector<uint64_t>)));
-	}
-
-	NETLM_EXPORT std::vector<uintptr_t>* AllocateVectorIntPtr() {
-		return static_cast<std::vector<uintptr_t>*>(malloc(sizeof(std::vector<uintptr_t>)));
-	}
-
-	NETLM_EXPORT std::vector<float>* AllocateVectorFloat() {
-		return static_cast<std::vector<float>*>(malloc(sizeof(std::vector<float>)));
-	}
-
-	NETLM_EXPORT std::vector<double>* AllocateVectorDouble() {
-		return static_cast<std::vector<double>*>(malloc(sizeof(std::vector<double>)));
-	}
-
-	NETLM_EXPORT std::vector<std::string>* AllocateVectorString() {
-		return static_cast<std::vector<std::string>*>(malloc(sizeof(std::vector<std::string>)));
-	}
-
-	// GetVectorSize Functions
-
-	NETLM_EXPORT int GetVectorSizeBool(std::vector<bool>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeChar8(std::vector<char>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeChar16(std::vector<char16_t>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeInt8(std::vector<int8_t>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeInt16(std::vector<int16_t>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeInt32(std::vector<int32_t>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeInt64(std::vector<int64_t>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeUInt8(std::vector<uint8_t>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeUInt16(std::vector<uint16_t>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeUInt32(std::vector<uint32_t>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeUInt64(std::vector<uint64_t>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeIntPtr(std::vector<uintptr_t>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeFloat(std::vector<float>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeDouble(std::vector<double>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	NETLM_EXPORT int GetVectorSizeString(std::vector<std::string>* vector) {
-		return static_cast<int>(vector->size());
-	}
-
-	// GetVectorData Functions
-
-	NETLM_EXPORT void GetVectorDataBool(std::vector<bool>* vector, bool* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataChar8(std::vector<char>* vector, char* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataChar16(std::vector<char16_t>* vector, char16_t* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataInt8(std::vector<int8_t>* vector, int8_t* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataInt16(std::vector<int16_t>* vector, int16_t* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataInt32(std::vector<int32_t>* vector, int32_t* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataInt64(std::vector<int64_t>* vector, int64_t* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataUInt8(std::vector<uint8_t>* vector, uint8_t* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataUInt16(std::vector<uint16_t>* vector, uint16_t* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataUInt32(std::vector<uint32_t>* vector, uint32_t* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataUInt64(std::vector<uint64_t>* vector, uint64_t* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataFloat(std::vector<float>* vector, float* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataDouble(std::vector<double>* vector, double* arr) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			arr[i] = (*vector)[i];
-		}
-	}
-
-	NETLM_EXPORT void GetVectorDataString(std::vector<std::string>* vector, char* arr[]) {
-		for (size_t i = 0; i < vector->size(); ++i) {
-			Memory::FreeCoTaskMem(arr[i]);
-			arr[i] = Memory::StringToHGlobalAnsi((*vector)[i]);
-		}
-	}
-
-	// Construct Functions
-
-	NETLM_EXPORT void ConstructVectorDataBool(std::vector<bool>* vector, bool* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<bool>() : std::vector<bool>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataChar8(std::vector<char>* vector, char* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<char>() : std::vector<char>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataChar16(std::vector<char16_t>* vector, char16_t* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<char16_t>() : std::vector<char16_t>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataInt8(std::vector<int8_t>* vector, int8_t* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<int8_t>() : std::vector<int8_t>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataInt16(std::vector<int16_t>* vector, int16_t* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<int16_t>() : std::vector<int16_t>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataInt32(std::vector<int32_t>* vector, int32_t* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<int32_t>() : std::vector<int32_t>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataInt64(std::vector<int64_t>* vector, int64_t* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<int64_t>() : std::vector<int64_t>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataUInt8(std::vector<uint8_t>* vector, uint8_t* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<uint8_t>() : std::vector<uint8_t>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataUInt16(std::vector<uint16_t>* vector, uint16_t* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<uint16_t>() : std::vector<uint16_t>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataUInt32(std::vector<uint32_t>* vector, uint32_t* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<uint32_t>() : std::vector<uint32_t>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataUInt64(std::vector<uint64_t>* vector, uint64_t* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<uint64_t>() : std::vector<uint64_t>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<uintptr_t>() : std::vector<uintptr_t>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataFloat(std::vector<float>* vector, float* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<float>() : std::vector<float>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataDouble(std::vector<double>* vector, double* arr, int len) {
-		std::construct_at(vector, len == 0 ? std::vector<double>() : std::vector<double>(arr, arr + len));
-	}
-
-	NETLM_EXPORT void ConstructVectorDataString(std::vector<std::string>* vector, char* arr[], int len) {
-		std::construct_at(vector, len == 0 ? std::vector<std::string>() : std::vector<std::string>(arr, arr + len));
-	}
-
-	// AssignVector Functions
-
-	NETLM_EXPORT void AssignVectorBool(std::vector<bool>* vector, bool* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorChar8(std::vector<char>* vector, char* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorChar16(std::vector<char16_t>* vector, char16_t* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorInt8(std::vector<int8_t>* vector, int8_t* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorInt16(std::vector<int16_t>* vector, int16_t* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorInt32(std::vector<int32_t>* vector, int32_t* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorInt64(std::vector<int64_t>* vector, int64_t* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorUInt8(std::vector<uint8_t>* vector, uint8_t* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorUInt16(std::vector<uint16_t>* vector, uint16_t* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorUInt32(std::vector<uint32_t>* vector, uint32_t* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorUInt64(std::vector<uint64_t>* vector, uint64_t* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorFloat(std::vector<float>* vector, float* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorDouble(std::vector<double>* vector, double* arr, int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	NETLM_EXPORT void AssignVectorString(std::vector<std::string>* vector, char* arr[], int len) {
-		if (arr == nullptr || len == 0)
-			vector->clear();
-		else
-			vector->assign(arr, arr + len);
-	}
-
-	// DeleteVector Functions
-
-	NETLM_EXPORT void DeleteVectorBool(std::vector<bool>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorChar8(std::vector<char>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorChar16(std::vector<char16_t>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorInt8(std::vector<int8_t>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorInt16(std::vector<int16_t>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorInt32(std::vector<int32_t>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorInt64(std::vector<int64_t>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorUInt8(std::vector<uint8_t>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorUInt16(std::vector<uint16_t>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorUInt32(std::vector<uint32_t>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorUInt64(std::vector<uint64_t>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorIntPtr(std::vector<uintptr_t>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorFloat(std::vector<float>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorDouble(std::vector<double>* vector) {
-		delete vector;
-	}
-
-	NETLM_EXPORT void DeleteVectorString(std::vector<std::string>* vector) {
-		delete vector;
-	}
-
-	// FreeVectorData functions
-
-	NETLM_EXPORT void FreeVectorBool(std::vector<bool>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorChar8(std::vector<char>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorChar16(std::vector<char16_t>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorInt8(std::vector<int8_t>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorInt16(std::vector<int16_t>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorInt32(std::vector<int32_t>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorInt64(std::vector<int64_t>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorUInt8(std::vector<uint8_t>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorUInt16(std::vector<uint16_t>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorUInt32(std::vector<uint32_t>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorUInt64(std::vector<uint64_t>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorIntPtr(std::vector<uintptr_t>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorFloat(std::vector<float>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorDouble(std::vector<double>* vector) {
-		vector->~vector();
-		free(vector);
-	}
-
-	NETLM_EXPORT void FreeVectorString(std::vector<std::string>* vector) {
-		vector->~vector();
-		free(vector);
 	}
 
 	NETLM_EXPORT ILanguageModule* GetLanguageModule() {

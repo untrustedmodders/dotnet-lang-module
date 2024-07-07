@@ -23,10 +23,14 @@ namespace netlm {
 			return reinterpret_cast<TFunc>(GetFunction(functionName));
 		}
 
+		bool operator==(const Assembly& other) const { return _handle == other._handle; }
+		operator bool() const { return _handle != nullptr; }
+		//void* GetHandle() const { return _handle; }
+
 	private:
 		explicit Assembly(void* handle);
 
 	private:
-		void* _handle{ nullptr };
+		void* _handle = nullptr;
 	};
 }
