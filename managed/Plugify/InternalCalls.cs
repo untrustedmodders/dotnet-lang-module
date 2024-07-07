@@ -19,7 +19,7 @@ public readonly struct InternalCall
 internal static class InternalCallsManager
 {
 	[UnmanagedCallersOnly]
-	private static unsafe void SetInternalCalls(InternalCall* internalCallsArrayPtr, int length)
+	private static unsafe void SetInternalCalls(InternalCall* internalCallsArrayPtr, int length, Bool32 warnOnMissing)
 	{
 		try
 		{
@@ -40,10 +40,13 @@ internal static class InternalCallsManager
 				var containingTypeName = name.Remove(fieldNameStart, fieldNameEnd - fieldNameStart);
 
 				var type = TypeInterface.FindType(containingTypeName);
-
+				
 				if (type == null)
 				{
-					LogMessage($"Cannot register internal call '{name}', failed to type '{containingTypeName}'.", MessageLevel.Error);
+					if (warnOnMissing)
+					{
+						LogMessage($"Cannot register internal call '{name}', failed to type '{containingTypeName}'.", MessageLevel.Error);
+					}
 					continue;
 				}
 

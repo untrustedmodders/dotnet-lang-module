@@ -89,7 +89,13 @@ void ManagedAssembly::AddInternalCall(std::string_view className, std::string_vi
 }
 
 void ManagedAssembly::UploadInternalCalls() {
-	Managed.SetInternalCallsFptr(_internalCalls.data(), static_cast<int32_t>(_internalCalls.size()));
+#if NDEBUG
+	const bool warnOnMissing = false;
+#else
+	const bool warnOnMissing = true;
+#endif
+	
+	Managed.SetInternalCallsFptr(_internalCalls.data(), static_cast<int32_t>(_internalCalls.size()), warnOnMissing);
 
 	_internalCalls.clear();
 	_internalCallNameStorage.clear();

@@ -9,7 +9,7 @@ namespace netlm {
 	struct ManagedType;
 	class ManagedObject;
 
-	using SetInternalCallsFn = void(*)(InternalCall*, int32_t);
+	using SetInternalCallsFn = void(*)(InternalCall*, int32_t, Bool32);
 	using CreateAssemblyLoadContextFn = int32_t(*)(String);
 	using UnloadAssemblyLoadContextFn = void(*)(int32_t);
 	using LoadManagedAssemblyFn = int32_t(*)(int32_t, String);

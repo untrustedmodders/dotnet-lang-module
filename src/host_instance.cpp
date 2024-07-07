@@ -1,6 +1,7 @@
 #include "host_instance.h"
-#include "managed_functions.h"
 #include "assembly.h"
+#include "gc.h"
+#include "managed_functions.h"
 #include "utils.h"
 
 #include <dotnet/coreclr_delegates.h>

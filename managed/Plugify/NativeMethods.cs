@@ -1,8 +1,4 @@
-﻿using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Marshalling;
-using System.Security;
-using Microsoft.Win32.SafeHandles;
+﻿using System.Runtime.InteropServices;
 
 namespace Plugify;
 
