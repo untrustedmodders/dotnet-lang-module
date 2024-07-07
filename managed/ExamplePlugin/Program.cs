@@ -2,7 +2,7 @@
 
 namespace ExamplePlugin
 {
-    public class ExamplePlugin(nint pluginHandle) : Plugin(pluginHandle)
+    public class ExamplePlugin : Plugin
     {
         public override void OnStart()
         {

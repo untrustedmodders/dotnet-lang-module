@@ -22,14 +22,18 @@ void String::Assign(std::string_view string) {
 	if (_string != nullptr)
 		Memory::FreeCoTaskMem(_string);
 
-	_string = Memory::StringToCoTaskMemAuto(Utils::UTF8StringToWideString(string));
+#if NETLM_PLATFORM_WINDOWS
+	_string = Memory::StringToCoTaskMemAuto(Utils::ConvertUtf8ToWide(string));
+#else
+	_string = Memory::StringToCoTaskMemAuto(string);
+#endif
 }
 
 String::operator std::string() const {
 	string_view_t string(_string);
 
 #if NETLM_PLATFORM_WINDOWS
-	return Utils::WideStringToUTF8String(string);
+	return Utils::ConvertWideToUtf8(string);
 #else
 	return std::string(string);
 #endif
@@ -51,7 +55,7 @@ bool String::operator==(const String& other) const {
 
 bool String::operator==(std::string_view other) const {
 #if NETLM_PLATFORM_WINDOWS
-	auto str = Utils::UTF8StringToWideString(other);
+	auto str = Utils::ConvertUtf8ToWide(other);
 	return wcscmp(_string, str.data()) == 0;
 #else
 	return strcmp(_string, other.data()) == 0;
@@ -92,7 +96,7 @@ String::operator std::wstring() const {
 #if NETLM_PLATFORM_WINDOWS
 	return std::wstring(string);
 #else
-	return Utils::UTF8StringToWideString(string);
+	return Utils::ConvertUtf8ToWide(string);
 #endif
 }
 
@@ -100,7 +104,7 @@ bool String::operator==(std::wstring_view other) const {
 #if NETLM_PLATFORM_WINDOWS
 	return wcscmp(_string, other.data()) == 0;
 #else
-	auto str = Utils::WideStringToUTF8String(other);
+	auto str = Utils::ConvertWideToUtf8(other);
 	return strcmp(_string, str.data()) == 0;
 #endif
 }

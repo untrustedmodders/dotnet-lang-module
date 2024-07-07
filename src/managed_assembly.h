@@ -21,7 +21,7 @@ namespace netlm {
 		std::string_view GetFullName() const { return _name; }
 
 		void AddInternalCall(std::string_view className, std::string_view variableName, void* functionPtr);
-		void UploadInternalCalls();
+		void UploadInternalCalls(bool warnOnMissing = true);
 
 		Type& GetType(std::string_view className);
 		const std::vector<Type>& GetTypes() const { return _types; }

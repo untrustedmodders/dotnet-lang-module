@@ -1,8 +1,8 @@
 #include "managed_object.h"
 #include "managed_assembly.h"
 #include "managed_functions.h"
-#include "strings.h"
 #include "type.h"
+#include "strings.h"
 
 using namespace netlm;
 
@@ -50,6 +50,10 @@ void ManagedObject::GetPropertyValueRaw(std::string_view propertyName, void* out
 
 const Type& ManagedObject::GetType() const {
 	return *_type;
+}
+
+MethodInfo ManagedObject::GetMethod(std::string_view methodName) const {
+	return GetType().GetMethod(methodName);
 }
 
 void ManagedObject::Destroy() {

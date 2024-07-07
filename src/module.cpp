@@ -242,8 +242,13 @@ void DotnetLanguageModule::OnMethodExport(const IPlugin& plugin) {
 		}
 	}
 
+#if NDEBUG
+	const bool warnOnMissing = false;
+#else
+	const bool warnOnMissing = true;
+#endif
 	for (auto& [id, assembly] : _alc.GetLoadedAssemblies()) {
-		assembly.UploadInternalCalls();
+		assembly.UploadInternalCalls(warnOnMissing);
 	}
 }
 

@@ -30,9 +30,9 @@ namespace netlm {
 		std::vector<FieldInfo> GetFields() const;
 		std::vector<PropertyInfo> GetProperties() const;
 
-		MethodInfo GetMethod(std::string_view name) const;
-		FieldInfo GetField(std::string_view name) const;
-		PropertyInfo GetProperty(std::string_view name) const;
+		MethodInfo GetMethod(std::string_view methodName) const;
+		FieldInfo GetField(std::string_view fieldName) const;
+		PropertyInfo GetProperty(std::string_view propertyName) const;
 
 		bool HasAttribute(const Type& attributeType) const;
 		std::vector<Attribute> GetAttributes() const;

@@ -8,14 +8,14 @@ using namespace netlm;
 
 #include <Windows.h>
 
-std::wstring Utils::UTF8StringToWideString(std::string_view str){
+std::wstring Utils::ConvertUtf8ToWide(std::string_view str){
 	std::wstring ret;
-	if (!UTF8StringToWideString(ret, str))
+	if (!ConvertUtf8ToWide(ret, str))
 		return {};
 	return ret;
 }
 
-bool Utils::UTF8StringToWideString(std::wstring& dest, std::string_view str) {
+bool Utils::ConvertUtf8ToWide(std::wstring& dest, std::string_view str) {
 	int wlen = MultiByteToWideChar(CP_UTF8, 0, str.data(), static_cast<int>(str.length()), nullptr, 0);
 	if (wlen < 0)
 		return false;
@@ -27,14 +27,14 @@ bool Utils::UTF8StringToWideString(std::wstring& dest, std::string_view str) {
 	return true;
 }
 
-std::string Utils::WideStringToUTF8String(std::wstring_view str) {
+std::string Utils::ConvertWideToUtf8(std::wstring_view str) {
 	std::string ret;
-	if (!WideStringToUTF8String(ret, str))
+	if (!ConvertWideToUtf8(ret, str))
 		return {};
 	return ret;
 }
 
-bool Utils::WideStringToUTF8String(std::string& dest, std::wstring_view str) {
+bool Utils::ConvertWideToUtf8(std::string& dest, std::wstring_view str) {
 	int mblen = WideCharToMultiByte(CP_UTF8, 0, str.data(), static_cast<int>(str.length()), nullptr, 0, nullptr, nullptr);
 	if (mblen < 0)
 		return false;

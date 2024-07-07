@@ -10,6 +10,9 @@
 
 #if NETLM_PLATFORM_WINDOWS
 #include <shlobj_core.h>
+#define NETLM_UTF8(str) Utils::ConvertWideToUtf8(str)
+#else
+#define NETLM_UTF8(str) str
 #endif
 
 using namespace netlm;

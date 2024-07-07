@@ -83,18 +83,17 @@ void ManagedAssembly::AddInternalCall(std::string_view className, std::string_vi
 
 	std::string assemblyQualifiedName(std::format("{}@{}, {}", className, variableName, _name));
 
-	const auto& name = _internalCallNameStorage.emplace_back(NETLM_WIDE(assemblyQualifiedName));
+#if NETLM_PLATFORM_WINDOWS
+	const auto& name = _internalCallNameStorage.emplace_back(Utils::ConvertUtf8ToWide(assemblyQualifiedName));
+#else
+	const auto& name = _internalCallNameStorage.emplace_back(std::move(assemblyQualifiedName));
+#endif
 
 	_internalCalls.emplace_back(name.c_str(), functionPtr);
 }
 
-void ManagedAssembly::UploadInternalCalls() {
-#if NDEBUG
-	const bool warnOnMissing = false;
-#else
-	const bool warnOnMissing = true;
-#endif
-	
+void ManagedAssembly::UploadInternalCalls(bool warnOnMissing) {
+
 	Managed.SetInternalCallsFptr(_internalCalls.data(), static_cast<int32_t>(_internalCalls.size()), warnOnMissing);
 
 	_internalCalls.clear();

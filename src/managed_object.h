@@ -1,24 +1,23 @@
 #pragma once
 
 #include "core.h"
-#include "type.h"
 #include "method_info.h"
 
 namespace netlm {
-	class ManagedAssembly;
 	class Type;
+	class ManagedAssembly;
 
 	class ManagedObject {
 	public:
 		template<typename TReturn, typename... TArgs>
 		TReturn InvokeMethod(std::string_view methodName, TArgs&&... parameters) const {
-			MethodInfo methodInfo = GetType().GetMethod(methodName);
+			MethodInfo methodInfo = GetMethod(methodName);
 			return InvokeMethodRaw<TReturn, TArgs...>(methodInfo, std::forward<TArgs>(parameters)...);
 		}
 
 		template<typename... TArgs>
 		void InvokeMethod(std::string_view methodName, TArgs&&... parameters) const {
-			MethodInfo methodInfo = GetType().GetMethod(methodName);
+			MethodInfo methodInfo = GetMethod(methodName);
 			InvokeMethodRaw<TArgs...>(methodInfo, std::forward<TArgs>(parameters)...);
 		}
 
@@ -88,6 +87,7 @@ namespace netlm {
 		void GetPropertyValueRaw(std::string_view propertyName, void* outValue) const;
 
 		const Type& GetType() const;
+		MethodInfo GetMethod(std::string_view methodName) const;
 
 		void Destroy();
 
