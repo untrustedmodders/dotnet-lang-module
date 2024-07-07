@@ -4,12 +4,12 @@ namespace ExamplePlugin
 {
     public class ExamplePlugin : Plugin
     {
-        public override void OnStart()
+        public void OnStart()
         {
             Console.WriteLine(".NET: OnStart");
         }
 
-        public override void OnEnd()
+        public void OnEnd()
         {
             Console.WriteLine(".NET: OnEnd");
         }
