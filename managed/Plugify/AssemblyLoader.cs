@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.IO.MemoryMappedFiles;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 
@@ -189,6 +190,14 @@ public static class AssemblyLoader
 			}
 
 			Assembly assembly = alc.LoadFromAssemblyPath(assemblyPath!);
+			
+			/*Assembly? assembly = null;
+
+			using (var file = MemoryMappedFile.CreateFromFile(assemblyPath!))
+			{
+				using var stream = file.CreateViewStream();
+				assembly = alc.LoadFromStream(stream);
+			}*/
 
 			LogMessage($"Loading assembly '{assemblyPath}'", MessageLevel.Info);
 			var assemblyName = assembly.GetName();

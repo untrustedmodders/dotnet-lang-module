@@ -11,12 +11,13 @@
 #include <module_export.h>
 
 #include <plugify/compat_format.h>
-#include <plugify/plugin_descriptor.h>
-#include <plugify/plugin.h>
-#include <plugify/module.h>
-#include <plugify/plugify_provider.h>
 #include <plugify/language_module.h>
 #include <plugify/log.h>
+#include <plugify/module.h>
+#include <plugify/plugify_provider.h>
+#include <plugify/plugin.h>
+#include <plugify/plugin_descriptor.h>
+#include <thread>
 
 #if NETLM_PLATFORM_WINDOWS
 #undef FindResource
@@ -154,7 +155,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		auto function = std::make_unique<Function>(_rt);
 		void* methodAddr = function->GetJitFunc(method, &InternalCall, reinterpret_cast<void*>(packed));
 		if (!methodAddr) {
-			methodErrors.emplace_back(std::format("Method JIT generation error: ", function->GetError()));
+			methodErrors.emplace_back(std::format("Method '{}' has JIT generation error: {}", method.funcName, function->GetError()));
 			continue;
 		}
 		_functions.emplace_back(std::move(function));
@@ -479,6 +480,9 @@ ScriptInstance::~ScriptInstance() {
 };
 
 void ScriptInstance::InvokeOnStart() const {
+	using namespace std::chrono_literals;
+	//std::this_thread::sleep_for(30000ms);
+
 	MethodInfo onStartMethod = _instance.GetType().GetMethod("OnStart");
 	if (onStartMethod) {
 		_instance.InvokeMethodRaw(onStartMethod);

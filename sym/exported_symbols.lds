@@ -128,11 +128,21 @@ DeleteVectorFloat
 DeleteVectorDouble
 DeleteVectorString
 
-NativeInterop_SetInvokeMethodFunction
-ManagedClass_Create
-ManagedClass_AddMethod
-ManagedClass_SetNewObjectFunction
-ManagedClass_SetFreeObjectFunction
+FreeVectorBool
+FreeVectorChar8
+FreeVectorChar16
+FreeVectorInt8
+FreeVectorInt16
+FreeVectorInt32
+FreeVectorInt64
+FreeVectorUInt8
+FreeVectorUInt16
+FreeVectorUInt32
+FreeVectorUInt64
+FreeVectorIntPtr
+FreeVectorFloat
+FreeVectorDouble
+FreeVectorString
 
 NewVM
 Free
