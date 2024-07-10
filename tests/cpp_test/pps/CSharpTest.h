@@ -6,11 +6,29 @@
 //generated with https://github.com/untrustedmodders/cpp-lang-module/blob/main/generator/generator.py from CSharpTest 
 
 namespace CSharpTest {
+    template<class TFunc> requires(std::is_pointer_v<TFunc> && std::is_function_v<std::remove_pointer_t<TFunc>>)
+    class PointerHolder {
+    public:
+        explicit PointerHolder(void* ptr) : _ptr{reinterpret_cast<TFunc>(ptr)} {}
+        ~PointerHolder() {
+            _ptr = nullptr;
+        }
+
+        [[nodiscard]] TFunc _() const {
+            return _ptr;
+        }
+
+    private:
+        TFunc _ptr;
+    };
+
+
 	using MyExportFunctionFunc = void(*)(int, const std::string&, const std::vector<int32_t>&);
 	inline void MyExportFunction(int a, MyExportFunctionFunc cb) {
 		using MyExportFunctionFn = void (*)(int, MyExportFunctionFunc);
-		static auto func = reinterpret_cast<MyExportFunctionFn>(plugify::GetMethodPtr("CSharpTest.MyExportFunction"));
-		func(a, cb);
+		//static auto func = reinterpret_cast<MyExportFunctionFn>(plugify::GetMethodPtr("CSharpTest.MyExportFunction"));
+        static auto func = std::make_unique<PointerHolder<MyExportFunctionFn>>(plugify::GetMethodPtr("CSharpTest.MyExportFunction"));
+        func->_()(a, cb);
 	}
 	inline void NoParamReturnVoid() {
 		using NoParamReturnVoidFn = void (*)();

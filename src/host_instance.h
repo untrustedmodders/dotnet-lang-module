@@ -3,6 +3,10 @@
 #include "core.h"
 #include "managed_assembly.h"
 
+namespace plugify {
+	class Assembly;
+}
+
 namespace netlm {
 	enum class MessageLevel {
 		Info = 1 << 0,
@@ -28,8 +32,6 @@ namespace netlm {
 		void operator()(void* handle) const noexcept;
 	};
 
-	class Assembly;
-
 	class HostInstance {
 	public:
 		bool Initialize(HostSettings settings);
@@ -54,7 +56,7 @@ namespace netlm {
 	private:
 		HostSettings _settings;
 		std::unique_ptr<void, HandleDeleter> _ctx;
-		std::unique_ptr<Assembly> _dll;
+		std::unique_ptr<plugify::Assembly> _dll;
 
 		friend class AssemblyLoadContext;
 	};

@@ -10,6 +10,7 @@
 		<EnableDynamicLoading>true</EnableDynamicLoading>
         <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <DebugType>portable</DebugType>
     </PropertyGroup>
 
     <ItemGroup>

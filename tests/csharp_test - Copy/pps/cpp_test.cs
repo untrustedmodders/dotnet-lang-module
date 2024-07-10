@@ -419,85 +419,85 @@ namespace cpp_test
 			__Param3(a, b, c);
 		}
 		internal static delegate* <int, float, double, Vector4, void> Param4 = &___Param4;
-		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, void> __Param4;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4*, void> __Param4;
 		private static void ___Param4(int a, float b, double c, Vector4 d)
 		{
-			__Param4(a, b, c, d);
+			__Param4(a, b, c, &d);
 		}
 		internal static delegate* <int, float, double, Vector4, long[], void> Param5 = &___Param5;
-		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, void> __Param5;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4*, nint, void> __Param5;
 		private static void ___Param5(int a, float b, double c, Vector4 d, long[] e)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 
-			__Param5(a, b, c, d, __e);
+			__Param5(a, b, c, &d, __e);
 
 			NativeMethods.DeleteVectorInt64(__e);
 
 		}
 		internal static delegate* <int, float, double, Vector4, long[], char, void> Param6 = &___Param6;
-		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, void> __Param6;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4*, nint, sbyte, void> __Param6;
 		private static void ___Param6(int a, float b, double c, Vector4 d, long[] e, char f)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 
-			__Param6(a, b, c, d, __e, __f);
+			__Param6(a, b, c, &d, __e, __f);
 
 			NativeMethods.DeleteVectorInt64(__e);
 
 		}
 		internal static delegate* <int, float, double, Vector4, long[], char, string, void> Param7 = &___Param7;
-		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, void> __Param7;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4*, nint, sbyte, nint, void> __Param7;
 		private static void ___Param7(int a, float b, double c, Vector4 d, long[] e, char f, string g)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			__Param7(a, b, c, d, __e, __f, __g);
+			__Param7(a, b, c, &d, __e, __f, __g);
 
 			NativeMethods.DeleteVectorInt64(__e);
 			NativeMethods.DeleteString(__g);
 
 		}
 		internal static delegate* <int, float, double, Vector4, long[], char, string, float, void> Param8 = &___Param8;
-		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, float, void> __Param8;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4*, nint, sbyte, nint, float, void> __Param8;
 		private static void ___Param8(int a, float b, double c, Vector4 d, long[] e, char f, string g, float h)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			__Param8(a, b, c, d, __e, __f, __g, h);
+			__Param8(a, b, c, &d, __e, __f, __g, h);
 
 			NativeMethods.DeleteVectorInt64(__e);
 			NativeMethods.DeleteString(__g);
 
 		}
 		internal static delegate* <int, float, double, Vector4, long[], char, string, float, short, void> Param9 = &___Param9;
-		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, float, short, void> __Param9;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4*, nint, sbyte, nint, float, short, void> __Param9;
 		private static void ___Param9(int a, float b, double c, Vector4 d, long[] e, char f, string g, float h, short k)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			__Param9(a, b, c, d, __e, __f, __g, h, k);
+			__Param9(a, b, c, &d, __e, __f, __g, h, k);
 
 			NativeMethods.DeleteVectorInt64(__e);
 			NativeMethods.DeleteString(__g);
 
 		}
 		internal static delegate* <int, float, double, Vector4, long[], char, string, float, short, nint, void> Param10 = &___Param10;
-		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4, nint, sbyte, nint, float, short, nint, void> __Param10;
+		internal static delegate* unmanaged[Cdecl]<int, float, double, Vector4*, nint, sbyte, nint, float, short, nint, void> __Param10;
 		private static void ___Param10(int a, float b, double c, Vector4 d, long[] e, char f, string g, float h, short k, nint l)
 		{
 			var __e = NativeMethods.CreateVectorInt64(e, e.Length);
 			var __f = Convert.ToSByte(f);
 			var __g = NativeMethods.CreateString(g);
 
-			__Param10(a, b, c, d, __e, __f, __g, h, k, l);
+			__Param10(a, b, c, &d, __e, __f, __g, h, k, l);
 
 			NativeMethods.DeleteVectorInt64(__e);
 			NativeMethods.DeleteString(__g);

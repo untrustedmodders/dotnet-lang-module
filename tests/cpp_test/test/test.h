@@ -2,31 +2,32 @@
 
 #include <vector>
 #include <iostream>
-#include <format>
 
-struct Vector2 {
-    float x, y;
+extern "C" {
+    struct Vector2 {
+        float x, y;
 
-    bool operator==(const Vector2&) const = default;
-};
+        bool operator==(const Vector2&) const = default;
+    };
 
-struct Vector3 {
-    float x, y, z;
+    struct Vector3 {
+        float x, y, z;
 
-    bool operator==(const Vector3&) const = default;
-};
+        bool operator==(const Vector3&) const = default;
+    };
 
-struct Vector4 {
-    float x, y, z, w;
+    struct Vector4 {
+        float x, y, z, w;
 
-    bool operator==(const Vector4&) const = default;
-};
+        bool operator==(const Vector4&) const = default;
+    };
 
-struct Matrix4x4 {
-    float m[4][4]{};
+    struct Matrix4x4 {
+        float m[4][4]{};
 
-    bool operator==(const Matrix4x4&) const = default;
-};
+        bool operator==(const Matrix4x4&) const = default;
+    };
+}
 
 // C++ exported
 
@@ -237,27 +238,27 @@ extern "C" PLUGIN_API Matrix4x4 NoParamReturnMatrix4x4()
 
 extern "C" PLUGIN_API void Param1(int a)
 {
-    std::cout << std::format("Param1: a = \n", a);
+    std::cout << printf("Param1: a = %d\n", a);
 }
 
 extern "C" PLUGIN_API void Param2(int a, float b)
 {
-    std::cout << std::format("Param2: a = , b = \n", a, b);
+    std::cout << printf("Param2: a = %d, b = %f\n", a, b);
 }
 
 extern "C" PLUGIN_API void Param3(int a, float b, double c)
 {
-    std::cout << std::format("Param3: a = , b = , c = \n", a, b, c);
+    std::cout << printf("Param3: a = %d, b = %f, c = %f\n", a, b, c);
 }
 
 extern "C" PLUGIN_API void Param4(int a, float b, double c, const Vector4& d)
 {
-    std::cout << std::format("Param4: a = , b = , c = , d = [,,,]\n", a, b, c, d.x, d.y, d.z, d.w);
+    std::cout << printf("Param4: a = %d, b = %f, c = %f, d = [%f,%f,%f,%f]\n", a, b, c, d.x, d.y, d.z, d.w);
 }
 
 extern "C" PLUGIN_API void Param5(int a, float b, double c, const Vector4& d, const std::vector<int64_t>& e)
 {
-    std::cout << std::format("Param5: a = , b = , c = , d = [,,,], e.size() = , e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
+    std::cout << printf("Param5: a = %d, b = %f, c = %f, d = [%f,%f,%f,%f], e.size() = %zu, e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
     for (const auto& elem : e) {
         std::cout << elem << ", ";
     }
@@ -266,47 +267,47 @@ extern "C" PLUGIN_API void Param5(int a, float b, double c, const Vector4& d, co
 
 extern "C" PLUGIN_API void Param6(int a, float b, double c, const Vector4& d, const std::vector<int64_t>& e, char f)
 {
-    std::cout << std::format("Param6: a = , b = , c = , d = [,,,], e.size() = , e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
+    std::cout << printf("Param6: a = %d, b = %f, c = %f, d = [%f,%f,%f,%f], e.size() = %zu, e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
     for (const auto& elem : e) {
         std::cout << elem << ", ";
     }
-    std::cout << std::format("], f = \n", f);
+    std::cout << printf("], f =  %c\n", f);
 }
 
 extern "C" PLUGIN_API void Param7(int a, float b, double c, const Vector4& d, const std::vector<int64_t>& e, char f, const std::string& g)
 {
-    std::cout << std::format("Param7: a = , b = , c = , d = [,,,], e.size() = , e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
+    std::cout << printf("Param7: a = %d, b = %f, c = %f, d = [%f,%f,%f,%f], e.size() = %zu, e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
     for (const auto& elem : e) {
         std::cout << elem << ", ";
     }
-    std::cout << std::format("], f = , g = \n", f, g);
+    std::cout << printf("], f = %c, g = %s \n", f, g.c_str());
 }
 
 extern "C" PLUGIN_API void Param8(int a, float b, double c, const Vector4& d, const std::vector<int64_t>& e, char f, const std::string& g, float h)
 {
-    std::cout << std::format("Param8: a = , b = , c = , d = [,,,], e.size() = , e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
+    std::cout << printf("Param8: a = %d, b = %f, c = %f, d = [%f,%f,%f,%f], e.size() = %zu, e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
     for (const auto& elem : e) {
         std::cout << elem << ", ";
     }
-    std::cout << std::format("], f = , g = , h = \n", f, g, h);
+    std::cout << printf("], f = %c, g = %s, h = %f\n", f, g.c_str(), h);
 }
 
 extern "C" PLUGIN_API void Param9(int a, float b, double c, const Vector4& d, const std::vector<int64_t>& e, char f, const std::string& g, float h, int16_t k)
 {
-    std::cout << std::format("Param9: a = , b = , c = , d = [,,,], e.size() = , e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
+    std::cout << printf("Param9: a = %d, b = %f, c = %f, d = [%f,%f,%f,%f], e.size() = %zu, e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
     for (const auto& elem : e) {
         std::cout << elem << ", ";
     }
-    std::cout << std::format("], f = , g = , h = , k = \n", f, g, h, k);
+    std::cout << printf("], f = %c, g = %s, h = %f, k = %d\n", f, g.c_str(), h, k);
 }
 
 extern "C" PLUGIN_API void Param10(int a, float b, double c, const Vector4& d, const std::vector<int64_t>& e, char f, const std::string& g, float h, int16_t k, void* l)
 {
-    std::cout << std::format("Param10: a = , b = , c = , d = [,,,], e.size() = , e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
+    std::cout << printf("Param10: a = %d, b = %f, c = %f, d = [%f,%f,%f,%f], e.size() = %zu, e = [", a, b, c, d.x, d.y, d.z, d.w, e.size());
     for (const auto& elem : e) {
         std::cout << elem << ", ";
     }
-    std::cout << std::format("], f = , g = , h = , k = , l = \n", f, g, h, k, l);
+    std::cout << printf("], f = %c, g = %s, h = %f, k = %d, l = %p\n", f, g.c_str(), h, k, l);
 }
 
 // Params (with refs)

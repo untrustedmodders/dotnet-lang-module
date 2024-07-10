@@ -9,8 +9,9 @@ namespace ExamplePlugin
     {
         public unsafe void OnStart()
         {
-	        MyExportFunction(1, "example string from C#");
+	        Console.WriteLine("ExamplePlugin::OnStart");
 	        
+	        //MyExportFunction(1, "example string from C#");
 	        
 	        float epsilon = 0.0001f; // Define a suitable epsilon value
 	        double epsilonD = 0.0001; // Define a suitable epsilon value for doubles
@@ -220,7 +221,8 @@ namespace ExamplePlugin
         {
 	        if (!condition)
 	        {
-		        throw new Exception(message);
+		        //throw new Exception(message);
+		        Console.WriteLine(message);
 	        }
         }
         

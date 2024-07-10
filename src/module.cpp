@@ -1,5 +1,4 @@
 #include "module.h"
-#include "assembly.h"
 #include "managed_assembly.h"
 #include "managed_functions.h"
 #include "method_info.h"
@@ -150,10 +149,10 @@ LoadResult DotnetLanguageModule::OnPluginLoad(const IPlugin& plugin) {
 		if (methodFail)
 			continue;
 
-		auto packed = (static_cast<int64_t>(type.GetTypeId()) << 32) | (static_cast<int64_t>(methodInfo.GetHandle()) & 0xFFFFFFFF);
+		int64_t packed = (static_cast<int64_t>(type.GetTypeId()) << 32) | (static_cast<int64_t>(methodInfo.GetHandle()) & 0xFFFFFFFF);
 
 		auto function = std::make_unique<Function>(_rt);
-		void* methodAddr = function->GetJitFunc(method, &InternalCall, reinterpret_cast<void*>(packed));
+		MemAddr methodAddr = function->GetJitFunc(method, &InternalCall, static_cast<uintptr_t>(packed));
 		if (!methodAddr) {
 			methodErrors.emplace_back(std::format("Method '{}' has JIT generation error: {}", method.funcName, function->GetError()));
 			continue;
@@ -261,8 +260,8 @@ ScriptInstance* DotnetLanguageModule::FindScript(UniqueId pluginId) {
 }
 
 // C++ to C#
-void DotnetLanguageModule::InternalCall(const plugify::Method* method, void* data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret) {
-	auto combined = reinterpret_cast<int64_t>(data);
+void DotnetLanguageModule::InternalCall(const plugify::Method* method, MemAddr data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret) {
+	auto combined = data.CCast<int64_t>();
 	auto typeId = static_cast<int32_t>((combined >> 32) & 0xFFFFFFFF);
 	auto methodId = static_cast<int32_t>(combined & 0xFFFFFFFF);
 

@@ -116,10 +116,10 @@ CTYPES_MAP = {
     'float*': '*',
     'double*': '*',
     'string*': '*',
-    'vec2': 'Vector2',
-    'vec3': 'Vector3',
-    'vec4': 'Vector4',
-    'mat4x4': 'Matrix4x4'
+    'vec2': 'Vector2*',
+    'vec3': 'Vector3*',
+    'vec4': 'Vector4*',
+    'mat4x4': 'Matrix4x4*'
 }
 
 VAL_TYPESCAST_MAP = {
@@ -706,16 +706,20 @@ def convert_wtype(type_name, is_ref=False):
         return type
 
 
-def convert_ctype(type_name, is_ref=False):
+def convert_ctype(type_name, is_ref=False, is_ret=False):
     type = CTYPES_MAP.get(type_name, 'int')
     if is_ref:
         if type == '*':
             return 'nint'
+        elif '*' in type:
+            return 'ref ' + type[:-1]
         else:
             return 'ref ' + type
     else:
         if type == '*':
             return 'nint'
+        elif is_ret and '*' in type:
+            return type[:-1]
         else:
             return type
 
@@ -800,9 +804,14 @@ def gen_params_string(method, param_gen: ParamGen):
                     return 'ref __' + generate_name(param['name'])
                 else:
                     return '__' + generate_name(param['name'])
+            elif 'vec' in param['type'] or 'mat' in param['type']:
+                if 'ref' in param and param['ref'] is True:
+                    return 'ref ' + generate_name(param['name']) 
+                else:
+                    return '&' + generate_name(param['name'])
             else:
                 if 'ref' in param and param['ref'] is True:
-                    return 'ref ' + generate_name(param['name'])
+                    return 'ref ' + generate_name(param['name']) 
                 else:
                     return generate_name(param['name'])
         elif param_gen == ParamGen.WrapperNames:
@@ -861,7 +870,7 @@ def gen_ctypes_string(method):
     if obj_return:
         output_string += 'void'
     else:
-        output_string += f'{convert_ctype(ret_type["type"])}'
+        output_string += f'{convert_ctype(ret_type["type"], is_ret=True)}'
     return output_string
 
 

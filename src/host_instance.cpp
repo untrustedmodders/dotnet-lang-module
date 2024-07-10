@@ -1,8 +1,9 @@
 #include "host_instance.h"
-#include "assembly.h"
 #include "gc.h"
 #include "managed_functions.h"
 #include "utils.h"
+
+#include <plugify/assembly.h>
 
 #include <dotnet/coreclr_delegates.h>
 #include <dotnet/error_codes.h>
@@ -16,6 +17,7 @@
 #endif
 
 using namespace netlm;
+using namespace plugify;
 
 namespace {
 	hostfxr_initialize_for_runtime_config_fn hostfxr_initialize_for_runtime_config;
@@ -118,16 +120,16 @@ bool HostInstance::LoadHostFXR() {
 	
 	MessageCallback(std::format("Loading hostfxr from: {}", hostfxrPath.string()), MessageLevel::Info);
 
-	_dll = Assembly::LoadFromPath(hostfxrPath);
+	_dll = std::make_unique<Assembly>(hostfxrPath, LoadFlag::Lazy | LoadFlag::Nodelete | LoadFlag::PinInMemory);
 	if (!_dll) {
 		return false;
 	}
 
-	hostfxr_initialize_for_runtime_config = _dll->GetFunction<hostfxr_initialize_for_runtime_config_fn>("hostfxr_initialize_for_runtime_config");
-	hostfxr_get_runtime_delegate = _dll->GetFunction<hostfxr_get_runtime_delegate_fn>("hostfxr_get_runtime_delegate");
-	hostfxr_set_runtime_property_value = _dll->GetFunction<hostfxr_set_runtime_property_value_fn>("hostfxr_set_runtime_property_value");
-	hostfxr_close = _dll->GetFunction<hostfxr_close_fn>("hostfxr_close");
-	hostfxr_set_error_writer = _dll->GetFunction<hostfxr_set_error_writer_fn>("hostfxr_set_error_writer");
+	hostfxr_initialize_for_runtime_config = _dll->GetFunctionByName("hostfxr_initialize_for_runtime_config").RCast<hostfxr_initialize_for_runtime_config_fn>();
+	hostfxr_get_runtime_delegate = _dll->GetFunctionByName("hostfxr_get_runtime_delegate").RCast<hostfxr_get_runtime_delegate_fn>();
+	hostfxr_set_runtime_property_value = _dll->GetFunctionByName("hostfxr_set_runtime_property_value").RCast<hostfxr_set_runtime_property_value_fn>();
+	hostfxr_close = _dll->GetFunctionByName("hostfxr_close").RCast<hostfxr_close_fn>();
+	hostfxr_set_error_writer = _dll->GetFunctionByName("hostfxr_set_error_writer").RCast<hostfxr_set_error_writer_fn>();
 
 	MessageCallback("Loaded hostfxr functions", MessageLevel::Info);
 
