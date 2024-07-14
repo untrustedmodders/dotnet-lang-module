@@ -28,7 +28,7 @@
 using namespace plugify;
 using namespace netlm;
 
-InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> provider, IModule module) {
+InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> provider, ModuleRef module) {
 	if (!(_provider = provider.lock())) {
 		return ErrorData{ "Provider not exposed" };
 	}
@@ -64,7 +64,7 @@ void DotnetLanguageModule::Shutdown() {
 	_provider.reset();
 }
 
-LoadResult DotnetLanguageModule::OnPluginLoad(IPlugin plugin) {
+LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 	fs::path assemblyPath(plugin.GetBaseDir());
 	assemblyPath /= plugin.GetDescriptor().GetEntryPoint();
 
@@ -80,7 +80,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(IPlugin plugin) {
 
 	std::vector<std::string> methodErrors;
 
-	std::vector<IMethod> exportedMethods = plugin.GetDescriptor().GetExportedMethods();
+	std::vector<MethodRef> exportedMethods = plugin.GetDescriptor().GetExportedMethods();
 	std::vector<MethodData> methods;
 	methods.reserve(exportedMethods.size());
 
@@ -130,7 +130,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(IPlugin plugin) {
 		const auto& parameterTypes = methodInfo.GetParameterTypes();
 
 		size_t paramCount = parameterTypes.size();
-		std::vector<IProperty> paramTypes = method.GetParamTypes();
+		std::vector<PropertyRef> paramTypes = method.GetParamTypes();
 		if (paramCount != paramTypes.size()) {
 			methodErrors.emplace_back(std::format("Method '{}' has invalid parameter count {} when it should have {}", method.GetFunctionName(), paramTypes.size(), paramCount));
 			continue;
@@ -180,21 +180,21 @@ LoadResult DotnetLanguageModule::OnPluginLoad(IPlugin plugin) {
 	return LoadResultData{ std::move(methods) };
 }
 
-void DotnetLanguageModule::OnPluginStart(IPlugin plugin) {
+void DotnetLanguageModule::OnPluginStart(PluginRef plugin) {
 	ScriptInstance* script = FindScript(plugin.GetId());
 	if (script) {
 		script->InvokeOnStart();
 	}
 }
 
-void DotnetLanguageModule::OnPluginEnd(IPlugin plugin) {
+void DotnetLanguageModule::OnPluginEnd(PluginRef plugin) {
 	ScriptInstance* script = FindScript(plugin.GetId());
 	if (script) {
 		script->InvokeOnEnd();
 	}
 }
 
-void DotnetLanguageModule::OnMethodExport(IPlugin plugin) {
+void DotnetLanguageModule::OnMethodExport(PluginRef plugin) {
 	auto pluginId = plugin.GetId();
 	auto pluginName = plugin.GetName();
 	auto className = std::format("{}.{}", pluginName, pluginName);
@@ -261,14 +261,14 @@ ScriptInstance* DotnetLanguageModule::FindScript(UniqueId pluginId) {
 }
 
 // C++ to C#
-void DotnetLanguageModule::InternalCall(IMethod method, MemAddr data, const Parameters* p, uint8_t count, const ReturnValue* ret) {
+void DotnetLanguageModule::InternalCall(MethodRef method, MemAddr data, const Parameters* p, uint8_t count, const ReturnValue* ret) {
 	auto combined = data.CCast<int64_t>();
 	auto typeId = static_cast<int32_t>((combined >> 32) & 0xFFFFFFFF);
 	auto methodId = static_cast<int32_t>(combined & 0xFFFFFFFF);
 
-	IProperty retProp = method.GetReturnType();
+	PropertyRef retProp = method.GetReturnType();
 	ValueType retType = retProp.GetType();
-	std::vector<IProperty> paramProps = method.GetParamTypes();
+	std::vector<PropertyRef> paramProps = method.GetParamTypes();
 
 	bool hasRet = ValueUtils::IsHiddenParam(retType);
 
@@ -460,9 +460,9 @@ void DotnetLanguageModule::CheckAllocations() {
 
 /*_________________________________________________*/
 
-ScriptInstance::ScriptInstance(IPlugin plugin, Type& type) : _plugin{plugin}, _instance{type.CreateInstance()} {
-	IPluginDescriptor desc = plugin.GetDescriptor();
-	std::vector<IPluginReferenceDescriptor> dependencies = desc.GetDependencies();
+ScriptInstance::ScriptInstance(PluginRef plugin, Type& type) : _plugin{plugin}, _instance{type.CreateInstance()} {
+	PluginDescriptorRef desc = plugin.GetDescriptor();
+	std::vector<PluginReferenceDescriptorRef> dependencies = desc.GetDependencies();
 
 	std::vector<std::string> deps;
 	deps.reserve(dependencies.size());

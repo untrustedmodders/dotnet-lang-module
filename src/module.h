@@ -12,10 +12,10 @@
 namespace netlm {
 	class ScriptInstance {
 	public:
-		ScriptInstance(plugify::IPlugin plugin, Type& type);
+		ScriptInstance(plugify::PluginRef plugin, Type& type);
 		~ScriptInstance();
 
-		plugify::IPlugin GetPlugin() const { return _plugin; }
+		plugify::PluginRef GetPlugin() const { return _plugin; }
 		const ManagedObject& GetManagedObject() const { return _instance; }
 
 		bool operator==(const ScriptInstance& other) const { return _instance == other._instance; }
@@ -26,7 +26,7 @@ namespace netlm {
 		void InvokeOnEnd() const;
 
 	private:
-		plugify::IPlugin _plugin;
+		plugify::PluginRef _plugin;
 		ManagedObject _instance;
 
 		friend class DotnetLanguageModule;
@@ -40,12 +40,12 @@ namespace netlm {
 		DotnetLanguageModule() = default;
 
 		// ILanguageModule
-		plugify::InitResult Initialize(std::weak_ptr<plugify::IPlugifyProvider> provider, plugify::IModule module) override;
+		plugify::InitResult Initialize(std::weak_ptr<plugify::IPlugifyProvider> provider, plugify::ModuleRef module) override;
 		void Shutdown() override;
-		plugify::LoadResult OnPluginLoad(plugify::IPlugin plugin) override;
-		void OnPluginStart(plugify::IPlugin plugin) override;
-		void OnPluginEnd(plugify::IPlugin plugin) override;
-		void OnMethodExport(plugify::IPlugin plugin) override;
+		plugify::LoadResult OnPluginLoad(plugify::PluginRef plugin) override;
+		void OnPluginStart(plugify::PluginRef plugin) override;
+		void OnPluginEnd(plugify::PluginRef plugin) override;
+		void OnMethodExport(plugify::PluginRef plugin) override;
 
 		const ScriptMap& GetScripts() const { return _scripts; }
 		ScriptInstance* FindScript(plugify::UniqueId pluginId);
@@ -57,7 +57,7 @@ namespace netlm {
 		static void MessageCallback(std::string_view message, MessageLevel level);
 		static void CheckAllocations();
 
-		static void InternalCall(plugify::IMethod method, plugify::MemAddr data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret);
+		static void InternalCall(plugify::MethodRef method, plugify::MemAddr data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret);
 
 	private:
 		std::shared_ptr<plugify::IPlugifyProvider> _provider;
