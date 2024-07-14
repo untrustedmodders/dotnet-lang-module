@@ -80,7 +80,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 
 	std::vector<std::string> methodErrors;
 
-	std::vector<MethodRef> exportedMethods = plugin.GetDescriptor().GetExportedMethods();
+	std::span<const MethodRef> exportedMethods = plugin.GetDescriptor().GetExportedMethods();
 	std::vector<MethodData> methods;
 	methods.reserve(exportedMethods.size());
 
@@ -130,7 +130,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 		const auto& parameterTypes = methodInfo.GetParameterTypes();
 
 		size_t paramCount = parameterTypes.size();
-		std::vector<PropertyRef> paramTypes = method.GetParamTypes();
+		std::span<const PropertyRef> paramTypes = method.GetParamTypes();
 		if (paramCount != paramTypes.size()) {
 			methodErrors.emplace_back(std::format("Method '{}' has invalid parameter count {} when it should have {}", method.GetFunctionName(), paramTypes.size(), paramCount));
 			continue;
@@ -214,7 +214,8 @@ void DotnetLanguageModule::OnMethodExport(PluginRef plugin) {
 
 					bool noNamespace = (size == 2);
 					assert(size == 3 || noNamespace);
-					Type& type = ownerAssembly.GetType(noNamespace ? separated[size-2] : std::string_view(separated[0].data(), separated[size-1].data() - 1));
+					Type& type = ownerAssembly.GetType(noNamespace ? separated[size-2] : std::string_view(separated[0].data(), separated[size-1]
+																																				 .data() - 1));
 					assert(type);
 					MethodInfo methodInfo = type.GetMethod(separated[size-1]);
 					assert(methodInfo);
@@ -268,7 +269,7 @@ void DotnetLanguageModule::InternalCall(MethodRef method, MemAddr data, const Pa
 
 	PropertyRef retProp = method.GetReturnType();
 	ValueType retType = retProp.GetType();
-	std::vector<PropertyRef> paramProps = method.GetParamTypes();
+	std::span<const PropertyRef> paramProps = method.GetParamTypes();
 
 	bool hasRet = ValueUtils::IsHiddenParam(retType);
 
@@ -462,7 +463,7 @@ void DotnetLanguageModule::CheckAllocations() {
 
 ScriptInstance::ScriptInstance(PluginRef plugin, Type& type) : _plugin{plugin}, _instance{type.CreateInstance()} {
 	PluginDescriptorRef desc = plugin.GetDescriptor();
-	std::vector<PluginReferenceDescriptorRef> dependencies = desc.GetDependencies();
+	std::span<const PluginReferenceDescriptorRef> dependencies = desc.GetDependencies();
 
 	std::vector<std::string> deps;
 	deps.reserve(dependencies.size());
