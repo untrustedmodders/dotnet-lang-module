@@ -32,7 +32,6 @@ namespace netlm {
 	using DestroyObjectFn = void(*)(void*);
 
 #pragma region TypeInterface
-
 	using GetAssemblyTypesFn = void(*)(int32_t, TypeId*, int32_t*);
 	using GetTypeIdFn = void (*)(String, TypeId*);
 	using GetFullTypeNameFn = String(*)(TypeId);
@@ -54,7 +53,6 @@ namespace netlm {
 	using HasTypeAttributeFn = Bool32(*)(TypeId, TypeId);
 	using GetTypeAttributesFn = void (*)(ManagedHandle, TypeId*, int32_t*);
 	using GetTypeManagedTypeFn = ManagedType(*)(TypeId);
-
 #pragma endregion
 
 #pragma region MethodInfo

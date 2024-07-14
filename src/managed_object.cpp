@@ -1,8 +1,8 @@
 #include "managed_object.h"
 #include "managed_assembly.h"
 #include "managed_functions.h"
+#include "native_string.h"
 #include "type.h"
-#include "strings.h"
 
 using namespace netlm;
 

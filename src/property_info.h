@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core.h"
-#include "strings.h"
+#include "native_string.h"
 
 namespace netlm {
 	class Type;

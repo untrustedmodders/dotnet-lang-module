@@ -1,5 +1,4 @@
-﻿using System.IO.MemoryMappedFiles;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 
@@ -189,7 +188,7 @@ public static class AssemblyLoader
 				return -1;
 			}
 
-			Assembly assembly = alc.LoadFromAssemblyPath(assemblyPath!);
+			Assembly assembly = alc.LoadFromAssemblyPath(assemblyPath);
 			
 			/*Assembly? assembly = null;
 

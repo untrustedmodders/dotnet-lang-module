@@ -15,8 +15,8 @@ namespace netlm {
 		All = Info | Warning | Error
 	};
 
-	using MessageCallbackFn = std::function<void(const std::string&, MessageLevel)>;
-	using ExceptionCallbackFn = std::function<void(const std::string&)>;
+	using MessageCallbackFn = std::function<void(std::string_view, MessageLevel)>;
+	using ExceptionCallbackFn = std::function<void(std::string_view)>;
 
 	struct HostSettings {
 		fs::path hostfxrPath;

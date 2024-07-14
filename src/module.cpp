@@ -402,7 +402,7 @@ void DotnetLanguageModule::InternalCall(IMethod method, MemAddr data, const Para
 
 /*_________________________________________________*/
 
-void DotnetLanguageModule::ExceptionCallback(const std::string& message) {
+void DotnetLanguageModule::ExceptionCallback(std::string_view message) {
 	if (!g_netlm._provider)
 		return;
 
@@ -413,7 +413,7 @@ void DotnetLanguageModule::ExceptionCallback(const std::string& message) {
 	g_netlm._provider->Log(stream.str(), Severity::Debug);
 }
 
-void DotnetLanguageModule::MessageCallback(const std::string& message, MessageLevel level) {
+void DotnetLanguageModule::MessageCallback(std::string_view message, MessageLevel level) {
 	if (!g_netlm._provider)
 		return;
 

@@ -6,6 +6,7 @@ namespace Plugify;
 public struct NativeString : IDisposable
 {
 	internal nint _string;
+	private int _length;
 	private Bool32 _disposed;
 
 	public void Dispose()
@@ -16,6 +17,7 @@ public struct NativeString : IDisposable
 			{
 				Marshal.FreeCoTaskMem(_string);
 				_string = nint.Zero;
+				_length = 0;
 			}
 
 			_disposed = true;
@@ -28,8 +30,8 @@ public struct NativeString : IDisposable
 
 	public static NativeString Null() => new(){ _string = nint.Zero };
 
-	public static implicit operator NativeString(string? value) => new(){ _string = Marshal.StringToCoTaskMemAuto(value) };
-	public static implicit operator string?(NativeString value) => Marshal.PtrToStringAuto(value._string);
+	public static implicit operator NativeString(string? value) => new(){ _string = Marshal.StringToCoTaskMemAuto(value), _length = value?.Length ?? 0 };
+	public static implicit operator string?(NativeString value) => Marshal.PtrToStringAuto(value._string, value._length);
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]

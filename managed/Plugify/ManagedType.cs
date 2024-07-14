@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace Plugify;
 
@@ -14,17 +13,17 @@ public struct ManagedType
 
     public static ManagedType Invalid => new();
 
-    public ManagedType(Type type, object[] attrubutes)
+    public ManagedType(Type type, object[] attributes)
     {
         reference = (byte)(type.IsByRef ? 1 : 0);
 
         var vt = TypeUtils.ConvertToValueType(type);
         switch (vt)
         {
-            case ValueType.Char16 when TypeUtils.IsUseAnsi(attrubutes):
+            case ValueType.Char16 when TypeUtils.IsUseAnsi(attributes):
                 vt = ValueType.Char8;
                 break;
-            case ValueType.ArrayChar16 when TypeUtils.IsUseAnsi(attrubutes):
+            case ValueType.ArrayChar16 when TypeUtils.IsUseAnsi(attributes):
                 vt = ValueType.ArrayChar8;
                 break;
         }

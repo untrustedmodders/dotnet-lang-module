@@ -53,8 +53,8 @@ namespace netlm {
 		const std::shared_ptr<plugify::IPlugifyProvider>& GetProvider() { return _provider; }
 
 	private:
-		static void ExceptionCallback(const std::string& message);
-		static void MessageCallback(const std::string& message, MessageLevel level);
+		static void ExceptionCallback(std::string_view message);
+		static void MessageCallback(std::string_view message, MessageLevel level);
 		static void CheckAllocations();
 
 		static void InternalCall(plugify::IMethod method, plugify::MemAddr data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret);

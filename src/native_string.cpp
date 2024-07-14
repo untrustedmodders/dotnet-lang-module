@@ -1,5 +1,5 @@
-#include "strings.h"
 #include "memory.h"
+#include "native_string.h"
 #include "utils.h"
 
 using namespace netlm;
@@ -16,6 +16,7 @@ void String::Free(String& string) {
 
 	Memory::FreeCoTaskMem(string._string);
 	string._string = nullptr;
+	string._length = 0;
 }
 
 void String::Assign(std::string_view string) {
@@ -27,6 +28,7 @@ void String::Assign(std::string_view string) {
 #else
 	_string = Memory::StringToCoTaskMemAuto(string);
 #endif
+	_length = static_cast<int32_t>(string.size());
 }
 
 String::operator std::string() const {
@@ -39,37 +41,11 @@ String::operator std::string() const {
 #endif
 }
 
-bool String::operator==(const String& other) const {
-	if (_string == other._string)
-		return true;
-
-	if (_string == nullptr || other._string == nullptr)
-		return false;
-
-#if NETLM_PLATFORM_WINDOWS
-	return wcscmp(_string, other._string) == 0;
-#else
-	return strcmp(_string, other._string) == 0;
-#endif
-}
-
 bool String::operator==(std::string_view other) const {
 #if NETLM_PLATFORM_WINDOWS
-	auto str = Utils::ConvertUtf8ToWide(other);
-	return wcscmp(_string, str.data()) == 0;
+	return _length == other.size() && wcscmp(_string, Utils::ConvertUtf8ToWide(other).data()) == 0;
 #else
-	return strcmp(_string, other.data()) == 0;
-#endif
-}
-
-size_t String::Size() const {
-	if (IsNull())
-		return 0;
-
-#if NETLM_PLATFORM_WINDOWS
-	return wcslen(_string);
-#else
-	return strlen(_string);
+	return _length == other.size() && strcmp(_string, other.data()) == 0;
 #endif
 }
 
@@ -88,6 +64,7 @@ void String::Assign(std::wstring_view string) {
 		Memory::FreeCoTaskMem(_string);
 
 	_string = Memory::StringToCoTaskMemAuto(string);
+	_length = static_cast<int32_t>(string.size());
 }
 
 String::operator std::wstring() const {
@@ -102,11 +79,24 @@ String::operator std::wstring() const {
 
 bool String::operator==(std::wstring_view other) const {
 #if NETLM_PLATFORM_WINDOWS
-	return wcscmp(_string, other.data()) == 0;
+	return _length == other.size() && wcscmp(_string, other.data()) == 0;
 #else
-	auto str = Utils::ConvertWideToUtf8(other);
-	return strcmp(_string, str.data()) == 0;
+	return _length == other.size() && strcmp(_string, Utils::ConvertWideToUtf8(other).data()) == 0;
 #endif
 }
 
 #endif
+
+bool String::operator==(const String& other) const {
+	if (_string == other._string)
+		return true;
+
+	if (_string == nullptr || other._string == nullptr)
+		return false;
+
+#if NETLM_PLATFORM_WINDOWS
+	return _length == other._length && wcscmp(_string, other._string) == 0;
+#else
+	return _length == other._length && strcmp(_string, other._string) == 0;
+#endif
+}

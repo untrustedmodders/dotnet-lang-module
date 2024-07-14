@@ -1,11 +1,11 @@
 #pragma once
 
 #include "core.h"
-#include "strings.h"
 #include "field_info.h"
 #include "managed_object.h"
 #include "managed_type.h"
 #include "method_info.h"
+#include "native_string.h"
 #include "property_info.h"
 
 namespace netlm {
