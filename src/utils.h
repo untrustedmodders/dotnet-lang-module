@@ -4,9 +4,11 @@
 #include <plugify/method.h>
 
 #if NETLM_PLATFORM_WINDOWS
-#define NETLM_STR(str) L##str
+#define NETLM_NSTR(str) L##str
+#define NETLM_UTF8(str) Utils::ConvertWideToUtf8(str)
 #else
-#define NETLM_STR(str) str
+#define NETLM_NSTR(str) str
+#define NETLM_UTF8(str) str
 #endif
 
 namespace netlm {

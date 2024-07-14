@@ -80,6 +80,8 @@ namespace netlm {
 			return result;
 		}
 
+		// TODO Cast string_view to string
+
 		void SetFieldValueRaw(std::string_view fieldName, void* inValue) const;
 		void GetFieldValueRaw(std::string_view fieldName, void* outValue) const;
 		void GetFieldPointerRaw(std::string_view fieldName, void** outPointer) const;

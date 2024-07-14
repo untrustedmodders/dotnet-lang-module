@@ -11,9 +11,6 @@
 
 #if NETLM_PLATFORM_WINDOWS
 #include <shlobj_core.h>
-#define NETLM_UTF8(str) Utils::ConvertWideToUtf8(str)
-#else
-#define NETLM_UTF8(str) str
 #endif
 
 using namespace netlm;
@@ -185,7 +182,7 @@ bool HostInstance::InitializeRuntimeHost() {
 	});
 
 	using InitializeFn = void(*)(void(*)(String, MessageLevel), void(*)(String));
-	InitializeFn managedEntryPoint = GetDelegate<InitializeFn>(rootAssemblyPath.c_str(), NETLM_STR("Plugify.ManagedHost, Plugify"), NETLM_STR("Initialize"));
+	InitializeFn managedEntryPoint = GetDelegate<InitializeFn>(rootAssemblyPath.c_str(), NETLM_NSTR("Plugify.ManagedHost, Plugify"), NETLM_NSTR("Initialize"));
 
 	LoadManagedFunctions(rootAssemblyPath);
 
@@ -245,74 +242,76 @@ void* HostInstance::GetDelegate(const char_t* assemblyPath, const char_t* typeNa
 }
 
 void HostInstance::LoadManagedFunctions(const fs::path& assemblyPath) {
-	Managed.CreateAssemblyLoadContextFptr = GetDelegate<CreateAssemblyLoadContextFn>(assemblyPath.c_str(), NETLM_STR("Plugify.AssemblyLoader, Plugify"), NETLM_STR("CreateAssemblyLoadContext"));
-	Managed.UnloadAssemblyLoadContextFptr = GetDelegate<UnloadAssemblyLoadContextFn>(assemblyPath.c_str(), NETLM_STR("Plugify.AssemblyLoader, Plugify"), NETLM_STR("UnloadAssemblyLoadContext"));
-	Managed.LoadManagedAssemblyFptr = GetDelegate<LoadManagedAssemblyFn>(assemblyPath.c_str(), NETLM_STR("Plugify.AssemblyLoader, Plugify"), NETLM_STR("LoadAssembly"));
-	Managed.GetLastLoadStatusFptr = GetDelegate<GetLastLoadStatusFn>(assemblyPath.c_str(), NETLM_STR("Plugify.AssemblyLoader, Plugify"), NETLM_STR("GetLastLoadStatus"));
-	Managed.GetAssemblyNameFptr = GetDelegate<GetAssemblyNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.AssemblyLoader, Plugify"), NETLM_STR("GetAssemblyName"));
+	const char_t* path = assemblyPath.c_str();
 
-	Managed.GetAssemblyTypesFptr = GetDelegate<GetAssemblyTypesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAssemblyTypes"));
-	Managed.GetTypeIdFptr = GetDelegate<GetTypeIdFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeId"));
-	Managed.GetFullTypeNameFptr = GetDelegate<GetFullTypeNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFullTypeName"));
-	Managed.GetAssemblyQualifiedNameFptr = GetDelegate<GetAssemblyQualifiedNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAssemblyQualifiedName"));
-	Managed.GetBaseTypeFptr = GetDelegate<GetBaseTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetBaseType"));
-	Managed.GetTypeSizeFptr = GetDelegate<GetTypeSizeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeSize"));
-	Managed.IsTypeSubclassOfFptr = GetDelegate<IsTypeSubclassOfFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeSubclassOf"));
-	Managed.IsTypeAssignableToFptr = GetDelegate<IsTypeAssignableToFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeAssignableTo"));
-	Managed.IsTypeAssignableFromFptr = GetDelegate<IsTypeAssignableFromFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeAssignableFrom"));
-	Managed.IsTypeSZArrayFptr = GetDelegate<IsTypeSZArrayFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeSZArray"));
-	Managed.IsTypeByRefFptr = GetDelegate<IsTypeByRefFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsTypeByRef"));
-	Managed.GetElementTypeFptr = GetDelegate<GetElementTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetElementType"));
-	Managed.GetTypeMethodsFptr = GetDelegate<GetTypeMethodsFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeMethods"));
-	Managed.GetTypeFieldsFptr = GetDelegate<GetTypeFieldsFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeFields"));
-	Managed.GetTypePropertiesFptr = GetDelegate<GetTypePropertiesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeProperties"));
-	Managed.GetTypeMethodFptr = GetDelegate<GetTypeMethodFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeMethod"));
-	Managed.GetTypeFieldFptr = GetDelegate<GetTypeFieldFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeField"));
-	Managed.GetTypePropertyFptr = GetDelegate<GetTypePropertyFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeProperty"));
-	Managed.HasTypeAttributeFptr = GetDelegate<HasTypeAttributeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("HasTypeAttribute"));
-	Managed.GetTypeAttributesFptr = GetDelegate<GetTypeAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeAttributes"));
-	Managed.GetTypeManagedTypeFptr = GetDelegate<GetTypeManagedTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetTypeManagedType"));
-	Managed.InvokeStaticMethodFptr = GetDelegate<InvokeStaticMethodFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("InvokeStaticMethod"));
-	Managed.InvokeStaticMethodRetFptr = GetDelegate<InvokeStaticMethodRetFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("InvokeStaticMethodRet"));
+	Managed.CreateAssemblyLoadContextFptr = GetDelegate<CreateAssemblyLoadContextFn>(path, NETLM_NSTR("Plugify.AssemblyLoader, Plugify"), NETLM_NSTR("CreateAssemblyLoadContext"));
+	Managed.UnloadAssemblyLoadContextFptr = GetDelegate<UnloadAssemblyLoadContextFn>(path, NETLM_NSTR("Plugify.AssemblyLoader, Plugify"), NETLM_NSTR("UnloadAssemblyLoadContext"));
+	Managed.LoadManagedAssemblyFptr = GetDelegate<LoadManagedAssemblyFn>(path, NETLM_NSTR("Plugify.AssemblyLoader, Plugify"), NETLM_NSTR("LoadAssembly"));
+	Managed.GetLastLoadStatusFptr = GetDelegate<GetLastLoadStatusFn>(path, NETLM_NSTR("Plugify.AssemblyLoader, Plugify"), NETLM_NSTR("GetLastLoadStatus"));
+	Managed.GetAssemblyNameFptr = GetDelegate<GetAssemblyNameFn>(path, NETLM_NSTR("Plugify.AssemblyLoader, Plugify"), NETLM_NSTR("GetAssemblyName"));
 
-	Managed.GetMethodInfoNameFptr = GetDelegate<GetMethodInfoNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoName"));
-	Managed.GetMethodInfoFunctionAddressFptr = GetDelegate<GetMethodInfoFunctionAddressFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoFunctionAddress"));
-	Managed.GetMethodInfoReturnTypeFptr = GetDelegate<GetMethodInfoReturnTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoReturnType"));
-	Managed.GetMethodInfoParameterTypesFptr = GetDelegate<GetMethodInfoParameterTypesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoParameterTypes"));
-	Managed.GetMethodInfoAccessibilityFptr = GetDelegate<GetMethodInfoAccessibilityFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoAccessibility"));
-	Managed.GetMethodInfoAttributesFptr = GetDelegate<GetMethodInfoAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoAttributes"));
-	Managed.GetMethodInfoReturnAttributesFptr = GetDelegate<GetMethodInfoReturnAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetMethodInfoReturnAttributes"));
+	Managed.GetAssemblyTypesFptr = GetDelegate<GetAssemblyTypesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetAssemblyTypes"));
+	Managed.GetTypeIdFptr = GetDelegate<GetTypeIdFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeId"));
+	Managed.GetFullTypeNameFptr = GetDelegate<GetFullTypeNameFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetFullTypeName"));
+	Managed.GetAssemblyQualifiedNameFptr = GetDelegate<GetAssemblyQualifiedNameFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetAssemblyQualifiedName"));
+	Managed.GetBaseTypeFptr = GetDelegate<GetBaseTypeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetBaseType"));
+	Managed.GetTypeSizeFptr = GetDelegate<GetTypeSizeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeSize"));
+	Managed.IsTypeSubclassOfFptr = GetDelegate<IsTypeSubclassOfFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("IsTypeSubclassOf"));
+	Managed.IsTypeAssignableToFptr = GetDelegate<IsTypeAssignableToFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("IsTypeAssignableTo"));
+	Managed.IsTypeAssignableFromFptr = GetDelegate<IsTypeAssignableFromFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("IsTypeAssignableFrom"));
+	Managed.IsTypeSZArrayFptr = GetDelegate<IsTypeSZArrayFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("IsTypeSZArray"));
+	Managed.IsTypeByRefFptr = GetDelegate<IsTypeByRefFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("IsTypeByRef"));
+	Managed.GetElementTypeFptr = GetDelegate<GetElementTypeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetElementType"));
+	Managed.GetTypeMethodsFptr = GetDelegate<GetTypeMethodsFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeMethods"));
+	Managed.GetTypeFieldsFptr = GetDelegate<GetTypeFieldsFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeFields"));
+	Managed.GetTypePropertiesFptr = GetDelegate<GetTypePropertiesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeProperties"));
+	Managed.GetTypeMethodFptr = GetDelegate<GetTypeMethodFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeMethod"));
+	Managed.GetTypeFieldFptr = GetDelegate<GetTypeFieldFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeField"));
+	Managed.GetTypePropertyFptr = GetDelegate<GetTypePropertyFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeProperty"));
+	Managed.HasTypeAttributeFptr = GetDelegate<HasTypeAttributeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("HasTypeAttribute"));
+	Managed.GetTypeAttributesFptr = GetDelegate<GetTypeAttributesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeAttributes"));
+	Managed.GetTypeManagedTypeFptr = GetDelegate<GetTypeManagedTypeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeManagedType"));
+	Managed.InvokeStaticMethodFptr = GetDelegate<InvokeStaticMethodFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("InvokeStaticMethod"));
+	Managed.InvokeStaticMethodRetFptr = GetDelegate<InvokeStaticMethodRetFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("InvokeStaticMethodRet"));
 
-	Managed.GetFieldInfoNameFptr = GetDelegate<GetFieldInfoNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoName"));
-	Managed.GetFieldInfoTypeFptr = GetDelegate<GetFieldInfoTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoType"));
-	Managed.GetFieldInfoAccessibilityFptr = GetDelegate<GetFieldInfoAccessibilityFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoAccessibility"));
-	Managed.GetFieldInfoAttributesFptr = GetDelegate<GetFieldInfoAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetFieldInfoAttributes"));
+	Managed.GetMethodInfoNameFptr = GetDelegate<GetMethodInfoNameFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetMethodInfoName"));
+	Managed.GetMethodInfoFunctionAddressFptr = GetDelegate<GetMethodInfoFunctionAddressFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetMethodInfoFunctionAddress"));
+	Managed.GetMethodInfoReturnTypeFptr = GetDelegate<GetMethodInfoReturnTypeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetMethodInfoReturnType"));
+	Managed.GetMethodInfoParameterTypesFptr = GetDelegate<GetMethodInfoParameterTypesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetMethodInfoParameterTypes"));
+	Managed.GetMethodInfoAccessibilityFptr = GetDelegate<GetMethodInfoAccessibilityFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetMethodInfoAccessibility"));
+	Managed.GetMethodInfoAttributesFptr = GetDelegate<GetMethodInfoAttributesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetMethodInfoAttributes"));
+	Managed.GetMethodInfoReturnAttributesFptr = GetDelegate<GetMethodInfoReturnAttributesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetMethodInfoReturnAttributes"));
 
-	Managed.GetPropertyInfoNameFptr = GetDelegate<GetPropertyInfoNameFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetPropertyInfoName"));
-	Managed.GetPropertyInfoTypeFptr = GetDelegate<GetPropertyInfoTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetPropertyInfoType"));
-	Managed.GetPropertyInfoAttributesFptr = GetDelegate<GetPropertyInfoAttributesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetPropertyInfoAttributes"));
+	Managed.GetFieldInfoNameFptr = GetDelegate<GetFieldInfoNameFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetFieldInfoName"));
+	Managed.GetFieldInfoTypeFptr = GetDelegate<GetFieldInfoTypeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetFieldInfoType"));
+	Managed.GetFieldInfoAccessibilityFptr = GetDelegate<GetFieldInfoAccessibilityFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetFieldInfoAccessibility"));
+	Managed.GetFieldInfoAttributesFptr = GetDelegate<GetFieldInfoAttributesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetFieldInfoAttributes"));
 
-	Managed.GetAttributeFieldValueFptr = GetDelegate<GetAttributeFieldValueFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAttributeFieldValue"));
-	Managed.GetAttributeTypeFptr = GetDelegate<GetAttributeTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetAttributeType"));
+	Managed.GetPropertyInfoNameFptr = GetDelegate<GetPropertyInfoNameFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetPropertyInfoName"));
+	Managed.GetPropertyInfoTypeFptr = GetDelegate<GetPropertyInfoTypeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetPropertyInfoType"));
+	Managed.GetPropertyInfoAttributesFptr = GetDelegate<GetPropertyInfoAttributesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetPropertyInfoAttributes"));
 
-	Managed.SetInternalCallsFptr = GetDelegate<SetInternalCallsFn>(assemblyPath.c_str(), NETLM_STR("Plugify.Interop.InternalCallsManager, Plugify"), NETLM_STR("SetInternalCalls"));
-	Managed.CreateObjectFptr = GetDelegate<CreateObjectFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("CreateObject"));
-	Managed.InvokeMethodFptr = GetDelegate<InvokeMethodFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("InvokeMethod"));
-	Managed.InvokeMethodRetFptr = GetDelegate<InvokeMethodRetFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("InvokeMethodRet"));
-	Managed.SetFieldValueFptr = GetDelegate<SetFieldValueFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("SetFieldValue"));
-	Managed.GetFieldValueFptr = GetDelegate<GetFieldValueFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("GetFieldValue"));
-	Managed.GetFieldPointerFptr = GetDelegate<GetFieldPointerFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("GetFieldPointer"));
-	Managed.SetPropertyValueFptr = GetDelegate<SetFieldValueFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("SetPropertyValue"));
-	Managed.GetPropertyValueFptr = GetDelegate<GetFieldValueFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("GetPropertyValue"));
-	Managed.DestroyObjectFptr = GetDelegate<DestroyObjectFn>(assemblyPath.c_str(), NETLM_STR("Plugify.ManagedObject, Plugify"), NETLM_STR("DestroyObject"));
-	Managed.CollectGarbageFptr = GetDelegate<CollectGarbageFn>(assemblyPath.c_str(), NETLM_STR("Plugify.GarbageCollector, Plugify"), NETLM_STR("CollectGarbage"));
-	Managed.WaitForPendingFinalizersFptr = GetDelegate<WaitForPendingFinalizersFn>(assemblyPath.c_str(), NETLM_STR("Plugify.GarbageCollector, Plugify"), NETLM_STR("WaitForPendingFinalizers"));
+	Managed.GetAttributeFieldValueFptr = GetDelegate<GetAttributeFieldValueFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetAttributeFieldValue"));
+	Managed.GetAttributeTypeFptr = GetDelegate<GetAttributeTypeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetAttributeType"));
 
-	Managed.IsClassFptr = GetDelegate<IsClassFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsClass"));
-	Managed.IsEnumFptr = GetDelegate<IsEnumFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsEnum"));
-	Managed.IsValueTypeFptr = GetDelegate<IsValueTypeFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("IsValueType"));
-	Managed.GetEnumNamesFptr = GetDelegate<GetEnumNamesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetEnumNames"));
-	Managed.GetEnumValuesFptr = GetDelegate<GetEnumValuesFn>(assemblyPath.c_str(), NETLM_STR("Plugify.TypeInterface, Plugify"), NETLM_STR("GetEnumValues"));
+	Managed.SetInternalCallsFptr = GetDelegate<SetInternalCallsFn>(path, NETLM_NSTR("Plugify.Interop.InternalCallsManager, Plugify"), NETLM_NSTR("SetInternalCalls"));
+	Managed.CreateObjectFptr = GetDelegate<CreateObjectFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("CreateObject"));
+	Managed.InvokeMethodFptr = GetDelegate<InvokeMethodFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("InvokeMethod"));
+	Managed.InvokeMethodRetFptr = GetDelegate<InvokeMethodRetFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("InvokeMethodRet"));
+	Managed.SetFieldValueFptr = GetDelegate<SetFieldValueFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("SetFieldValue"));
+	Managed.GetFieldValueFptr = GetDelegate<GetFieldValueFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("GetFieldValue"));
+	Managed.GetFieldPointerFptr = GetDelegate<GetFieldPointerFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("GetFieldPointer"));
+	Managed.SetPropertyValueFptr = GetDelegate<SetFieldValueFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("SetPropertyValue"));
+	Managed.GetPropertyValueFptr = GetDelegate<GetFieldValueFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("GetPropertyValue"));
+	Managed.DestroyObjectFptr = GetDelegate<DestroyObjectFn>(path, NETLM_NSTR("Plugify.ManagedObject, Plugify"), NETLM_NSTR("DestroyObject"));
+	Managed.CollectGarbageFptr = GetDelegate<CollectGarbageFn>(path, NETLM_NSTR("Plugify.GarbageCollector, Plugify"), NETLM_NSTR("CollectGarbage"));
+	Managed.WaitForPendingFinalizersFptr = GetDelegate<WaitForPendingFinalizersFn>(path, NETLM_NSTR("Plugify.GarbageCollector, Plugify"), NETLM_NSTR("WaitForPendingFinalizers"));
+
+	Managed.IsClassFptr = GetDelegate<IsClassFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("IsClass"));
+	Managed.IsEnumFptr = GetDelegate<IsEnumFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("IsEnum"));
+	Managed.IsValueTypeFptr = GetDelegate<IsValueTypeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("IsValueType"));
+	Managed.GetEnumNamesFptr = GetDelegate<GetEnumNamesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetEnumNames"));
+	Managed.GetEnumValuesFptr = GetDelegate<GetEnumValuesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetEnumValues"));
 }
 
 // https://github.com/dotnet/runtime/blob/main/docs/design/features/host-error-codes.md
