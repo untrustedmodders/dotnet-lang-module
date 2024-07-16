@@ -712,9 +712,9 @@ def convert_ctype(type_name, is_ref=False, is_ret=False):
         if type == '*':
             return 'nint'
         elif '*' in type:
-            return 'ref ' + type[:-1]
+            return type[:-1] + '*'
         else:
-            return 'ref ' + type
+            return type + '*'
     else:
         if type == '*':
             return 'nint'
@@ -801,17 +801,17 @@ def gen_params_string(method, param_gen: ParamGen):
                 return '__' + generate_name(param['name'])
             elif param['type'] == 'char8' or param['type'] == 'char16':
                 if 'ref' in param and param['ref'] is True:
-                    return 'ref __' + generate_name(param['name'])
+                    return '&__' + generate_name(param['name'])
                 else:
                     return '__' + generate_name(param['name'])
             elif 'vec' in param['type'] or 'mat' in param['type']:
                 if 'ref' in param and param['ref'] is True:
-                    return 'ref ' + generate_name(param['name']) 
+                    return '__' + generate_name(param['name'])
                 else:
                     return '&' + generate_name(param['name'])
             else:
                 if 'ref' in param and param['ref'] is True:
-                    return 'ref ' + generate_name(param['name']) 
+                    return '__' + generate_name(param['name'])
                 else:
                     return generate_name(param['name'])
         elif param_gen == ParamGen.WrapperNames:
@@ -828,7 +828,7 @@ def gen_params_string(method, param_gen: ParamGen):
         if 'delegate' in type and 'prototype' in param:
             type = generate_name(param['prototype']['name'])
         return f'{type} {generate_name(param["name"])}'
-        
+
     def gen_return(param):
         if param_gen == ParamGen.WrapperCastNames:
             return '__output__'
@@ -855,7 +855,7 @@ def gen_params_string(method, param_gen: ParamGen):
 def gen_ctypes_string(method):
     output_string = ''
     ret_type = method['retType']
-    obj_return = is_obj_return(ret_type['type']) 
+    obj_return = is_obj_return(ret_type['type'])
     if obj_return:
         output_string += f'{convert_ctype(ret_type["type"], True)}'
     if method['paramTypes']:
@@ -887,7 +887,7 @@ def gen_types_string(method):
         output_string += ', '
     output_string += f'{convert_type(ret_type["type"])}'
     return output_string
-    
+
 
 def gen_paramscast_string(method):
     def gen_param(param):
@@ -895,11 +895,15 @@ def gen_paramscast_string(method):
         name = generate_name(param['name'])
         if 'CreateVector' in type:
             return f'var __{name} = {type}({name}, {name}.Length)'
-        elif  type != '':
+        elif type != '':
             return f'var __{name} = {type}({name})'
         else:
-            return ''
-      
+            if 'ref' in param and param['ref'] is True:
+                ctype = TYPES_MAP.get(param['type'], 'int')
+                return f'fixed({ctype}* __{name} = &{name}) {{'
+            else:
+                return ''
+
     def gen_return(param):
         type = RET_TYPESCAST_MAP.get(param['type'], 'int')
         return f'var __output = {type}()'
@@ -915,14 +919,22 @@ def gen_paramscast_string(method):
         it = iter(method['paramTypes'])
         param = gen_param(next(it))
         if param != '':
-            output_string += f'\t\t\t{param};\n'
+            output_string += f'\t\t\t{param}'
+            if output_string[-1] != '{':
+                output_string += ';\n'
+            else:
+                output_string += '\n'
         for p in it:
             param = gen_param(p)
             if param != '':
-                output_string += f'\t\t\t{param};\n'
+                output_string += f'\t\t\t{param}'
+                if output_string[-1] != '{':
+                    output_string += ';\n'
+                else:
+                    output_string += '\n'
     return output_string
 
-             
+
 def gen_paramscast_assign_string(method):
     def gen_param(param):
         if 'ref' in param and param['ref'] is True:
@@ -950,7 +962,7 @@ def gen_paramscast_assign_string(method):
         elif type != '':
             return f'var output = {type}(__output)'
         else:
-                return ''
+            return ''
 
     output_string = ''
     ret_type = method['retType']
@@ -968,6 +980,33 @@ def gen_paramscast_assign_string(method):
             param = gen_param(p)
             if param != '':
                 output_string += f'\t\t\t{param};\n'
+    return output_string
+
+
+def gen_paramscast_assign_string2(method):
+    def gen_param(param):
+        if 'ref' in param and param['ref'] is True:
+            type = ASS_TYPESCAST_MAP.get(param['type'], 'int')
+            name = generate_name(param['name'])
+            if 'VectorData' in type:
+                return ''
+            elif type != '':
+                return ''
+            else:
+                return '}'
+        else:
+            return ''
+
+    output_string = ''
+    if method["paramTypes"]:
+        it = iter(method["paramTypes"])
+        param = gen_param(next(it))
+        if param != '':
+            output_string += f'\t\t\t{param}\n'
+        for p in it:
+            param = gen_param(p)
+            if param != '':
+                output_string += f'\t\t\t{param}\n'
     return output_string
 
 
@@ -1145,7 +1184,7 @@ def main(manifest_path, output_dir, override):
 
     content += f'\n\tinternal static unsafe class {plugin_name}\n\t{{'
     content += '\n'
-    
+
     content += '\t\tprivate static Dictionary<Delegate, Delegate> s_DelegateHolder = new();\n'
     content += '\t\tprivate static TValue GetOrAdd<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key, TValue value) where TKey : notnull\n'
     content += '\t\t{\n'
@@ -1156,7 +1195,7 @@ def main(manifest_path, output_dir, override):
     content += '\t\t\tdict.Add(key, value);\n'
     content += '\t\t\treturn value;\n'
     content += '\t\t}\n\n'
-    
+
     for method in pplugin['exportedMethods']:
         content += f'\t\tinternal static delegate* <{gen_types_string(method)}> {method["name"]} = &___{method["name"]};\n'
         content += f'\t\tinternal static delegate* unmanaged[Cdecl]<{gen_ctypes_string(method)}> __{method["name"]};\n'
@@ -1206,23 +1245,27 @@ def main(manifest_path, output_dir, override):
             content += f'\t\t\tvar __result = __{method["name"]}({gen_params_string(method, ParamGen.CastNames)});\n'
         else:
             content += f'\t\t\t__{method["name"]}({gen_params_string(method, ParamGen.CastNames)});\n'
-            
+
         params = gen_paramscast_assign_string(method)
         if params != '':
             content += f'\n{params}'
-        
+
         params = gen_paramscast_cleanup_string(method)
         if params != '':
             content += f'\n{params}\n'
-        
+
         if is_obj_ret:
             content += '\t\t\treturn output;\n'
         elif ret_type['type'] == 'char8' or ret_type['type'] == 'char16':
             content += '\t\t\treturn (char)__result;\n'
         elif ret_type['type'] != 'void':
             content += '\t\t\treturn __result;\n'
-        
-        content += '\t\t}\n'                  
+
+        params = gen_paramscast_assign_string2(method)
+        if params != '':
+            content += f'\n{params}'
+
+        content += '\t\t}\n'
     content += '\t}\n'
     content += '}\n'
 
