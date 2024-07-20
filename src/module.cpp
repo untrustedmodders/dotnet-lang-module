@@ -3,6 +3,7 @@
 #include "managed_functions.h"
 #include "method_info.h"
 #include "attribute.h"
+#include "char_set.h"
 #include "type.h"
 #include "memory.h"
 #include "utils.h"
@@ -111,14 +112,14 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 			// Adjust char return
 			if (returnType == plugify::ValueType::Char16)
 				for (auto& attributes: methodInfo.GetReturnAttributes()) {
-					if (attributes.GetFieldValue<ValueType>("Value") == ValueType::Char8) {
-						goto next;
+					if (attributes.GetFieldValue<CharSet>("Value") == CharSet::Ansi) {
+						goto good;
 					}
 				}
 			else if (returnType == plugify::ValueType::ArrayChar16)
 				for (auto& attributes: methodInfo.GetReturnAttributes()) {
-					if (attributes.GetFieldValue<ValueType>("Value") == ValueType::ArrayChar8) {
-						goto next;
+					if (attributes.GetFieldValue<CharSet>("Value") == CharSet::Ansi) {
+						goto good;
 					}
 				}
 
@@ -126,7 +127,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 			continue;
 		}
 
-	next:
+	good:
 		const auto& parameterTypes = methodInfo.GetParameterTypes();
 
 		size_t paramCount = parameterTypes.size();
@@ -142,6 +143,21 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 			ValueType paramType = parameterTypes[i].GetManagedType().type;
 			ValueType methodParamType = paramTypes[i].GetType();
 			if (paramType != methodParamType) {
+				// Adjust char param
+				if (paramType == plugify::ValueType::Char16)
+					for (auto& attributes: parameterTypes[i].GetAttributes()) {
+						if (attributes.GetFieldValue<CharSet>("Value") == CharSet::Ansi) {
+							continue;
+						}
+					}
+				else if (paramType == plugify::ValueType::ArrayChar16)
+					for (auto& attributes:  parameterTypes[i].GetAttributes()) {
+						if (attributes.GetFieldValue<CharSet>("Value") == CharSet::Ansi) {
+							continue;
+						}
+					}
+
+
 				methodFail = true;
 				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.GetFunctionName(), ValueUtils::ToString(methodParamType), i, ValueUtils::ToString(paramType)));
 				continue;
