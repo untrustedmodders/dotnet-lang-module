@@ -875,17 +875,23 @@ def gen_ctypes_string(method):
 
 
 def gen_types_string(method):
+    def gen_param(param):
+        type = convert_type(param['type'], 'ref' in param and param['ref'] is True)
+        if 'delegate' in type and 'prototype' in param:
+            type = generate_name(param['prototype']['name'])
+        return type
+
     output_string = ''
     ret_type = method['retType']
     if method['paramTypes']:
         it = iter(method['paramTypes'])
         param = next(it)
-        output_string += convert_type(param['type'], 'ref' in param and param['ref'] is True)
+        output_string += gen_param(param)
         for p in it:
-            output_string += f', {convert_type(p["type"], "ref" in p and p["ref"] is True)}'
+            output_string += f', {gen_param(p)}'
     if output_string != '':
         output_string += ', '
-    output_string += f'{convert_type(ret_type["type"])}'
+    output_string += f'{gen_param(ret_type)}'
     return output_string
 
 
@@ -1159,28 +1165,10 @@ def main(manifest_path, output_dir, override):
     for method in pplugin['exportedMethods']:
         ret_type = method['retType']
         if "prototype" in ret_type:
-            prototype = ret_type['prototype']
-            delegate = gen_delegate(prototype)
-            if delegate not in delegates:
-                content += delegate
-                delegates.add(delegate)
-            if is_need_marshal(prototype):
-                wrapper_delegate = gen_wrapper_delegate(prototype)
-                if wrapper_delegate not in delegates:
-                    content += wrapper_delegate
-                    delegates.add(wrapper_delegate)
-        for attribute in method['paramTypes']:
-            if "prototype" in attribute:
-                prototype = attribute['prototype']
-                delegate = gen_delegate(prototype)
-                if delegate not in delegates:
-                    content += delegate
-                    delegates.add(delegate)
-                if is_need_marshal(prototype):
-                        wrapper_delegate = gen_wrapper_delegate(prototype)
-                        if wrapper_delegate not in delegates:
-                            content += wrapper_delegate
-                            delegates.add(wrapper_delegate)
+            content += decl_wrapper_delegate(ret_type, delegates)
+        for param_type in method['paramTypes']:
+            if "prototype" in param_type:
+                content += decl_wrapper_delegate(param_type, delegates)
 
     content += f'\n\tinternal static unsafe class {plugin_name}\n\t{{'
     content += '\n'
@@ -1202,39 +1190,15 @@ def main(manifest_path, output_dir, override):
 
         ret_type = method['retType']
         return_type = convert_type(ret_type['type'], 'ref' in ret_type and ret_type['ref'] is True)
+        if 'delegate' in return_type and 'prototype' in ret_type:
+            return_type = generate_name(ret_type['prototype']['name'])
         content += (f'\t\tprivate static {return_type} '
                     f'___{method["name"]}({gen_params_string(method, ParamGen.TypesNames)})\n')
         content += '\t\t{\n'
 
-        for attribute in method['paramTypes']:
-            if "prototype" in attribute:
-                prototype = attribute['prototype']
-                if is_need_marshal(prototype):
-                    content += f'\t\t\tvar {method["name"]}_{attribute["name"]} = ({prototype["name"]}Wrapper) s_DelegateHolder.GetOrAdd({attribute["name"]}, ({gen_params_string(prototype, ParamGen.WrapperNames)}) => {{\n'
-
-                    params = gen_paramswrapper_string(prototype)
-                    if params != '':
-                        content += f'{params}\n'
-
-                    prot_ret_type = prototype['retType']
-
-                    if prot_ret_type['type'] != 'void':
-                        content += f'\t\t\t\tvar __result__ = {attribute["name"]}({gen_params_string(prototype, ParamGen.WrapperCastNames)});\n'
-                    else:
-                        content += f'\t\t\t\t{attribute["name"]}({gen_params_string(prototype, ParamGen.WrapperCastNames)});\n'
-
-                    params = gen_paramswrapper_assign_string(prototype)
-                    if params != '':
-                        content += f'\n{params}'
-
-                    if is_obj_return(prot_ret_type['type']):
-                        content += '\t\t\t\treturn @__output;\n'
-                    elif prot_ret_type['type'] == 'char8' or prot_ret_type['type'] == 'char16':
-                        content += '\t\t\t\treturn (char)__result__;\n'
-                    elif prot_ret_type['type'] != 'void':
-                        content += '\t\t\t\treturn __result__;\n'
-
-                    content += '\t\t\t});\n'
+        for param_type in method['paramTypes']:
+            if "prototype" in param_type:
+                content += gen_wrapper_body(param_type, method["name"])
 
         params = gen_paramscast_string(method)
         if params != '':
@@ -1254,8 +1218,16 @@ def main(manifest_path, output_dir, override):
         if params != '':
             content += f'\n{params}\n'
 
+        if "prototype" in ret_type:
+            content += gen_wrapper_body(ret_type, method["name"])
+
         if is_obj_ret:
             content += '\t\t\treturn output;\n'
+        elif ret_type['type'] == 'function':
+            if is_need_marshal(ret_type['prototype']):
+                content += f'\t\t\treturn {method["name"]}__result;\n'
+            else:
+                content += f'\t\t\treturn Marshal.GetDelegateForFunctionPointer<{ret_type["prototype"]["name"]}>(__result);\n'
         elif ret_type['type'] == 'char8' or ret_type['type'] == 'char16':
             content += '\t\t\treturn (char)__result;\n'
         elif ret_type['type'] != 'void':
@@ -1273,6 +1245,53 @@ def main(manifest_path, output_dir, override):
         fd.write(content)
 
     return 0
+
+
+def gen_wrapper_body(param, name):
+    content = ''
+    prototype = param['prototype']
+    if is_need_marshal(prototype):
+        content += f'\t\t\tvar {name}_{param["name"]} = ({prototype["name"]}Wrapper) s_DelegateHolder.GetOrAdd({param["name"]}, ({gen_params_string(prototype, ParamGen.WrapperNames)}) => {{\n'
+
+        params = gen_paramswrapper_string(prototype)
+        if params != '':
+            content += f'{params}\n'
+
+        prot_ret_type = prototype['retType']
+
+        if prot_ret_type['type'] != 'void':
+            content += f'\t\t\t\tvar __result__ = {param["name"]}({gen_params_string(prototype, ParamGen.WrapperCastNames)});\n'
+        else:
+            content += f'\t\t\t\t{param["name"]}({gen_params_string(prototype, ParamGen.WrapperCastNames)});\n'
+
+        params = gen_paramswrapper_assign_string(prototype)
+        if params != '':
+            content += f'\n{params}'
+
+        if is_obj_return(prot_ret_type['type']):
+            content += '\t\t\t\treturn @__output;\n'
+        elif prot_ret_type['type'] == 'char8' or prot_ret_type['type'] == 'char16':
+            content += '\t\t\t\treturn (char)__result__;\n'
+        elif prot_ret_type['type'] != 'void':
+            content += '\t\t\t\treturn __result__;\n'
+
+        content += '\t\t\t});\n'
+    return content
+
+
+def decl_wrapper_delegate(param, delegates):
+    content = ''
+    prototype = param['prototype']
+    delegate = gen_delegate(prototype)
+    if delegate not in delegates:
+        content += delegate
+        delegates.add(delegate)
+    if is_need_marshal(prototype):
+        wrapper_delegate = gen_wrapper_delegate(prototype)
+        if wrapper_delegate not in delegates:
+            content += wrapper_delegate
+            delegates.add(wrapper_delegate)
+    return content
 
 
 def get_args():
