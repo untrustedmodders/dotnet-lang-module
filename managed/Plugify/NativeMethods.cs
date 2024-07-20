@@ -53,7 +53,7 @@ public static class NativeMethods
 	#region CreateVector functions
 
 	[DllImport(DllName)]
-	public static extern nint CreateVectorBool([MarshalAs(UnmanagedType.LPArray)] [In] bool[] arr, int len);
+	public static extern nint CreateVectorBool([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Bool)] [In] bool[] arr, int len);
 
 	[DllImport(DllName, CharSet = CharSet.Ansi)]
 	public static extern nint CreateVectorChar8([In] char[] arr, int len);
@@ -95,7 +95,7 @@ public static class NativeMethods
 	public static extern nint CreateVectorDouble([In] double[] arr, int len);
 
 	[DllImport(DllName)]
-	public static extern nint CreateVectorString([MarshalAs(UnmanagedType.LPArray)] [In] string[] arr, int len);
+	public static extern nint CreateVectorString([MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] [In] string[] arr, int len);
 	
 	#endregion
 
@@ -200,7 +200,7 @@ public static class NativeMethods
 	#region GetVectorData functions
 
 	[DllImport(DllName)]
-	public static extern void GetVectorDataBool(nint ptr, [MarshalAs(UnmanagedType.LPArray)] [In, Out] bool[] arr);
+	public static extern void GetVectorDataBool(nint ptr, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Bool)] [In, Out] bool[] arr);
 
 	[DllImport(DllName, CharSet = CharSet.Ansi)]
 	public static extern void GetVectorDataChar8(nint ptr, [In, Out] char[] arr);
@@ -242,14 +242,14 @@ public static class NativeMethods
 	public static extern void GetVectorDataDouble(nint ptr, [In, Out] double[] arr);
 
 	[DllImport(DllName)]
-	public static extern void GetVectorDataString(nint ptr, [MarshalAs(UnmanagedType.LPArray)] [In, Out] string[] arr);
+	public static extern void GetVectorDataString(nint ptr, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] [In, Out] string[] arr);
 
 	#endregion
 
 	#region ConstructVector Functions
 	
 	[DllImport(DllName)]
-	public static extern void ConstructVectorBool(nint ptr, [MarshalAs(UnmanagedType.LPArray)] [In] bool[] arr, int len);
+	public static extern void ConstructVectorBool(nint ptr, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Bool)] [In] bool[] arr, int len);
 
 	[DllImport(DllName, CharSet = CharSet.Ansi)]
 	public static extern void ConstructVectorChar8(nint ptr, [In] char[] arr, int len);
@@ -291,14 +291,14 @@ public static class NativeMethods
 	public static extern void ConstructVectorDouble(nint ptr, [In] double[] arr, int len);
 
 	[DllImport(DllName)]
-	public static extern void ConstructVectorString(nint ptr, [MarshalAs(UnmanagedType.LPArray)] [In] string[] arr, int len);
+	public static extern void ConstructVectorString(nint ptr, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] [In] string[] arr, int len);
 
 	#endregion
 
 	#region AssignVector Functions
 	
 	[DllImport(DllName)]
-	public static extern void AssignVectorBool(nint ptr, [MarshalAs(UnmanagedType.LPArray)] [In] bool[] arr, int len);
+	public static extern void AssignVectorBool(nint ptr, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Bool)] [In] bool[] arr, int len);
 
 	[DllImport(DllName, CharSet = CharSet.Ansi)]
 	public static extern void AssignVectorChar8(nint ptr, [In] char[] arr, int len);
@@ -340,7 +340,7 @@ public static class NativeMethods
 	public static extern void AssignVectorDouble(nint ptr, [In] double[] arr, int len);
 
 	[DllImport(DllName)]
-	public static extern void AssignVectorString(nint ptr, [MarshalAs(UnmanagedType.LPArray)] [In] string[] arr, int len);
+	public static extern void AssignVectorString(nint ptr, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr)] [In] string[] arr, int len);
 	
 	#endregion
 	

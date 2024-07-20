@@ -48,7 +48,7 @@ template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
 std::vector<std::string>* CreateVector(T* arr, int len) {
 	auto vector = len == 0 ? new std::vector<std::string>() : new std::vector<std::string>(arr, arr + len);
 	assert(vector);
-	g_numberOfAllocs[type_id<std::string>]++;
+	g_numberOfAllocs[type_id<std::vector<std::string>>]++;
 	return vector;
 }
 
@@ -64,7 +64,7 @@ template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
 std::vector<std::string>* AllocateVector() {
 	auto vector = static_cast<std::vector<std::string>*>(malloc(sizeof(std::vector<std::string>)));
 	assert(vector);
-	g_numberOfMalloc[type_id<std::string>]++;
+	g_numberOfMalloc[type_id<std::vector<std::string>>]++;
 	return vector;
 }
 
