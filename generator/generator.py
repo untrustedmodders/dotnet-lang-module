@@ -1279,7 +1279,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('manifest')
     parser.add_argument('output')
-    parser.add_argument('--override')
+    parser.add_argument('--override', action='store_true')
     return parser.parse_args()
 
 
