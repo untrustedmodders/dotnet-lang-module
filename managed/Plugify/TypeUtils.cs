@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Plugify;
 
@@ -123,9 +124,9 @@ internal static class TypeUtils
     {
 	    foreach (var attribute in customAttributes)
 	    {
-		    if (attribute is MarshalAttribute a)
+		    if (attribute is CharSetAttribute a)
 		    {
-			    return a.Value is ValueType.Char8 or ValueType.ArrayChar8;
+			    return a.Value is CharSet.Ansi;
 		    }
 	    }
 

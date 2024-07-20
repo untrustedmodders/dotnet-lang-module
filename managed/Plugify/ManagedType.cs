@@ -3,7 +3,7 @@
 namespace Plugify;
 
 [StructLayout(LayoutKind.Sequential, Size = 2)]
-public struct ManagedType
+internal struct ManagedType
 {
     private byte valueType;
     private byte reference;

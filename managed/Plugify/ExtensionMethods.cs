@@ -1,6 +1,6 @@
 namespace Plugify;
 
-public static class ExtensionMethods
+internal static class ExtensionMethods
 {
 	public static bool IsDelegate(this Type type)
 	{

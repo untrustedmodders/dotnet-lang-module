@@ -3,7 +3,7 @@ using System.Reflection.Emit;
 
 namespace Plugify;
 
-public static class MethodUtils
+internal static class MethodUtils
 {
     private static readonly MethodInfo FuncInvoke = typeof(Func<object[], object>).GetMethod("Invoke");
     private static readonly MethodInfo ArrayEmpty = typeof(Array).GetMethod(nameof(Array.Empty))!.MakeGenericMethod(typeof(object));

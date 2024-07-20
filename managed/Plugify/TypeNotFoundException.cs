@@ -1,6 +1,6 @@
 ﻿namespace Plugify;
 
-public class TypeNotFoundException : Exception
+internal class TypeNotFoundException : Exception
 {
 	public TypeNotFoundException()
 	{

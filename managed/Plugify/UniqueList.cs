@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Plugify;
 
-public class UniqueIdList<T>
+internal class UniqueIdList<T>
 {
 	private readonly Dictionary<int, T> _objects = new();
 

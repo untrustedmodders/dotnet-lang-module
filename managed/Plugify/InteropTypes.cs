@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace Plugify;
 
 [StructLayout(LayoutKind.Sequential)]
-public struct NativeString : IDisposable
+internal struct NativeString : IDisposable
 {
 	internal nint _string;
 	private int _length;
@@ -35,7 +35,7 @@ public struct NativeString : IDisposable
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct Bool32
+internal struct Bool32
 {
 	public uint Value { get; init; }
 

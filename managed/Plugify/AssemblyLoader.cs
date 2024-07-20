@@ -6,12 +6,12 @@ namespace Plugify;
 
 using static ManagedHost;
 
-public enum AssemblyLoadStatus
+internal enum AssemblyLoadStatus
 {
 	Success, FileNotFound, FileLoadFailure, InvalidFilePath, InvalidAssembly, UnknownError
 }
 
-public static class AssemblyLoader
+internal static class AssemblyLoader
 {
 	private static readonly Dictionary<Type, AssemblyLoadStatus> AssemblyLoadErrorLookup = new();
 	private static readonly Dictionary<int, AssemblyLoadContext?> AssemblyContexts = new();

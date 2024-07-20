@@ -6,7 +6,7 @@ namespace Plugify.Interop;
 using static ManagedHost;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly struct InternalCall
+internal readonly struct InternalCall
 {
 	private readonly nint namePtr;
 	public readonly nint NativeFunctionPtr;
