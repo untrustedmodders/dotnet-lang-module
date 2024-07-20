@@ -2,27 +2,23 @@
 	"fileVersion": 1,
 	"version": 1,
 	"versionName": "1.0",
-	"friendlyName": "C++ Test Plugin",
-	"description": "A simple plugin that test some calls",
+	"friendlyName": "Cross-call Worker",
+	"description": "Calls test plugin. Language specific implementation",
 	"createdBy": "untrustedmodders",
 	"createdByURL": "https://github.com/untrustedmodders/",
-	"docsURL": "ttps://github.com/untrustedmodders/csharp-lang-module",
+	"docsURL": "",
 	"downloadURL": "",
 	"updateURL": "",
-	"entryPoint": "bin/cpp_test",
+	"entryPoint": "cross_call_worker.dll",
 	"supportedPlatforms": [],
 	"languageModule": {
-		"name": "cpp"
+		"name": "csharp-dotnet"
 	},
-	"dependencies": [
-	  {
-		"name": "CSharpTest"
-	  }
-	],
+	"dependencies": [],
 	"exportedMethods": [
 		{
 			"name": "NoParamReturnVoid",
-			"funcName": "NoParamReturnVoid",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnVoid",
 			"paramTypes": [],
 			"retType": {
 				"type": "void"
@@ -30,7 +26,7 @@
 		},
 		{
 			"name": "NoParamReturnBool",
-			"funcName": "NoParamReturnBool",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnBool",
 			"paramTypes": [],
 			"retType": {
 				"type": "bool"
@@ -38,7 +34,7 @@
 		},
 		{
 			"name": "NoParamReturnChar8",
-			"funcName": "NoParamReturnChar8",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnChar8",
 			"paramTypes": [],
 			"retType": {
 				"type": "char8"
@@ -46,7 +42,7 @@
 		},
 		{
 			"name": "NoParamReturnChar16",
-			"funcName": "NoParamReturnChar16",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnChar16",
 			"paramTypes": [],
 			"retType": {
 				"type": "char16"
@@ -54,7 +50,7 @@
 		},
 		{
 			"name": "NoParamReturnInt8",
-			"funcName": "NoParamReturnInt8",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnInt8",
 			"paramTypes": [],
 			"retType": {
 				"type": "int8"
@@ -62,7 +58,7 @@
 		},
 		{
 			"name": "NoParamReturnInt16",
-			"funcName": "NoParamReturnInt16",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnInt16",
 			"paramTypes": [],
 			"retType": {
 				"type": "int16"
@@ -70,7 +66,7 @@
 		},
 		{
 			"name": "NoParamReturnInt32",
-			"funcName": "NoParamReturnInt32",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnInt32",
 			"paramTypes": [],
 			"retType": {
 				"type": "int32"
@@ -78,7 +74,7 @@
 		},
 		{
 			"name": "NoParamReturnInt64",
-			"funcName": "NoParamReturnInt64",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnInt64",
 			"paramTypes": [],
 			"retType": {
 				"type": "int64"
@@ -86,7 +82,7 @@
 		},
 		{
 			"name": "NoParamReturnUInt8",
-			"funcName": "NoParamReturnUInt8",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnUInt8",
 			"paramTypes": [],
 			"retType": {
 				"type": "uint8"
@@ -94,7 +90,7 @@
 		},
 		{
 			"name": "NoParamReturnUInt16",
-			"funcName": "NoParamReturnUInt16",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnUInt16",
 			"paramTypes": [],
 			"retType": {
 				"type": "uint16"
@@ -102,7 +98,7 @@
 		},
 		{
 			"name": "NoParamReturnUInt32",
-			"funcName": "NoParamReturnUInt32",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnUInt32",
 			"paramTypes": [],
 			"retType": {
 				"type": "uint32"
@@ -110,15 +106,15 @@
 		},
 		{
 			"name": "NoParamReturnUInt64",
-			"funcName": "NoParamReturnUInt64",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnUInt64",
 			"paramTypes": [],
 			"retType": {
 				"type": "uint64"
 			}
 		},
 		{
-			"name": "NoParamReturnPtr64",
-			"funcName": "NoParamReturnPtr64",
+			"name": "NoParamReturnPointer",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnPointer",
 			"paramTypes": [],
 			"retType": {
 				"type": "ptr64"
@@ -126,7 +122,7 @@
 		},
 		{
 			"name": "NoParamReturnFloat",
-			"funcName": "NoParamReturnFloat",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnFloat",
 			"paramTypes": [],
 			"retType": {
 				"type": "float"
@@ -134,7 +130,7 @@
 		},
 		{
 			"name": "NoParamReturnDouble",
-			"funcName": "NoParamReturnDouble",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnDouble",
 			"paramTypes": [],
 			"retType": {
 				"type": "double"
@@ -142,15 +138,22 @@
 		},
 		{
 			"name": "NoParamReturnFunction",
-			"funcName": "NoParamReturnFunction",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnFunction",
 			"paramTypes": [],
 			"retType": {
-				"type": "ptr64"
+				"type": "function",
+				"prototype": {
+					"name": "NoParamReturnFunctionFunc",
+					"paramTypes": [],
+					"retType": {
+						"type": "void"
+					}
+				}
 			}
 		},
 		{
 			"name": "NoParamReturnString",
-			"funcName": "NoParamReturnString",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnString",
 			"paramTypes": [],
 			"retType": {
 				"type": "string"
@@ -158,7 +161,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayBool",
-			"funcName": "NoParamReturnArrayBool",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayBool",
 			"paramTypes": [],
 			"retType": {
 				"type": "bool*"
@@ -166,7 +169,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayChar8",
-			"funcName": "NoParamReturnArrayChar8",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayChar8",
 			"paramTypes": [],
 			"retType": {
 				"type": "char8*"
@@ -174,7 +177,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayChar16",
-			"funcName": "NoParamReturnArrayChar16",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayChar16",
 			"paramTypes": [],
 			"retType": {
 				"type": "char16*"
@@ -182,7 +185,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayInt8",
-			"funcName": "NoParamReturnArrayInt8",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayInt8",
 			"paramTypes": [],
 			"retType": {
 				"type": "int8*"
@@ -190,7 +193,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayInt16",
-			"funcName": "NoParamReturnArrayInt16",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayInt16",
 			"paramTypes": [],
 			"retType": {
 				"type": "int16*"
@@ -198,7 +201,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayInt32",
-			"funcName": "NoParamReturnArrayInt32",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayInt32",
 			"paramTypes": [],
 			"retType": {
 				"type": "int32*"
@@ -206,7 +209,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayInt64",
-			"funcName": "NoParamReturnArrayInt64",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayInt64",
 			"paramTypes": [],
 			"retType": {
 				"type": "int64*"
@@ -214,7 +217,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayUInt8",
-			"funcName": "NoParamReturnArrayUInt8",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayUInt8",
 			"paramTypes": [],
 			"retType": {
 				"type": "uint8*"
@@ -222,7 +225,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayUInt16",
-			"funcName": "NoParamReturnArrayUInt16",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayUInt16",
 			"paramTypes": [],
 			"retType": {
 				"type": "uint16*"
@@ -230,7 +233,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayUInt32",
-			"funcName": "NoParamReturnArrayUInt32",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayUInt32",
 			"paramTypes": [],
 			"retType": {
 				"type": "uint32*"
@@ -238,15 +241,15 @@
 		},
 		{
 			"name": "NoParamReturnArrayUInt64",
-			"funcName": "NoParamReturnArrayUInt64",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayUInt64",
 			"paramTypes": [],
 			"retType": {
 				"type": "uint64*"
 			}
 		},
 		{
-			"name": "NoParamReturnArrayPtr64",
-			"funcName": "NoParamReturnArrayPtr64",
+			"name": "NoParamReturnArrayPointer",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayPointer",
 			"paramTypes": [],
 			"retType": {
 				"type": "ptr64*"
@@ -254,7 +257,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayFloat",
-			"funcName": "NoParamReturnArrayFloat",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayFloat",
 			"paramTypes": [],
 			"retType": {
 				"type": "float*"
@@ -262,7 +265,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayDouble",
-			"funcName": "NoParamReturnArrayDouble",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayDouble",
 			"paramTypes": [],
 			"retType": {
 				"type": "double*"
@@ -270,7 +273,7 @@
 		},
 		{
 			"name": "NoParamReturnArrayString",
-			"funcName": "NoParamReturnArrayString",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnArrayString",
 			"paramTypes": [],
 			"retType": {
 				"type": "string*"
@@ -278,7 +281,7 @@
 		},
 		{
 			"name": "NoParamReturnVector2",
-			"funcName": "NoParamReturnVector2",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnVector2",
 			"paramTypes": [],
 			"retType": {
 				"type": "vec2"
@@ -286,7 +289,7 @@
 		},
 		{
 			"name": "NoParamReturnVector3",
-			"funcName": "NoParamReturnVector3",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnVector3",
 			"paramTypes": [],
 			"retType": {
 				"type": "vec3"
@@ -294,7 +297,7 @@
 		},
 		{
 			"name": "NoParamReturnVector4",
-			"funcName": "NoParamReturnVector4",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnVector4",
 			"paramTypes": [],
 			"retType": {
 				"type": "vec4"
@@ -302,7 +305,7 @@
 		},
 		{
 			"name": "NoParamReturnMatrix4x4",
-			"funcName": "NoParamReturnMatrix4x4",
+			"funcName": "cross_call_worker.ExportClass.NoParamReturnMatrix4x4",
 			"paramTypes": [],
 			"retType": {
 				"type": "mat4x4"
@@ -310,7 +313,7 @@
 		},
 		{
 			"name": "Param1",
-			"funcName": "Param1",
+			"funcName": "cross_call_worker.ExportClass.Param1",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -324,7 +327,7 @@
 		},
 		{
 			"name": "Param2",
-			"funcName": "Param2",
+			"funcName": "cross_call_worker.ExportClass.Param2",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -343,7 +346,7 @@
 		},
 		{
 			"name": "Param3",
-			"funcName": "Param3",
+			"funcName": "cross_call_worker.ExportClass.Param3",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -367,7 +370,7 @@
 		},
 		{
 			"name": "Param4",
-			"funcName": "Param4",
+			"funcName": "cross_call_worker.ExportClass.Param4",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -396,7 +399,7 @@
 		},
 		{
 			"name": "Param5",
-			"funcName": "Param5",
+			"funcName": "cross_call_worker.ExportClass.Param5",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -430,7 +433,7 @@
 		},
 		{
 			"name": "Param6",
-			"funcName": "Param6",
+			"funcName": "cross_call_worker.ExportClass.Param6",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -459,7 +462,7 @@
 				},
 				{
 					"name": "f",
-					"type": "char8",
+					"type": "char16",
 					"ref": false
 				}
 			],
@@ -469,7 +472,7 @@
 		},
 		{
 			"name": "Param7",
-			"funcName": "Param7",
+			"funcName": "cross_call_worker.ExportClass.Param7",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -498,7 +501,7 @@
 				},
 				{
 					"name": "f",
-					"type": "char8",
+					"type": "char16",
 					"ref": false
 				},
 				{
@@ -513,7 +516,7 @@
 		},
 		{
 			"name": "Param8",
-			"funcName": "Param8",
+			"funcName": "cross_call_worker.ExportClass.Param8",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -542,7 +545,7 @@
 				},
 				{
 					"name": "f",
-					"type": "char8",
+					"type": "char16",
 					"ref": false
 				},
 				{
@@ -562,7 +565,7 @@
 		},
 		{
 			"name": "Param9",
-			"funcName": "Param9",
+			"funcName": "cross_call_worker.ExportClass.Param9",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -591,7 +594,7 @@
 				},
 				{
 					"name": "f",
-					"type": "char8",
+					"type": "char16",
 					"ref": false
 				},
 				{
@@ -616,7 +619,7 @@
 		},
 		{
 			"name": "Param10",
-			"funcName": "Param10",
+			"funcName": "cross_call_worker.ExportClass.Param10",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -645,7 +648,7 @@
 				},
 				{
 					"name": "f",
-					"type": "char8",
+					"type": "char16",
 					"ref": false
 				},
 				{
@@ -675,7 +678,7 @@
 		},
 		{
 			"name": "ParamRef1",
-			"funcName": "ParamRef1",
+			"funcName": "cross_call_worker.ExportClass.ParamRef1",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -689,7 +692,7 @@
 		},
 		{
 			"name": "ParamRef2",
-			"funcName": "ParamRef2",
+			"funcName": "cross_call_worker.ExportClass.ParamRef2",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -708,7 +711,7 @@
 		},
 		{
 			"name": "ParamRef3",
-			"funcName": "ParamRef3",
+			"funcName": "cross_call_worker.ExportClass.ParamRef3",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -732,7 +735,7 @@
 		},
 		{
 			"name": "ParamRef4",
-			"funcName": "ParamRef4",
+			"funcName": "cross_call_worker.ExportClass.ParamRef4",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -761,7 +764,7 @@
 		},
 		{
 			"name": "ParamRef5",
-			"funcName": "ParamRef5",
+			"funcName": "cross_call_worker.ExportClass.ParamRef5",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -795,7 +798,7 @@
 		},
 		{
 			"name": "ParamRef6",
-			"funcName": "ParamRef6",
+			"funcName": "cross_call_worker.ExportClass.ParamRef6",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -834,7 +837,7 @@
 		},
 		{
 			"name": "ParamRef7",
-			"funcName": "ParamRef7",
+			"funcName": "cross_call_worker.ExportClass.ParamRef7",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -878,7 +881,7 @@
 		},
 		{
 			"name": "ParamRef8",
-			"funcName": "ParamRef8",
+			"funcName": "cross_call_worker.ExportClass.ParamRef8",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -917,7 +920,7 @@
 				},
 				{
 					"name": "h",
-					"type": "float",
+					"type": "char16",
 					"ref": true
 				}
 			],
@@ -927,7 +930,7 @@
 		},
 		{
 			"name": "ParamRef9",
-			"funcName": "ParamRef9",
+			"funcName": "cross_call_worker.ExportClass.ParamRef9",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -966,7 +969,7 @@
 				},
 				{
 					"name": "h",
-					"type": "float",
+					"type": "char16",
 					"ref": true
 				},
 				{
@@ -981,7 +984,7 @@
 		},
 		{
 			"name": "ParamRef10",
-			"funcName": "ParamRef10",
+			"funcName": "cross_call_worker.ExportClass.ParamRef10",
 			"paramTypes": [
 				{
 					"name": "a",
@@ -1020,7 +1023,7 @@
 				},
 				{
 					"name": "h",
-					"type": "float",
+					"type": "char16",
 					"ref": true
 				},
 				{
@@ -1040,7 +1043,7 @@
 		},
 		{
 			"name": "ParamRefVectors",
-			"funcName": "ParamRefVectors",
+			"funcName": "cross_call_worker.ExportClass.ParamRefVectors",
 			"paramTypes": [
 				{
 					"name": "p1",
@@ -1124,7 +1127,7 @@
 		},
 		{
 			"name": "ParamAllPrimitives",
-			"funcName": "ParamAllPrimitives",
+			"funcName": "cross_call_worker.ExportClass.ParamAllPrimitives",
 			"paramTypes": [
 				{
 					"name": "p1",
@@ -1133,67 +1136,86 @@
 				},
 				{
 					"name": "p2",
-					"type": "char16",
+					"type": "char8",
 					"ref": false
 				},
 				{
 					"name": "p3",
-					"type": "int8",
+					"type": "char16",
 					"ref": false
 				},
 				{
 					"name": "p4",
-					"type": "int16",
+					"type": "int8",
 					"ref": false
 				},
 				{
 					"name": "p5",
-					"type": "int32",
+					"type": "int16",
 					"ref": false
 				},
 				{
 					"name": "p6",
-					"type": "int64",
+					"type": "int32",
 					"ref": false
 				},
 				{
 					"name": "p7",
-					"type": "uint8",
+					"type": "int64",
 					"ref": false
 				},
 				{
 					"name": "p8",
-					"type": "uint16",
+					"type": "uint8",
 					"ref": false
 				},
 				{
 					"name": "p9",
-					"type": "uint32",
+					"type": "uint16",
 					"ref": false
 				},
 				{
 					"name": "p10",
-					"type": "uint64",
+					"type": "uint32",
 					"ref": false
 				},
 				{
 					"name": "p11",
-					"type": "ptr64",
+					"type": "uint64",
 					"ref": false
 				},
 				{
 					"name": "p12",
-					"type": "float",
+					"type": "ptr64",
 					"ref": false
 				},
 				{
 					"name": "p13",
+					"type": "float",
+					"ref": false
+				},
+				{
+					"name": "p14",
 					"type": "double",
 					"ref": false
 				}
 			],
 			"retType": {
 				"type": "int64"
+			}
+		},
+		{
+			"name": "ReverseCall",
+			"funcName": "cross_call_worker.ExportClass.ReverseCall",
+			"paramTypes": [
+				{
+					"name": "test",
+					"type": "string",
+					"ref": false
+				}
+			],
+			"retType": {
+				"type": "void"
 			}
 		}
 	]

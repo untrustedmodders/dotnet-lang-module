@@ -5,7 +5,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>CSharpTest</AssemblyName>
+        <AssemblyName>cross_call_worker</AssemblyName>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<EnableDynamicLoading>true</EnableDynamicLoading>
         <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
@@ -13,7 +13,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Plugify" Version="1.0.8" />
+      <PackageReference Include="Plugify" Version="1.0.35" />
     </ItemGroup>
 
 </Project>

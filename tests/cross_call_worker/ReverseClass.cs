@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-
+using System.Runtime.InteropServices;
 using static cross_call_master.cross_call_master;
 
 namespace cross_call_worker;
@@ -81,7 +81,7 @@ public unsafe class ReverseClass
     public static string ReverseNoParamReturnPointer()
     {
         IntPtr result = NoParamReturnPointerCallback();
-        return result.ToString("X");
+        return "0x" + result.ToString("x");
     }
 
     public static string ReverseNoParamReturnFloat()
@@ -96,11 +96,12 @@ public unsafe class ReverseClass
         return result.ToString();
     }
 
+    delegate int NoParamReturnFunctionCallbackFunc();
+    
     public static string ReverseNoParamReturnFunction()
     {
-        // Func<string> result = NoParamReturnFunctionCallback();
-        Func<string> result = () => "Function Result"; // Placeholder for actual call
-        return result != null ? result() : "<null function pointer>";
+        var func = NoParamReturnFunctionCallback();
+        return func().ToString();
     }
 
     public static string ReverseNoParamReturnString()
@@ -178,7 +179,7 @@ public unsafe class ReverseClass
     public static string ReverseNoParamReturnArrayPointer()
     {
         IntPtr[] result = NoParamReturnArrayPointerCallback();
-        return $"{{{string.Join(", ", result.Select(v => v.ToString("X")))}}}";
+        return $"{{{string.Join(", ", result.Select(v =>  "0x" + v.ToString("x")))}}}";
     }
 
     public static string ReverseNoParamReturnArrayFloat()
@@ -345,7 +346,7 @@ public unsafe class ReverseClass
         long[] e = [];
         char f =  default;
         ParamRef6Callback(ref a, ref b, ref c, ref d, ref e, ref f);
-        return $"{a}|{b:F1}|{c}|{{{d.X:F1}, {d.Y:F1}, {d.Z:F1}, {d.W:F1}}}|{{{string.Join(", ", e)}}}|{f}";
+        return $"{a}|{b:F1}|{c}|{{{d.X:F1}, {d.Y:F1}, {d.Z:F1}, {d.W:F1}}}|{{{string.Join(", ", e)}}}|{(int)f}";
     }
 
     public static string ReverseParamRef7()
@@ -358,7 +359,7 @@ public unsafe class ReverseClass
         char f =  default;
         string g = "";
         ParamRef7Callback(ref a, ref b, ref c, ref d, ref e, ref f, ref g);
-        return $"{a}|{b:F1}|{c}|{{{d.X:F1}, {d.Y:F1}, {d.Z:F1}, {d.W:F1}}}|{{{string.Join(", ", e)}}}|{f}|{g}";
+        return $"{a}|{b:F1}|{c}|{{{d.X:F1}, {d.Y:F1}, {d.Z:F1}, {d.W:F1}}}|{{{string.Join(", ", e)}}}|{(int)f}|{g}";
     }
 
     public static string ReverseParamRef8()
@@ -372,7 +373,7 @@ public unsafe class ReverseClass
         string g = "";
         char h =  default;
         ParamRef8Callback(ref a, ref b, ref c, ref d, ref e, ref f, ref g, ref h);
-        return $"{a}|{b:F1}|{c}|{{{d.X:F1}, {d.Y:F1}, {d.Z:F1}, {d.W:F1}}}|{{{string.Join(", ", e)}}}|{f}|{g}|{h}";
+        return $"{a}|{b:F1}|{c}|{{{d.X:F1}, {d.Y:F1}, {d.Z:F1}, {d.W:F1}}}|{{{string.Join(", ", e)}}}|{(int)f}|{g}|{(int)h}";
     }
 
     public static string ReverseParamRef9()
@@ -387,7 +388,7 @@ public unsafe class ReverseClass
         char h =  default;
         short k = default;
         ParamRef9Callback(ref a, ref b, ref c, ref d, ref e, ref f, ref g, ref h, ref k);
-        return $"{a}|{b:F1}|{c}|{{{d.X:F1}, {d.Y:F1}, {d.Z:F1}, {d.W:F1}}}|{{{string.Join(", ", e)}}}|{f}|{g}|{h}|{k}";
+        return $"{a}|{b:F1}|{c}|{{{d.X:F1}, {d.Y:F1}, {d.Z:F1}, {d.W:F1}}}|{{{string.Join(", ", e)}}}|{(int)f}|{g}|{(int)h}|{k}";
     }
 
     public static string ReverseParamRef10()
@@ -403,7 +404,7 @@ public unsafe class ReverseClass
         short k = default;
         IntPtr l = default;
         ParamRef10Callback(ref a, ref b, ref c, ref d, ref e, ref f, ref g, ref h, ref k, ref l);
-        return $"{a}|{b:F1}|{c}|{{{d.X:F1}, {d.Y:F1}, {d.Z:F1}, {d.W:F1}}}|{{{string.Join(", ", e)}}}|{f}|{g}|{h}|{k}|{l:X}";
+        return $"{a}|{b:F1}|{c}|{{{d.X:F1}, {d.Y:F1}, {d.Z:F1}, {d.W:F1}}}|{{{string.Join(", ", e)}}}|{(int)f}|{g}|{(int)h}|{k}|{"0x" + l.ToString("x")}";
     }
 
     public static string ReverseParamRefVectors()
@@ -446,8 +447,8 @@ public unsafe class ReverseClass
 
         // Format and convert the results
         var p1Formatted = string.Join(", ", p1.Select(v => v.ToString().ToLower()));
-        var p2Formatted = string.Join(", ", p2.Select(v => v.ToString()));
-        var p3Formatted = string.Join(", ", p3.Select(v => v.ToString()));
+        var p2Formatted = string.Join(", ", p2.Select(v => ((int)v).ToString()));
+        var p3Formatted = string.Join(", ", p3.Select(v => ((int)v).ToString()));
         var p4Formatted = string.Join(", ", p4.Select(v => v.ToString()));
         var p5Formatted = string.Join(", ", p5.Select(v => v.ToString()));
         var p6Formatted = string.Join(", ", p6.Select(v => v.ToString()));
@@ -456,7 +457,7 @@ public unsafe class ReverseClass
         var p9Formatted = string.Join(", ", p9.Select(v => v.ToString()));
         var p10Formatted = string.Join(", ", p10.Select(v => v.ToString()));
         var p11Formatted = string.Join(", ", p11.Select(v => v.ToString()));
-        var p12Formatted = string.Join(", ", p12.Select(v => v.ToString("X")));
+        var p12Formatted = string.Join(", ", p12.Select(v => "0x" + v.ToString("x")));
         var p13Formatted = string.Join(", ", p13.Select(v => v.ToString("F2")));
         var p14Formatted = string.Join(", ", p14.Select(v => v.ToString()));
         var p15Formatted = string.Join(", ", p15.Select(v => $"'{v}'"));
@@ -531,8 +532,14 @@ public unsafe class ReverseClass
         { "ParamRef1", ReverseParamRef1 },
         { "ParamRef2", ReverseParamRef2 },
         { "ParamRef3", ReverseParamRef3 },
-        // Add other ParamRef* entries similarly
-        { "ParamRefVectors", ReverseParamRefVectors },
+        { "ParamRef4", ReverseParamRef4 },
+        { "ParamRef5", ReverseParamRef5 },
+        { "ParamRef6", ReverseParamRef6 },
+        { "ParamRef7", ReverseParamRef7 },
+        { "ParamRef8", ReverseParamRef8 },
+        { "ParamRef9", ReverseParamRef9 },
+        { "ParamRef10", ReverseParamRef10 },
+        { "ParamRefArrays", ReverseParamRefVectors },
         { "ParamAllPrimitives", ReverseParamAllPrimitives }
     };
     
