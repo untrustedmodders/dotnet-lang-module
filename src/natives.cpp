@@ -40,7 +40,7 @@ template<typename T, typename = std::enable_if_t<!std::is_same_v<T, char*>>>
 std::vector<T>* CreateVector(T* arr, int len) {
 	auto vector = len == 0 ? new std::vector<T>() : new std::vector<T>(arr, arr + len);
 	assert(vector);
-	g_numberOfAllocs[type_id<T>]++;
+	g_numberOfAllocs[type_id<std::vector<T>>]++;
 	return vector;
 }
 
@@ -56,7 +56,7 @@ template<typename T, typename = std::enable_if_t<!std::is_same_v<T, char*>>>
 std::vector<T>* AllocateVector() {
 	auto vector = static_cast<std::vector<T>*>(malloc(sizeof(std::vector<T>)));
 	assert(vector);
-	g_numberOfMalloc[type_id<T>]++;
+	g_numberOfMalloc[type_id<std::vector<T>>]++;
 	return vector;
 }
 
@@ -71,16 +71,16 @@ std::vector<std::string>* AllocateVector() {
 template<typename T>
 void DeleteVector(std::vector<T>* vector) {
 	delete vector;
-	g_numberOfAllocs[type_id<T>]--;
-	assert(g_numberOfAllocs[type_id<T>] != -1);
+	g_numberOfAllocs[type_id<std::vector<T>>]--;
+	assert(g_numberOfAllocs[type_id<std::vector<T>>] != -1);
 }
 
 template<typename T>
 void FreeVector(std::vector<T>* vector) {
 	vector->~vector();
 	free(vector);
-	g_numberOfMalloc[type_id<T>]--;
-	assert(g_numberOfMalloc[type_id<T>] != -1);
+	g_numberOfMalloc[type_id<std::vector<T>>]--;
+	assert(g_numberOfMalloc[type_id<std::vector<T>>] != -1);
 }
 
 template<typename T>

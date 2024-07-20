@@ -664,6 +664,45 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
+	private static unsafe void GetMethodInfoParameterAttributes(int methodId, int parameterIndex, int* outAttributeArrayPtr, int* outAttributeCount)
+	{
+		try
+		{
+			if (!CachedMethods.TryGetValue(methodId, out var methodInfo))
+				return;
+
+			ParameterInfo[] parameters = methodInfo.GetParameters();
+			if (parameters.Length == 0 || parameterIndex >= parameters.Length)
+			{
+				*outAttributeCount = 0;
+				return;
+			}
+			
+			var attributes = parameters[parameterIndex].GetCustomAttributes(false).ToImmutableArray();
+
+			if (attributes.Length == 0)
+			{
+				*outAttributeCount = 0;
+				return;
+			}
+
+			*outAttributeCount = attributes.Length;
+
+			if (outAttributeArrayPtr == null)
+				return;
+
+			for (int i = 0; i < attributes.Length; i++)
+			{
+				outAttributeArrayPtr[i] = CachedAttributes.Add((Attribute) attributes[i]);
+			}
+		}
+		catch (Exception e)
+		{
+			HandleException(e);
+		}
+	}
+
+	[UnmanagedCallersOnly]
 	private static unsafe void GetMethodInfoReturnAttributes(int methodId, int* outAttributeArrayPtr, int* outAttributeCount)
 	{
 		try

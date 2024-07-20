@@ -62,6 +62,7 @@ namespace netlm {
 	using GetMethodInfoParameterTypesFn = void(*)(ManagedHandle, TypeId*, int32_t*);
 	using GetMethodInfoAccessibilityFn = TypeAccessibility(*)(ManagedHandle);
 	using GetMethodInfoAttributesFn = void(*)(ManagedHandle, TypeId*, int32_t*);
+	using GetMethodInfoParameterAttributesFn = void(*)(ManagedHandle, int32_t, TypeId*, int32_t*);
 	using GetMethodInfoReturnAttributesFn = void(*)(ManagedHandle, TypeId*, int32_t*);
 #pragma endregion
 
@@ -146,6 +147,7 @@ namespace netlm {
 		GetMethodInfoParameterTypesFn GetMethodInfoParameterTypesFptr;
 		GetMethodInfoAccessibilityFn GetMethodInfoAccessibilityFptr;
 		GetMethodInfoAttributesFn GetMethodInfoAttributesFptr;
+		GetMethodInfoParameterAttributesFn GetMethodInfoParameterAttributesFptr;
 		GetMethodInfoReturnAttributesFn GetMethodInfoReturnAttributesFptr;
 #pragma endregion
 

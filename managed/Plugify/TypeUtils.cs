@@ -112,7 +112,8 @@ internal static class TypeUtils
 
     internal static ValueType ConvertToValueType(Type type)
     {
-	    if (TypeSwitcher.TryGetValue(type.IsByRef ? type.GetElementType() : type, out var valueType))
+	    var elementType = type.IsByRef ? type.GetElementType() : type;
+	    if (TypeSwitcher.TryGetValue(elementType, out var valueType))
 	    {
 		    return valueType;
 	    }

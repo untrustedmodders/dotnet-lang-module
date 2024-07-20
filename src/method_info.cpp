@@ -59,6 +59,21 @@ std::vector<Attribute> MethodInfo::GetAttributes() const {
 	return result;
 }
 
+std::vector<Attribute> MethodInfo::GetParameterAttributes(size_t index) const {
+	int32_t parameterIndex = static_cast<int32_t>(index);
+
+	int32_t attributeCount;
+	Managed.GetMethodInfoParameterAttributesFptr(_handle, parameterIndex, nullptr, &attributeCount);
+	std::vector<ManagedHandle> attributeHandles(static_cast<size_t>(attributeCount));
+	Managed.GetMethodInfoParameterAttributesFptr(_handle, parameterIndex, attributeHandles.data(), &attributeCount);
+
+	std::vector<Attribute> result(attributeHandles.size());
+	for (size_t i = 0; i < attributeHandles.size(); i++)
+		result[i]._handle = attributeHandles[i];
+
+	return result;
+}
+
 std::vector<Attribute> MethodInfo::GetReturnAttributes() const {
 	int32_t attributeCount;
 	Managed.GetMethodInfoReturnAttributesFptr(_handle, nullptr, &attributeCount);

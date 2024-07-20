@@ -18,6 +18,7 @@ namespace netlm {
 		TypeAccessibility GetAccessibility() const;
 
 		std::vector<Attribute> GetAttributes() const;
+		std::vector<Attribute> GetParameterAttributes(size_t index) const;
 		std::vector<Attribute> GetReturnAttributes() const;
 
 		bool operator==(const MethodInfo& other) const { return _handle == other._handle; }

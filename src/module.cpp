@@ -113,13 +113,13 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 			if (returnType == plugify::ValueType::Char16)
 				for (auto& attributes: methodInfo.GetReturnAttributes()) {
 					if (attributes.GetFieldValue<CharSet>("Value") == CharSet::Ansi) {
-						goto good;
+						goto good_return;
 					}
 				}
 			else if (returnType == plugify::ValueType::ArrayChar16)
 				for (auto& attributes: methodInfo.GetReturnAttributes()) {
 					if (attributes.GetFieldValue<CharSet>("Value") == CharSet::Ansi) {
-						goto good;
+						goto good_return;
 					}
 				}
 
@@ -127,7 +127,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 			continue;
 		}
 
-	good:
+	good_return:
 		const auto& parameterTypes = methodInfo.GetParameterTypes();
 
 		size_t paramCount = parameterTypes.size();
@@ -145,21 +145,23 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 			if (paramType != methodParamType) {
 				// Adjust char param
 				if (paramType == plugify::ValueType::Char16)
-					for (auto& attributes: parameterTypes[i].GetAttributes()) {
+					for (auto& attributes: methodInfo.GetParameterAttributes(i)) {
 						if (attributes.GetFieldValue<CharSet>("Value") == CharSet::Ansi) {
-							continue;
+							goto good_param;
 						}
 					}
 				else if (paramType == plugify::ValueType::ArrayChar16)
-					for (auto& attributes:  parameterTypes[i].GetAttributes()) {
+					for (auto& attributes:  methodInfo.GetParameterAttributes(i)) {
 						if (attributes.GetFieldValue<CharSet>("Value") == CharSet::Ansi) {
-							continue;
+							goto good_param;
 						}
 					}
 
 
 				methodFail = true;
 				methodErrors.emplace_back(std::format("Method '{}' has invalid param type '{}' at index {} when it should have '{}'", method.GetFunctionName(), ValueUtils::ToString(methodParamType), i, ValueUtils::ToString(paramType)));
+
+			good_param:
 				continue;
 			}
 		}
