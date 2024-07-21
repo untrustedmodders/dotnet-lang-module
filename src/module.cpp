@@ -59,7 +59,7 @@ void DotnetLanguageModule::Shutdown() {
 	_host.UnloadAssemblyLoadContext(_alc);
 	_host.Shutdown();
 
-	CheckAllocations();
+	DetectLeaks();
 
 	_rt.reset();
 	_provider.reset();
@@ -458,18 +458,16 @@ extern std::map<type_index, int32_t> g_numberOfMalloc;
 extern std::map<type_index, int32_t> g_numberOfAllocs;
 extern std::string_view GetTypeName(type_index type);
 
-void DotnetLanguageModule::CheckAllocations() {
+void DotnetLanguageModule::DetectLeaks() {
 	for (const auto& [type, count] : g_numberOfMalloc) {
 		if (count > 0) {
-			auto typeName = GetTypeName(type);
-			g_netlm._provider->Log(std::format(LOG_PREFIX "Memory leaks detected: {} allocations. Related to Create{}. You should use Delete{}!", count, typeName, typeName), Severity::Error);
+			g_netlm._provider->Log(std::format(LOG_PREFIX "Memory leaks detected: {} allocations. Related to {}!", count, GetTypeName(type)), Severity::Error);
 		}
 	}
 
-	for (auto [type, count] : g_numberOfAllocs) {
+	for (const auto& [type, count] : g_numberOfAllocs) {
 		if (count > 0) {
-			auto typeName = GetTypeName(type);
-			g_netlm._provider->Log(std::format(LOG_PREFIX "Memory leaks detected: {} allocations. Related to Allocate{}. You should use Free{}!", count, typeName, typeName), Severity::Error);
+			g_netlm._provider->Log(std::format(LOG_PREFIX "Memory leaks detected: {} allocations. Related to {}!", count, GetTypeName(type)), Severity::Error);
 		}
 	}
 

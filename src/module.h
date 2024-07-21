@@ -55,7 +55,7 @@ namespace netlm {
 	private:
 		static void ExceptionCallback(std::string_view message);
 		static void MessageCallback(std::string_view message, MessageLevel level);
-		static void CheckAllocations();
+		static void DetectLeaks();
 
 		static void InternalCall(plugify::MethodRef method, plugify::MemAddr data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret);
 
