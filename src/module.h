@@ -46,6 +46,7 @@ namespace netlm {
 		void OnPluginStart(plugify::PluginRef plugin) override;
 		void OnPluginEnd(plugify::PluginRef plugin) override;
 		void OnMethodExport(plugify::PluginRef plugin) override;
+		bool IsDebugBuild() override { return NETLM_IS_DEBUG; };
 
 		const ScriptMap& GetScripts() const { return _scripts; }
 		ScriptInstance* FindScript(plugify::UniqueId pluginId);

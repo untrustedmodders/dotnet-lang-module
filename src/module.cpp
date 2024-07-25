@@ -179,7 +179,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 		}
 		_functions.emplace_back(std::move(function));
 
-		methods.emplace_back(method.GetName(), methodAddr);
+		methods.emplace_back(method, methodAddr);
 	}
 
 	if (!methodErrors.empty()) {
@@ -192,7 +192,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 
 	const auto [_, result] = _scripts.try_emplace(plugin.GetId(), plugin, pluginClassType);
 	if (!result) {
-		return ErrorData{ std::format("Plugin key duplicate") };
+		return ErrorData{ "Plugin key duplicate" };
 	}
 
 	return LoadResultData{ std::move(methods) };
@@ -222,40 +222,34 @@ void DotnetLanguageModule::OnMethodExport(PluginRef plugin) {
 		// Add as C# calls (direct)
 		auto& ownerAssembly = _alc.GetLoadedAssemblies()[pluginId];
 
-		for (const auto& [name, _] : plugin.GetMethods()) {
+		for (const auto& [method, _] : plugin.GetMethods()) {
 			void* addr = nullptr;
 
-			for (auto& method : plugin.GetDescriptor().GetExportedMethods()) {
-				if (method.GetName() == name) {
-					auto separated= Utils::Split(method.GetFunctionName(), ".");
-					size_t size = separated.size();
+			auto separated= Utils::Split(method.GetFunctionName(), ".");
+			size_t size = separated.size();
 
-					bool noNamespace = (size == 2);
-					assert(size == 3 || noNamespace);
-					Type& type = ownerAssembly.GetType(noNamespace ? separated[size-2] : std::string_view(separated[0].data(), separated[size-1]
-																																				 .data() - 1));
-					assert(type);
-					MethodInfo methodInfo = type.GetMethod(separated[size-1]);
-					assert(methodInfo);
+			bool noNamespace = (size == 2);
+			assert(size == 3 || noNamespace);
+			Type& type = ownerAssembly.GetType(noNamespace ? separated[size-2] : std::string_view(separated[0].data(), separated[size-1].data() - 1));
+			assert(type);
+			MethodInfo methodInfo = type.GetMethod(separated[size-1]);
+			assert(methodInfo);
 
-					addr = methodInfo.GetFunctionAddress();
-					break;
-				}
-			}
+			addr = methodInfo.GetFunctionAddress();
 
 			for (auto& [id, assembly] : _alc.GetLoadedAssemblies()) {
 				// No self export
 				if (id == pluginId)
 					continue;
 
-				assembly.AddInternalCall(className, name, addr);
+				assembly.AddInternalCall(className, method.GetName(), addr);
 			}
 		}
 
 	} else {
 		// Add as C++ calls
-		for (const auto& [name, addr] : plugin.GetMethods()) {
-			auto variableName = std::format("__{}", name);
+		for (const auto& [method, addr] : plugin.GetMethods()) {
+			auto variableName = std::format("__{}", method.GetName());
 			for (auto& [_, assembly] : _alc.GetLoadedAssemblies()) {
 				assembly.AddInternalCall(className, variableName, addr);
 			}
