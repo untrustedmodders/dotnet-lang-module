@@ -214,8 +214,7 @@ void DotnetLanguageModule::OnPluginEnd(PluginRef plugin) {
 
 void DotnetLanguageModule::OnMethodExport(PluginRef plugin) {
 	auto pluginId = plugin.GetId();
-	auto pluginName = plugin.GetName();
-	auto className = std::format("{}.{}", pluginName, pluginName);
+	auto className = std::format("{}.{}", plugin.GetName(), plugin.GetName());
 
 	ScriptInstance* script = FindScript(pluginId);
 	if (script) {
@@ -482,12 +481,12 @@ ScriptInstance::ScriptInstance(PluginRef plugin, Type& type) : _plugin{plugin}, 
 	}
 
 	_instance.SetPropertyValue("Id", plugin.GetId());
-	_instance.SetPropertyValue("Name", std::string(plugin.GetName()));
-	_instance.SetPropertyValue("FullName", std::string(plugin.GetFriendlyName()));
-	_instance.SetPropertyValue("Description", std::string(desc.GetDescription()));
-	_instance.SetPropertyValue("Version", std::string(desc.GetVersionName()));
-	_instance.SetPropertyValue("Author", std::string(desc.GetCreatedBy()));
-	_instance.SetPropertyValue("Website", std::string(desc.GetCreatedByURL()));
+	_instance.SetPropertyValue("Name", plugin.GetName());
+	_instance.SetPropertyValue("FullName", plugin.GetFriendlyName());
+	_instance.SetPropertyValue("Description", desc.GetDescription());
+	_instance.SetPropertyValue("Version", desc.GetVersionName());
+	_instance.SetPropertyValue("Author", desc.GetCreatedBy());
+	_instance.SetPropertyValue("Website", desc.GetCreatedByURL());
 	_instance.SetPropertyValue("BaseDir", plugin.GetBaseDir().string());
 	_instance.SetPropertyValue("Dependencies", deps);
 }
