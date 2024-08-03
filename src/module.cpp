@@ -212,6 +212,10 @@ void DotnetLanguageModule::OnPluginEnd(PluginRef plugin) {
 	}
 }
 
+bool DotnetLanguageModule::IsDebugBuild() {
+	return NETLM_IS_DEBUG;
+}
+
 void DotnetLanguageModule::OnMethodExport(PluginRef plugin) {
 	auto pluginId = plugin.GetId();
 	auto className = std::format("{}.{}", plugin.GetName(), plugin.GetName());
