@@ -102,8 +102,8 @@ namespace netlm {
 		void InvokeMethodRetInternal(ManagedHandle methodId, const void** parameters, size_t length, void* resultStorage) const;
 
 	private:
-		void* _handle{ nullptr };
-		Type* _type{ nullptr };
+		void* _handle = nullptr;
+		Type* _type = nullptr;
 
 	private:
 		friend class ManagedAssembly;

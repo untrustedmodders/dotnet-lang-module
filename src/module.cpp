@@ -259,11 +259,8 @@ void DotnetLanguageModule::OnMethodExport(PluginRef plugin) {
 		}
 	}
 
-#if NDEBUG
-	const bool warnOnMissing = false;
-#else
-	const bool warnOnMissing = true;
-#endif
+	const bool warnOnMissing = NETLM_IS_DEBUG;
+
 	for (auto& [id, assembly] : _alc.GetLoadedAssemblies()) {
 		assembly.UploadInternalCalls(warnOnMissing);
 	}
@@ -500,9 +497,6 @@ ScriptInstance::~ScriptInstance() {
 };
 
 void ScriptInstance::InvokeOnStart() const {
-	using namespace std::chrono_literals;
-	//std::this_thread::sleep_for(30000ms);
-
 	MethodInfo onStartMethod = _instance.GetType().GetMethod("OnStart");
 	if (onStartMethod) {
 		_instance.InvokeMethodRaw(onStartMethod);

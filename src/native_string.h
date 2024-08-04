@@ -31,12 +31,12 @@ namespace netlm {
 		const char_t* Data() const { return _string; }
 
 		bool IsNull() const { return _string == nullptr; }
-		bool IsEmpty() const { return Size() == 0; }
+		bool IsEmpty() const { return _length == 0; }
 		size_t Size() const{ return static_cast<size_t>(_length); }
 
 	private:
-		char_t* _string{ nullptr };
-		int32_t _length{ 0 };
-		Bool32 _disposed{ false }; // unused in C++
+		char_t* _string = nullptr;
+		int32_t _length = 0;
+		Bool32 _disposed = false; // unused in C++
 	};
 }
