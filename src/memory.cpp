@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "utils.h"
 
 #if NETLM_PLATFORM_WINDOWS
 #include <strsafe.h>
@@ -24,8 +25,8 @@ void Memory::FreeHGlobal(void* ptr) {
 }
 
 char_t* Memory::StringToCoTaskMemAuto(string_view_t string) {
-	size_t length = string.length() + 1;
-	size_t size = length * sizeof(char_t);
+	size_t length = string.length();
+	size_t size = (length + 1) * sizeof(char_t);
 
 #if NETLM_PLATFORM_WINDOWS
 	auto* buffer = static_cast<char_t*>(CoTaskMemAlloc(size));
@@ -34,15 +35,16 @@ char_t* Memory::StringToCoTaskMemAuto(string_view_t string) {
 #endif
 
 	if (buffer != nullptr) {
-		memcpy(buffer, string.data(), size);
+		memcpy(buffer, string.data(), length * sizeof(char_t));
+		buffer[length] = NETLM_NSTR('\0');
 	}
 
 	return buffer;
 }
 
 char* Memory::StringToHGlobalAnsi(std::string_view string) {
-	size_t length = string.length() + 1;
-	size_t size = length * sizeof(char);
+	size_t length = string.length();
+	size_t size = (length + 1) * sizeof(char);
 
 #if NETLM_PLATFORM_WINDOWS
 	auto* buffer = static_cast<char*>(CoTaskMemAlloc(size));
@@ -51,7 +53,8 @@ char* Memory::StringToHGlobalAnsi(std::string_view string) {
 #endif
 
 	if (buffer != nullptr) {
-		memcpy(buffer, string.data(), size);
+		memcpy(buffer, string.data(), length * sizeof(char));
+		buffer[length] = '\0';
 	}
 
 	return buffer;
