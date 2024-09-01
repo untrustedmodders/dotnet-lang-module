@@ -11,7 +11,7 @@ namespace netlm {
 
 		template<typename TReturn>
 		TReturn GetFieldValue(std::string_view fieldName) {
-			TReturn result;
+			TReturn result{};
 			GetFieldValue(fieldName, &result);
 			return result;
 		}

@@ -87,7 +87,7 @@ namespace netlm {
 		TReturn InvokeStaticMethodRaw(const MethodInfo& methodInfo, TArgs&&... parameters) const {
 			constexpr size_t parameterCount = sizeof...(parameters);
 
-			TReturn result;
+			TReturn result{};
 
 			if constexpr (parameterCount > 0) {
 				const void* parameterValues[] = { &parameters ... };

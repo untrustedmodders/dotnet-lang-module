@@ -25,7 +25,7 @@ namespace netlm {
 		TReturn InvokeMethodRaw(const MethodInfo& methodInfo, TArgs&&... parameters) const {
 			constexpr size_t parameterCount = sizeof...(parameters);
 
-			TReturn result;
+			TReturn result{};
 
 			if constexpr (parameterCount > 0) {
 				const void* parameterValues[] = { &parameters ... };
@@ -56,7 +56,7 @@ namespace netlm {
 
 		template<typename TReturn>
 		TReturn GetFieldValue(std::string_view fieldName) const {
-			TReturn result;
+			TReturn result{};
 			GetFieldValueRaw(fieldName, &result);
 			return result;
 		}
@@ -75,7 +75,7 @@ namespace netlm {
 
 		template<typename TReturn>
 		TReturn GetPropertyValue(std::string_view propertyName) const {
-			TReturn result;
+			TReturn result{};
 			GetPropertyValueRaw(propertyName, &result);
 			return result;
 		}
