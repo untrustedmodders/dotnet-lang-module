@@ -8,6 +8,10 @@ namespace Plugify;
 
 internal static class Marshalling
 {
+	private static readonly DCCallVM vm = new(4096);
+	private static Dictionary<Delegate, Delegate> CachedDelegates = new();
+	private static Dictionary<nint, Delegate> CachedFunctions = new();
+
 	internal static unsafe object?[]? MarshalParameterArray(nint paramsPtr, int parameterCount, MethodBase methodInfo)
     {
         ParameterInfo[] parameterInfos = methodInfo.GetParameters();
@@ -90,7 +94,7 @@ internal static class Marshalling
         }
     }
 
-    internal static unsafe void MarshalReturnValue(object paramValue, Type paramType, nint outValue, bool useAnsi = false)
+    internal static unsafe void MarshalReturnValue(object? paramValue, Type paramType, nint outValue, bool useAnsi = false)
     {
 	    if (paramType.IsEnum)
 	    {
@@ -102,132 +106,138 @@ internal static class Marshalling
         switch (TypeUtils.ConvertToValueType(paramType))
         {
 	        case ValueType.Bool:
-		        *(byte*)outValue = (byte)((bool)paramValue ? 1 : 0);
+		        *(byte*)outValue = (byte)(((bool?)paramValue ?? default) ? 1 : 0);
 		        return;
 	        case ValueType.Char8:
 	        case ValueType.Char16:
 		        if (useAnsi)
 		        {
-			        *(byte*)outValue = (byte)(char)paramValue;
+			        *(byte*)outValue = (byte)((char?)paramValue ?? default);
 		        }
 		        else
 		        {
-			        *(short*)outValue = (short)(char)paramValue;
+			        *(short*)outValue = (short)((char?)paramValue ?? default);
 		        }
 		        return;
 	        case ValueType.Int8:
-		        *(sbyte*)outValue = (sbyte)paramValue;
+		        *(sbyte*)outValue = (sbyte?)paramValue ?? default;
 		        return;
 	        case ValueType.Int16:
-		        *(short*)outValue = (short)paramValue;
+		        *(short*)outValue = (short?)paramValue ?? default;
 		        return;
 	        case ValueType.Int32:
-		        *(int*)outValue = (int)paramValue;
+		        *(int*)outValue = (int?)paramValue ?? default;
 		        return;
 	        case ValueType.Int64:
-		        *(long*)outValue = (long)paramValue;
+		        *(long*)outValue = (long?)paramValue ?? default;
 		        return;
 	        case ValueType.UInt8:
-		        *(byte*)outValue = (byte)paramValue;
+		        *(byte*)outValue = (byte?)paramValue ?? default;
 		        return;
 	        case ValueType.UInt16:
-		        *(ushort*)outValue = (ushort)paramValue;
+		        *(ushort*)outValue = (ushort?)paramValue ?? default;
 		        return;
 	        case ValueType.UInt32:
-		        *(uint*)outValue = (uint)paramValue;
+		        *(uint*)outValue = (uint?)paramValue ?? default;
 		        return;
 	        case ValueType.UInt64:
-		        *(ulong*)outValue = (ulong)paramValue;
+		        *(ulong*)outValue = (ulong?)paramValue ?? default;
 		        return;
 	        case ValueType.Pointer:
-		        *(nint*)outValue = (nint)paramValue;
+		        *(nint*)outValue = (nint?)paramValue ?? default;
 		        return;
 	        case ValueType.Float:
-		        *(float*)outValue = (float)paramValue;
+		        *(float*)outValue = (float?)paramValue ?? default;
 		        return;
 	        case ValueType.Double:
-		        *(double*)outValue = (double)paramValue;
+		        *(double*)outValue = (double?)paramValue ?? default;
 		        return;
-	        case ValueType.String:
-		        NativeMethods.AssignString(outValue, (string)paramValue);
-		        return;
-	        case ValueType.ArrayBool:
-		        var arrBool = (bool[])paramValue;
-		        NativeMethods.AssignVectorBool(outValue, arrBool, arrBool.Length);
-		        return;
-	        case ValueType.ArrayChar8:
-	        case ValueType.ArrayChar16:
-			    var arrChar = (char[])paramValue;
-		        if (useAnsi)
+	        case ValueType.Function:
+		        if (paramValue != null)
 		        {
-			        NativeMethods.AssignVectorChar8(outValue, arrChar, arrChar.Length);
+			        Delegate d = GetDelegateForMarshalling((Delegate)paramValue);
+			        *(nint*)outValue = Marshal.GetFunctionPointerForDelegate(d);
 		        }
 		        else
 		        {
-			        NativeMethods.AssignVectorChar16(outValue, arrChar, arrChar.Length);
+			        *(nint*)outValue = default;
+		        }
+		        return;
+	        case ValueType.String:
+		        if (paramValue is string str) NativeMethods.AssignString(outValue, str);
+		        return;
+	        case ValueType.ArrayBool:
+		        if (paramValue is bool[] arrBool) NativeMethods.AssignVectorBool(outValue, arrBool, arrBool.Length);
+		        return;
+	        case ValueType.ArrayChar8:
+	        case ValueType.ArrayChar16:
+		        if (paramValue is char[] arrChar)
+		        {
+			        if (useAnsi)
+			        {
+				        NativeMethods.AssignVectorChar8(outValue, arrChar, arrChar.Length);
+			        }
+			        else
+			        {
+				        NativeMethods.AssignVectorChar16(outValue, arrChar, arrChar.Length);
+			        }
 		        }
 		        return;
 	        case ValueType.ArrayInt8:
-		        var arrInt8 = (sbyte[])paramValue;
-		        NativeMethods.AssignVectorInt8(outValue, arrInt8, arrInt8.Length);
+		        if (paramValue is sbyte[] arrInt8) NativeMethods.AssignVectorInt8(outValue, arrInt8, arrInt8.Length);
 		        return;
 	        case ValueType.ArrayInt16:
-		        var arrInt16 = (short[])paramValue;
-		        NativeMethods.AssignVectorInt16(outValue, arrInt16, arrInt16.Length);
+		        if (paramValue is short[] arrInt16) NativeMethods.AssignVectorInt16(outValue, arrInt16, arrInt16.Length);
 		        return;
 	        case ValueType.ArrayInt32:
-		        var arrInt32 = (int[])paramValue;
-		        NativeMethods.AssignVectorInt32(outValue, arrInt32, arrInt32.Length);
+		        if (paramValue is int[] arrInt32) NativeMethods.AssignVectorInt32(outValue, arrInt32, arrInt32.Length);
 		        return;
 	        case ValueType.ArrayInt64:
-		        var arrInt64 = (long[])paramValue;
-		        NativeMethods.AssignVectorInt64(outValue, arrInt64, arrInt64.Length);
+		        if (paramValue is long[] arrInt64) NativeMethods.AssignVectorInt64(outValue, arrInt64, arrInt64.Length);
 		        return;
 	        case ValueType.ArrayUInt8:
-		        var arrUInt8 = (byte[])paramValue;
-		        NativeMethods.AssignVectorUInt8(outValue, arrUInt8, arrUInt8.Length);
+		        if (paramValue is byte[] arrUInt8) NativeMethods.AssignVectorUInt8(outValue, arrUInt8, arrUInt8.Length);
 		        return;
 	        case ValueType.ArrayUInt16:
-		        var arrUInt16 = (ushort[])paramValue;
-		        NativeMethods.AssignVectorUInt16(outValue, arrUInt16, arrUInt16.Length);
+		        if (paramValue is ushort[] arrUInt16) NativeMethods.AssignVectorUInt16(outValue, arrUInt16, arrUInt16.Length);
 		        return;
 	        case ValueType.ArrayUInt32:
-		        var arrUInt32 = (uint[])paramValue;
-		        NativeMethods.AssignVectorUInt32(outValue, arrUInt32, arrUInt32.Length);
+		        if (paramValue is uint[] arrUInt32) NativeMethods.AssignVectorUInt32(outValue, arrUInt32, arrUInt32.Length);
 		        return;
 	        case ValueType.ArrayUInt64:
-		        var arrUInt64 = (ulong[])paramValue;
-		        NativeMethods.AssignVectorUInt64(outValue, arrUInt64, arrUInt64.Length);
+		        if (paramValue is ulong[] arrUInt64) NativeMethods.AssignVectorUInt64(outValue, arrUInt64, arrUInt64.Length);
 		        return;
 	        case ValueType.ArrayPointer:
-		        var arrIntPtr = (nint[])paramValue;
-		        NativeMethods.AssignVectorIntPtr(outValue, arrIntPtr, arrIntPtr.Length);
+		        if (paramValue is nint[] arrIntPtr) NativeMethods.AssignVectorIntPtr(outValue, arrIntPtr, arrIntPtr.Length);
 		        return;
 	        case ValueType.ArrayFloat:
-		        var arrFloat = (float[])paramValue;
-		        NativeMethods.AssignVectorFloat(outValue, arrFloat, arrFloat.Length);
+		        if (paramValue is float[] arrFloat) NativeMethods.AssignVectorFloat(outValue, arrFloat, arrFloat.Length);
 		        return;
 	        case ValueType.ArrayDouble:
-		        var arrDouble = (double[])paramValue;
-		        NativeMethods.AssignVectorDouble(outValue, arrDouble, arrDouble.Length);
+		        if (paramValue is double[] arrDouble) NativeMethods.AssignVectorDouble(outValue, arrDouble, arrDouble.Length);
 		        return;
 	        case ValueType.ArrayString:
-		        var arrString = (string[])paramValue;
-		        NativeMethods.AssignVectorString(outValue, arrString, arrString.Length);
+		        if (paramValue is string[] arrString) NativeMethods.AssignVectorString(outValue, arrString, arrString.Length);
 		        return;
 	        case ValueType.Vector2:
+		        Marshal.StructureToPtr(paramValue ?? Vector2.Zero, outValue, false);
+		        return;
 	        case ValueType.Vector3:
+		        Marshal.StructureToPtr(paramValue ?? Vector3.Zero, outValue, false);
+		        return;
 	        case ValueType.Vector4:
+		        Marshal.StructureToPtr(paramValue ?? Vector4.Zero, outValue, false);
+		        return;
 	        case ValueType.Matrix4x4:
-		        Marshal.StructureToPtr(paramValue, outValue, false);
+		        Marshal.StructureToPtr(paramValue ?? Matrix4x4.Identity, outValue, false);
 		        return;
         }
 
-        if (paramType.IsValueType)
+        /*if (paramType.IsValueType)
         {
             Marshal.StructureToPtr(paramValue, outValue, false);
             return;
-        }
+        }*/
 
         throw new NotImplementedException($"Parameter type {paramType.Name} not implemented");
     }
@@ -350,10 +360,10 @@ internal static class Marshalling
 		    }
 	    }
 	    
-	    if (paramType.IsValueType)
+	    /*if (paramType.IsValueType)
 	    {
 		    return Marshal.PtrToStructure(inValue, paramType.IsByRef ? paramType.GetElementType() : paramType);
-	    }
+	    }*/
 	    
 	    throw new NotImplementedException($"Parameter type {paramType.Name} not implemented");
     }
@@ -370,18 +380,23 @@ internal static class Marshalling
     
     private static Delegate GetDelegateForFunctionPointer(nint funcAddress, Type delegateType)
     {
+	    if (CachedFunctions.TryGetValue(funcAddress, out var @delegate))
+	    {
+		    return @delegate;
+	    }
+
 	    MethodInfo methodInfo = delegateType.GetMethod("Invoke");
 	    if (IsNeedMarshal(methodInfo.ReturnType) || methodInfo.GetParameters().Any(p => IsNeedMarshal(p.ParameterType)))
 	    {
-		    return MethodUtils.CreateObjectArrayDelegate(delegateType, ExternalInvoke(funcAddress, methodInfo));
+		    @delegate = MethodUtils.CreateObjectArrayDelegate(delegateType, ExternalInvoke(funcAddress, methodInfo));
+		    CachedFunctions.Add(funcAddress, @delegate);
+		    return @delegate;
 	    }
 
 	    return Marshal.GetDelegateForFunctionPointer(funcAddress, delegateType);
     }
 
     #region External Call from C# to C++
-
-    private static readonly DCCallVM vm = new(4096);
 
     private static Func<object[], object> ExternalInvoke(nint funcAddress, MethodInfo methodInfo)
     {
@@ -1513,6 +1528,11 @@ internal static class Marshalling
 
     private static Delegate GetDelegateForMarshalling(Delegate d)
     {
+	    if (CachedDelegates.TryGetValue(d, out var @delegate))
+	    {
+		    return @delegate;
+	    }
+
 	    MethodInfo methodInfo = d.Method;
 	    if (IsNeedMarshal(methodInfo.ReturnType) || methodInfo.GetParameters().Any(p => IsNeedMarshal(p.ParameterType)))
 	    {
@@ -1536,9 +1556,11 @@ internal static class Marshalling
 		    }
 
 		    types.Add(hasHidden ? typeof(nint) : returnType);
-
 		    Type delegateType = Expression.GetDelegateType(types.ToArray());
-		    return MethodUtils.CreateObjectArrayDelegate(delegateType, InternalInvoke(d));
+
+		    @delegate = MethodUtils.CreateObjectArrayDelegate(delegateType, InternalInvoke(d));
+		    CachedDelegates.Add(d, @delegate);
+		    return @delegate;
 	    }
 
 	    return d;

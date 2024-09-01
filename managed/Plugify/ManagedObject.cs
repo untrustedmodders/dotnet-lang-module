@@ -234,10 +234,10 @@ internal static class ManagedObject
 
 			Marshalling.MarshalParameterRefs(parameterPtr, parameterCount, methodInfo, parameters);
 			
-			if (returnValue == null)
+			/*if (returnValue == null)
 			{
 				return;
-			}
+			}*/
 
 			Type returnType = methodInfo.ReturnType;
 			
@@ -311,10 +311,10 @@ internal static class ManagedObject
 
 			Marshalling.MarshalParameterRefs(parameterPtr, parameterCount, methodInfo, parameters);
 			
-			if (returnValue == null)
+			/*if (returnValue == null)
 			{
 				return;
-			}
+			}*/
 			
 			Type returnType = methodInfo.ReturnType;
 			
