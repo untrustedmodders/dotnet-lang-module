@@ -14,6 +14,7 @@
 #include <plugify/language_module.h>
 #include <plugify/log.h>
 #include <plugify/module.h>
+#include <plugify/string.h>
 #include <plugify/plugify_provider.h>
 #include <plugify/plugin.h>
 #include <plugify/plugin_descriptor.h>
@@ -348,7 +349,7 @@ void DotnetLanguageModule::InternalCall(MethodRef method, MemAddr data, const Pa
 	if (hasRet) {
 		switch (retType) {
 			case ValueType::String:
-				std::construct_at(reinterpret_cast<std::string*>(retPtr), std::string());
+				std::construct_at(reinterpret_cast<plg::string*>(retPtr), plg::string());
 				break;
 			case ValueType::ArrayBool:
 				std::construct_at(reinterpret_cast<std::vector<bool>*>(retPtr), std::vector<bool>());
@@ -393,7 +394,7 @@ void DotnetLanguageModule::InternalCall(MethodRef method, MemAddr data, const Pa
 				std::construct_at(reinterpret_cast<std::vector<double>*>(retPtr), std::vector<double>());
 				break;
 			case ValueType::ArrayString:
-				std::construct_at(reinterpret_cast<std::vector<std::string>*>(retPtr), std::vector<std::string>());
+				std::construct_at(reinterpret_cast<std::vector<plg::string>*>(retPtr), std::vector<plg::string>());
 				break;
 			default:
 				break;
@@ -475,20 +476,20 @@ ScriptInstance::ScriptInstance(PluginRef plugin, Type& type) : _plugin{plugin}, 
 	PluginDescriptorRef desc = plugin.GetDescriptor();
 	std::span<const PluginReferenceDescriptorRef> dependencies = desc.GetDependencies();
 
-	std::vector<std::string> deps;
+	std::vector<plg::string> deps;
 	deps.reserve(dependencies.size());
 	for (const auto& dependency : dependencies) {
 		deps.emplace_back(dependency.GetName());
 	}
 
-	_instance.SetPropertyValue("Id", plugin.GetId());
-	_instance.SetPropertyValue("Name", plugin.GetName());
-	_instance.SetPropertyValue("FullName", plugin.GetFriendlyName());
-	_instance.SetPropertyValue("Description", desc.GetDescription());
-	_instance.SetPropertyValue("Version", desc.GetVersionName());
-	_instance.SetPropertyValue("Author", desc.GetCreatedBy());
-	_instance.SetPropertyValue("Website", desc.GetCreatedByURL());
-	_instance.SetPropertyValue("BaseDir", plugin.GetBaseDir().string());
+	_instance.SetPropertyValue("Id", plg::detail::to_string(plugin.GetId()));
+	_instance.SetPropertyValue("Name", plg::string(plugin.GetName()));
+	_instance.SetPropertyValue("FullName", plg::string(plugin.GetFriendlyName()));
+	_instance.SetPropertyValue("Description", plg::string(desc.GetDescription()));
+	_instance.SetPropertyValue("Version", plg::string(desc.GetVersionName()));
+	_instance.SetPropertyValue("Author", plg::string(desc.GetCreatedBy()));
+	_instance.SetPropertyValue("Website", plg::string(desc.GetCreatedByURL()));
+	_instance.SetPropertyValue("BaseDir", plg::string(plugin.GetBaseDir().string()));
 	_instance.SetPropertyValue("Dependencies", deps);
 }
 

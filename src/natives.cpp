@@ -1,6 +1,7 @@
 #include "core.h"
 #include "memory.h"
 #include <dyncall/dyncall.h>
+#include <plugify/string.h>
 #include <module_export.h>
 
 using namespace netlm;
@@ -10,7 +11,7 @@ std::map<type_index, int32_t> g_numberOfAllocs = { };
 
 std::string_view GetTypeName(type_index type) {
 	static std::map<type_index, std::string_view> typeNameMap = {
-		{type_id<std::string>, "String"},
+		{type_id<plg::string>, "String"},
 		{type_id<std::vector<bool>>, "VectorBool"},
 		{type_id<std::vector<char>>, "VectorChar8"},
 		{type_id<std::vector<char16_t>>, "VectorChar16"},
@@ -25,7 +26,7 @@ std::string_view GetTypeName(type_index type) {
 		{type_id<std::vector<uintptr_t>>, "VectorUIntPtr"},
 		{type_id<std::vector<float>>, "VectorFloat"},
 		{type_id<std::vector<double>>, "VectorDouble"},
-		{type_id<std::vector<std::string>>, "VectorString"},
+		{type_id<std::vector<plg::string>>, "VectorString"},
 		{type_id<DCCallVM>, "DCCallVM"},
 		{type_id<DCaggr>, "DCAggr"}
 	};
@@ -45,10 +46,10 @@ std::vector<T>* CreateVector(T* arr, int len) {
 }
 
 template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
-std::vector<std::string>* CreateVector(T* arr, int len) {
-	auto vector = len == 0 ? new std::vector<std::string>() : new std::vector<std::string>(arr, arr + len);
+std::vector<plg::string>* CreateVector(T* arr, int len) {
+	auto vector = len == 0 ? new std::vector<plg::string>() : new std::vector<plg::string>(arr, arr + len);
 	assert(vector);
-	g_numberOfAllocs[type_id<std::vector<std::string>>]++;
+	g_numberOfAllocs[type_id<std::vector<plg::string>>]++;
 	return vector;
 }
 
@@ -61,10 +62,10 @@ std::vector<T>* AllocateVector() {
 }
 
 template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
-std::vector<std::string>* AllocateVector() {
-	auto vector = static_cast<std::vector<std::string>*>(malloc(sizeof(std::vector<std::string>)));
+std::vector<plg::string>* AllocateVector() {
+	auto vector = static_cast<std::vector<plg::string>*>(malloc(sizeof(std::vector<plg::string>)));
 	assert(vector);
-	g_numberOfMalloc[type_id<std::vector<std::string>>]++;
+	g_numberOfMalloc[type_id<std::vector<plg::string>>]++;
 	return vector;
 }
 
@@ -97,7 +98,7 @@ void AssignVector(std::vector<T>* vector, T* arr, int len) {
 }
 
 template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
-void AssignVector(std::vector<std::string>* vector, T* arr, int len) {
+void AssignVector(std::vector<plg::string>* vector, T* arr, int len) {
 	if (arr == nullptr || len == 0)
 		vector->clear();
 	else
@@ -112,7 +113,7 @@ void GetVectorData(std::vector<T>* vector, T* arr) {
 }
 
 template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
-void GetVectorData(std::vector<std::string>* vector, T* arr) {
+void GetVectorData(std::vector<plg::string>* vector, T* arr) {
 	for (size_t i = 0; i < vector->size(); ++i) {
 		Memory::FreeCoTaskMem(arr[i]);
 		arr[i] = Memory::StringToHGlobalAnsi((*vector)[i]);
@@ -125,51 +126,51 @@ void ConstructVector(std::vector<T>* vector, T* arr, int len) {
 }
 
 template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
-void ConstructVector(std::vector<std::string>* vector, T* arr, int len) {
-	std::construct_at(vector, len == 0 ? std::vector<std::string>() : std::vector<std::string>(arr, arr + len));
+void ConstructVector(std::vector<plg::string>* vector, T* arr, int len) {
+	std::construct_at(vector, len == 0 ? std::vector<plg::string>() : std::vector<plg::string>(arr, arr + len));
 }
 
 extern "C" {
 	// String Functions
 
-	NETLM_EXPORT std::string* AllocateString() {
-		auto str = static_cast<std::string*>(malloc(sizeof(std::string)));
-		g_numberOfMalloc[type_id<std::string>]++;
+	NETLM_EXPORT plg::string* AllocateString() {
+		auto str = static_cast<plg::string*>(malloc(sizeof(plg::string)));
+		g_numberOfMalloc[type_id<plg::string>]++;
 		return str;
 	}
 	NETLM_EXPORT void* CreateString(const char* source) {
-		auto str = source == nullptr ? new std::string() : new std::string(source);
-		g_numberOfAllocs[type_id<std::string>]++;
+		auto str = source == nullptr ? new plg::string() : new plg::string(source);
+		g_numberOfAllocs[type_id<plg::string>]++;
 		return str;
 	}
-	NETLM_EXPORT const char* GetStringData(std::string* string) {
+	NETLM_EXPORT const char* GetStringData(plg::string* string) {
 		return Memory::StringToHGlobalAnsi(*string);
 	}
-	NETLM_EXPORT int GetStringLength(std::string* string) {
+	NETLM_EXPORT int GetStringLength(plg::string* string) {
 		return static_cast<int>(string->length());
 	}
-	NETLM_EXPORT void ConstructString(std::string* string, const char* source) {
+	NETLM_EXPORT void ConstructString(plg::string* string, const char* source) {
 		if (source == nullptr)
-			std::construct_at(string, std::string());
+			std::construct_at(string, plg::string());
 		else
 			std::construct_at(string, source);
 	}
-	NETLM_EXPORT void AssignString(std::string* string, const char* source) {
+	NETLM_EXPORT void AssignString(plg::string* string, const char* source) {
 		if (source == nullptr)
 			string->clear();
 		else
 			string->assign(source);
 	}
-	NETLM_EXPORT void FreeString(std::string* string) {
+	NETLM_EXPORT void FreeString(plg::string* string) {
 		string->~basic_string();
 		free(string);
-		g_numberOfMalloc[type_id<std::string>]--;
-		assert(g_numberOfMalloc[type_id<std::string>] != -1);
+		g_numberOfMalloc[type_id<plg::string>]--;
+		assert(g_numberOfMalloc[type_id<plg::string>] != -1);
 	}
-	NETLM_EXPORT void DeleteString(std::string* string) {
+	NETLM_EXPORT void DeleteString(plg::string* string) {
 		delete string;
-		g_numberOfAllocs[type_id<std::string>]--;
-		assert(g_numberOfAllocs[type_id<std::string>] != -1);
+		g_numberOfAllocs[type_id<plg::string>]--;
+		assert(g_numberOfAllocs[type_id<plg::string>] != -1);
 	}
 
 	// CreateVector Functions
@@ -187,7 +188,7 @@ extern "C" {
 	NETLM_EXPORT std::vector<uintptr_t>* CreateVectorIntPtr(uintptr_t* arr, int len) { return CreateVector(arr, len); }
 	NETLM_EXPORT std::vector<float>* CreateVectorFloat(float* arr, int len) { return CreateVector(arr, len); }
 	NETLM_EXPORT std::vector<double>* CreateVectorDouble(double* arr, int len) { return CreateVector(arr, len); }
-	NETLM_EXPORT std::vector<std::string>* CreateVectorString(char* arr[], int len) { return CreateVector(arr, len); }
+	NETLM_EXPORT std::vector<plg::string>* CreateVectorString(char* arr[], int len) { return CreateVector(arr, len); }
 
 	// AllocateVector Functions
 	NETLM_EXPORT std::vector<bool>* AllocateVectorBool() { return AllocateVector<bool>(); }
@@ -204,7 +205,7 @@ extern "C" {
 	NETLM_EXPORT std::vector<uintptr_t>* AllocateVectorIntPtr() { return AllocateVector<uintptr_t>(); }
 	NETLM_EXPORT std::vector<float>* AllocateVectorFloat() { return AllocateVector<float>(); }
 	NETLM_EXPORT std::vector<double>* AllocateVectorDouble() { return AllocateVector<double>(); }
-	NETLM_EXPORT std::vector<std::string>* AllocateVectorString() { return AllocateVector<char*>(); }
+	NETLM_EXPORT std::vector<plg::string>* AllocateVectorString() { return AllocateVector<char*>(); }
 
 
 	// GetVectorSize Functions
@@ -222,7 +223,7 @@ extern "C" {
 	NETLM_EXPORT int GetVectorSizeIntPtr(std::vector<uintptr_t>* vector) { return GetVectorSize(vector); }
 	NETLM_EXPORT int GetVectorSizeFloat(std::vector<float>* vector) { return GetVectorSize(vector); }
 	NETLM_EXPORT int GetVectorSizeDouble(std::vector<double>* vector) { return GetVectorSize(vector); }
-	NETLM_EXPORT int GetVectorSizeString(std::vector<std::string>* vector) { return GetVectorSize(vector); }
+	NETLM_EXPORT int GetVectorSizeString(std::vector<plg::string>* vector) { return GetVectorSize(vector); }
 
 	// GetVectorData Functions
 
@@ -240,7 +241,7 @@ extern "C" {
 	NETLM_EXPORT void GetVectorDataIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr) { GetVectorData(vector, arr); }
 	NETLM_EXPORT void GetVectorDataFloat(std::vector<float>* vector, float* arr) { GetVectorData(vector, arr); }
 	NETLM_EXPORT void GetVectorDataDouble(std::vector<double>* vector, double* arr) { GetVectorData(vector, arr); }
-	NETLM_EXPORT void GetVectorDataString(std::vector<std::string>* vector, char* arr[]) { GetVectorData(vector, arr); }
+	NETLM_EXPORT void GetVectorDataString(std::vector<plg::string>* vector, char* arr[]) { GetVectorData(vector, arr); }
 
 	// Construct Functions
 
@@ -258,7 +259,7 @@ extern "C" {
 	NETLM_EXPORT void ConstructVectorDataIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr, int len) { ConstructVector(vector, arr, len); }
 	NETLM_EXPORT void ConstructVectorDataFloat(std::vector<float>* vector, float* arr, int len) { ConstructVector(vector, arr, len); }
 	NETLM_EXPORT void ConstructVectorDataDouble(std::vector<double>* vector, double* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataString(std::vector<std::string>* vector, char* arr[], int len)  { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorDataString(std::vector<plg::string>* vector, char* arr[], int len)  { ConstructVector(vector, arr, len); }
 
 	// AssignVector Functions
 
@@ -276,7 +277,7 @@ extern "C" {
 	NETLM_EXPORT void AssignVectorIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr, int len) { AssignVector(vector, arr, len); }
 	NETLM_EXPORT void AssignVectorFloat(std::vector<float>* vector, float* arr, int len) { AssignVector(vector, arr, len); }
 	NETLM_EXPORT void AssignVectorDouble(std::vector<double>* vector, double* arr, int len) { AssignVector(vector, arr, len); }
-	NETLM_EXPORT void AssignVectorString(std::vector<std::string>* vector, char* arr[], int len) { AssignVector(vector, arr, len); }
+	NETLM_EXPORT void AssignVectorString(std::vector<plg::string>* vector, char* arr[], int len) { AssignVector(vector, arr, len); }
 
 	// DeleteVector Functions
 
@@ -294,7 +295,7 @@ extern "C" {
 	NETLM_EXPORT void DeleteVectorIntPtr(std::vector<uintptr_t>* vector) { DeleteVector(vector); }
 	NETLM_EXPORT void DeleteVectorFloat(std::vector<float>* vector) { DeleteVector(vector); }
 	NETLM_EXPORT void DeleteVectorDouble(std::vector<double>* vector) { DeleteVector(vector); }
-	NETLM_EXPORT void DeleteVectorString(std::vector<std::string>* vector) { DeleteVector(vector); }
+	NETLM_EXPORT void DeleteVectorString(std::vector<plg::string>* vector) { DeleteVector(vector); }
 
 	// FreeVector functions
 
@@ -312,7 +313,7 @@ extern "C" {
 	NETLM_EXPORT void FreeVectorIntPtr(std::vector<uintptr_t>* vector) { FreeVector(vector); }
 	NETLM_EXPORT void FreeVectorFloat(std::vector<float>* vector) { FreeVector(vector); }
 	NETLM_EXPORT void FreeVectorDouble(std::vector<double>* vector) { FreeVector(vector); }
-	NETLM_EXPORT void FreeVectorString(std::vector<std::string>* vector) { FreeVector(vector); }
+	NETLM_EXPORT void FreeVectorString(std::vector<plg::string>* vector) { FreeVector(vector); }
 
 	// Dyncall Functions
 
