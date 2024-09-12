@@ -37,50 +37,50 @@ std::string_view GetTypeName(type_index type) {
 	return "unknown";
 }
 
-template<typename T, typename = std::enable_if_t<!std::is_same_v<T, char*>>>
-std::vector<T>* CreateVector(T* arr, int len) {
+template<typename T>
+std::vector<T>* CreateVector(T* arr, int len) requires(!std::is_same_v<T, char*>) {
 	auto vector = len == 0 ? new std::vector<T>() : new std::vector<T>(arr, arr + len);
 	assert(vector);
-	g_numberOfAllocs[type_id<std::vector<T>>]++;
+	++g_numberOfAllocs[type_id<std::vector<T>>];
 	return vector;
 }
 
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
-std::vector<plg::string>* CreateVector(T* arr, int len) {
+template<typename T>
+std::vector<plg::string>* CreateVector(T* arr, int len) requires(std::is_same_v<T, char*>) {
 	auto vector = len == 0 ? new std::vector<plg::string>() : new std::vector<plg::string>(arr, arr + len);
 	assert(vector);
-	g_numberOfAllocs[type_id<std::vector<plg::string>>]++;
+	++g_numberOfAllocs[type_id<std::vector<plg::string>>];
 	return vector;
 }
 
-template<typename T, typename = std::enable_if_t<!std::is_same_v<T, char*>>>
-std::vector<T>* AllocateVector() {
-	auto vector = static_cast<std::vector<T>*>(malloc(sizeof(std::vector<T>)));
+template<typename T>
+std::vector<T>* AllocateVector() requires(!std::is_same_v<T, char*>) {
+	auto vector = static_cast<std::vector<T>*>(std::malloc(sizeof(std::vector<T>)));
 	assert(vector);
-	g_numberOfMalloc[type_id<std::vector<T>>]++;
+	++g_numberOfMalloc[type_id<std::vector<T>>];
 	return vector;
 }
 
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
-std::vector<plg::string>* AllocateVector() {
-	auto vector = static_cast<std::vector<plg::string>*>(malloc(sizeof(std::vector<plg::string>)));
+template<typename T>
+std::vector<plg::string>* AllocateVector() requires(std::is_same_v<T, char*>) {
+	auto vector = static_cast<std::vector<plg::string>*>(std::malloc(sizeof(std::vector<plg::string>)));
 	assert(vector);
-	g_numberOfMalloc[type_id<std::vector<plg::string>>]++;
+	++g_numberOfMalloc[type_id<std::vector<plg::string>>];
 	return vector;
 }
 
 template<typename T>
 void DeleteVector(std::vector<T>* vector) {
 	delete vector;
-	g_numberOfAllocs[type_id<std::vector<T>>]--;
+	--g_numberOfAllocs[type_id<std::vector<T>>];
 	assert(g_numberOfAllocs[type_id<std::vector<T>>] != -1);
 }
 
 template<typename T>
 void FreeVector(std::vector<T>* vector) {
 	vector->~vector();
-	free(vector);
-	g_numberOfMalloc[type_id<std::vector<T>>]--;
+	std::free(vector);
+	--g_numberOfMalloc[type_id<std::vector<T>>];
 	assert(g_numberOfMalloc[type_id<std::vector<T>>] != -1);
 }
 
@@ -89,44 +89,44 @@ int GetVectorSize(std::vector<T>* vector) {
 	return static_cast<int>(vector->size());
 }
 
-template<typename T, typename = std::enable_if_t<!std::is_same_v<T, char*>>>
-void AssignVector(std::vector<T>* vector, T* arr, int len) {
+template<typename T>
+void AssignVector(std::vector<T>* vector, T* arr, int len) requires(!std::is_same_v<T, char*>) {
 	if (arr == nullptr || len == 0)
 		vector->clear();
 	else
 		vector->assign(arr, arr + len);
 }
 
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
-void AssignVector(std::vector<plg::string>* vector, T* arr, int len) {
+template<typename T>
+void AssignVector(std::vector<plg::string>* vector, T* arr, int len) requires(std::is_same_v<T, char*>) {
 	if (arr == nullptr || len == 0)
 		vector->clear();
 	else
 		vector->assign(arr, arr + len);
 }
 
-template<typename T, typename = std::enable_if_t<!std::is_same_v<T, char*>>>
-void GetVectorData(std::vector<T>* vector, T* arr) {
+template<typename T>
+void GetVectorData(std::vector<T>* vector, T* arr) requires(!std::is_same_v<T, char*>) {
 	for (size_t i = 0; i < vector->size(); ++i) {
 		arr[i] = (*vector)[i];
 	}
 }
 
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
-void GetVectorData(std::vector<plg::string>* vector, T* arr) {
+template<typename T>
+void GetVectorData(std::vector<plg::string>* vector, T* arr) requires(std::is_same_v<T, char*>) {
 	for (size_t i = 0; i < vector->size(); ++i) {
 		Memory::FreeCoTaskMem(arr[i]);
 		arr[i] = Memory::StringToHGlobalAnsi((*vector)[i]);
 	}
 }
 
-template<typename T, typename = std::enable_if_t<!std::is_same_v<T, char*>>>
-void ConstructVector(std::vector<T>* vector, T* arr, int len) {
+template<typename T>
+void ConstructVector(std::vector<T>* vector, T* arr, int len) requires(!std::is_same_v<T, char*>) {
 	std::construct_at(vector, len == 0 ? std::vector<T>() : std::vector<T>(arr, arr + len));
 }
 
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, char*>>>
-void ConstructVector(std::vector<plg::string>* vector, T* arr, int len) {
+template<typename T>
+void ConstructVector(std::vector<plg::string>* vector, T* arr, int len) requires(std::is_same_v<T, char*>) {
 	std::construct_at(vector, len == 0 ? std::vector<plg::string>() : std::vector<plg::string>(arr, arr + len));
 }
 
@@ -134,13 +134,13 @@ extern "C" {
 	// String Functions
 
 	NETLM_EXPORT plg::string* AllocateString() {
-		auto str = static_cast<plg::string*>(malloc(sizeof(plg::string)));
-		g_numberOfMalloc[type_id<plg::string>]++;
+		auto str = static_cast<plg::string*>(std::malloc(sizeof(plg::string)));
+		++g_numberOfMalloc[type_id<plg::string>];
 		return str;
 	}
 	NETLM_EXPORT void* CreateString(const char* source) {
 		auto str = source == nullptr ? new plg::string() : new plg::string(source);
-		g_numberOfAllocs[type_id<plg::string>]++;
+		++g_numberOfAllocs[type_id<plg::string>];
 		return str;
 	}
 	NETLM_EXPORT const char* GetStringData(plg::string* string) {
@@ -163,13 +163,13 @@ extern "C" {
 	}
 	NETLM_EXPORT void FreeString(plg::string* string) {
 		string->~basic_string();
-		free(string);
-		g_numberOfMalloc[type_id<plg::string>]--;
+		std::free(string);
+		--g_numberOfMalloc[type_id<plg::string>];
 		assert(g_numberOfMalloc[type_id<plg::string>] != -1);
 	}
 	NETLM_EXPORT void DeleteString(plg::string* string) {
 		delete string;
-		g_numberOfAllocs[type_id<plg::string>]--;
+		--g_numberOfAllocs[type_id<plg::string>];
 		assert(g_numberOfAllocs[type_id<plg::string>] != -1);
 	}
 
@@ -319,12 +319,12 @@ extern "C" {
 
 	NETLM_EXPORT DCCallVM* NewVM(size_t size) {
 		DCCallVM* vm = dcNewCallVM(size);
-		g_numberOfAllocs[type_id<DCCallVM>]++;
+		++g_numberOfAllocs[type_id<DCCallVM>];
 		return vm;
 	}
 	NETLM_EXPORT void Free(DCCallVM* vm) {
 		dcFree(vm);
-		g_numberOfAllocs[type_id<DCCallVM>]--;
+		--g_numberOfAllocs[type_id<DCCallVM>];
 		assert(g_numberOfAllocs[type_id<DCCallVM>] != -1);
 	}
 	NETLM_EXPORT void Reset(DCCallVM* vm) { dcReset(vm); }
@@ -369,12 +369,12 @@ extern "C" {
 
 	NETLM_EXPORT DCaggr* NewAggr(size_t fieldCount, size_t size) {
 		DCaggr* ag = dcNewAggr(fieldCount, size);
-		g_numberOfAllocs[type_id<DCaggr>]++;
+		++g_numberOfAllocs[type_id<DCaggr>];
 		return ag;
 	}
 	NETLM_EXPORT void FreeAggr(DCaggr* ag) {
 		dcFreeAggr(ag);
-		g_numberOfAllocs[type_id<DCaggr>]--;
+		--g_numberOfAllocs[type_id<DCaggr>];
 		assert(g_numberOfAllocs[type_id<DCaggr>] != -1);
 	}
 	NETLM_EXPORT void AggrField(DCaggr* ag, char type, int offset, size_t arrayLength) { dcAggrField(ag, type, offset, arrayLength); }
