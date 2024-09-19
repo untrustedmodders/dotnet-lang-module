@@ -35,8 +35,8 @@ char_t* Memory::StringToCoTaskMemAuto(string_view_t string) {
 #endif
 
 	if (buffer != nullptr) {
-		memcpy(buffer, string.data(), length * sizeof(char_t));
-		buffer[length] = NETLM_NSTR('\0');
+		std::memcpy(buffer, string.data(), length * sizeof(char_t));
+		buffer[length] = 0;
 	}
 
 	return buffer;
@@ -53,8 +53,8 @@ char* Memory::StringToHGlobalAnsi(std::string_view string) {
 #endif
 
 	if (buffer != nullptr) {
-		memcpy(buffer, string.data(), length * sizeof(char));
-		buffer[length] = '\0';
+		std::memcpy(buffer, string.data(), length * sizeof(char));
+		buffer[length] = 0;
 	}
 
 	return buffer;

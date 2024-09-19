@@ -6,9 +6,11 @@
 #if NETLM_PLATFORM_WINDOWS
 #define NETLM_NSTR(str) L##str
 #define NETLM_UTF8(str) Utils::ConvertWideToUtf8(str)
+#define NETLM_PSTR(str) Utils::ConvertUtf8ToWide(str)
 #else
 #define NETLM_NSTR(str) str
 #define NETLM_UTF8(str) str
+#define NETLM_PSTR(str) str
 #endif
 
 namespace netlm {

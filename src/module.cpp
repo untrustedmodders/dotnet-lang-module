@@ -35,9 +35,11 @@ InitResult DotnetLanguageModule::Initialize(std::weak_ptr<IPlugifyProvider> prov
 		return ErrorData{ "Provider not exposed" };
 	}
 
+	fs::path baseDir(module.GetBaseDir());
+
 	if (!_host.Initialize({
-		.hostfxrPath = module.GetBaseDir() / "dotnet/host/fxr/8.0.3/" NETLM_LIBRARY_PREFIX "hostfxr" NETLM_LIBRARY_SUFFIX,
-		.rootDirectory = module.GetBaseDir() / "api",
+		.hostfxrPath = baseDir / "dotnet/host/fxr/8.0.3/" NETLM_LIBRARY_PREFIX "hostfxr" NETLM_LIBRARY_SUFFIX,
+		.rootDirectory = baseDir / "api",
 		.messageCallback = MessageCallback,
 		.exceptionCallback = ExceptionCallback,
 	})) {
@@ -476,6 +478,8 @@ ScriptInstance::ScriptInstance(PluginRef plugin, Type& type) : _plugin{plugin}, 
 	PluginDescriptorRef desc = plugin.GetDescriptor();
 	std::span<const PluginReferenceDescriptorRef> dependencies = desc.GetDependencies();
 
+	// use plg::string as currently plugify use custom string implementation
+
 	std::vector<plg::string> deps;
 	deps.reserve(dependencies.size());
 	for (const auto& dependency : dependencies) {
@@ -489,7 +493,7 @@ ScriptInstance::ScriptInstance(PluginRef plugin, Type& type) : _plugin{plugin}, 
 	_instance.SetPropertyValue("Version", plg::string(desc.GetVersionName()));
 	_instance.SetPropertyValue("Author", plg::string(desc.GetCreatedBy()));
 	_instance.SetPropertyValue("Website", plg::string(desc.GetCreatedByURL()));
-	_instance.SetPropertyValue("BaseDir", plg::string(plugin.GetBaseDir().string()));
+	_instance.SetPropertyValue("BaseDir", plg::string(NETLM_UTF8(plugin.GetBaseDir())));
 	_instance.SetPropertyValue("Dependencies", deps);
 }
 
@@ -517,7 +521,7 @@ namespace netlm {
 
 extern "C" {
 	NETLM_EXPORT const char* GetBaseDir() {
-		return Memory::StringToHGlobalAnsi(g_netlm.GetProvider()->GetBaseDir().string());
+		return Memory::StringToHGlobalAnsi(NETLM_UTF8(g_netlm.GetProvider()->GetBaseDir()));
 	}
 
 	NETLM_EXPORT bool IsModuleLoaded(const char* moduleName, int version, bool minimum) {
@@ -533,9 +537,9 @@ extern "C" {
 	NETLM_EXPORT const char* FindPluginResource(UniqueId pluginId, const char* path) {
 		ScriptInstance* script = g_netlm.FindScript(pluginId);
 		if (script) {
-			auto resource = script->GetPlugin().FindResource(path);
+			auto resource = script->GetPlugin().FindResource(NETLM_PSTR(path));
 			if (resource.has_value()) {
-				return Memory::StringToHGlobalAnsi(resource->string());
+				return Memory::StringToHGlobalAnsi(NETLM_UTF8(*resource));
 			}
 		}
 		return nullptr;
