@@ -75,7 +75,7 @@ jobs:
           cp build/${{env.BUILD_TYPE}}/dotnet-lang-module.dll build/output/bin
           cp build/dotnet-lang-module.pmodule build/output
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dotnetlm-build-windows-${{ env.GITHUB_SHA_SHORT }}
           path: build/output/
@@ -115,7 +115,7 @@ jobs:
           mv build/libdotnet-lang-module.so build/output/bin
           mv build/dotnet-lang-module.pmodule build/output
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dotnetlm-build-linux-${{ env.GITHUB_SHA_SHORT }}
           path: build/output/
@@ -144,7 +144,7 @@ jobs:
           dotnet publish -c Release /p:Version=1.0.${{ needs.setup.outputs.buildnumber }} managed/Plugify
           dotnet pack -c Release /p:Version=1.0.${{ needs.setup.outputs.buildnumber }} managed/Plugify
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dotnetlm-build-api-${{ env.GITHUB_SHA_SHORT }}
           path: managed/Plugify/bin/Release
