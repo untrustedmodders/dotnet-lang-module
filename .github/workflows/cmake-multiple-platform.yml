@@ -66,7 +66,7 @@ jobs:
           mkdir -p build
           cd build
           cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DMONOLM_VERSION="${{ needs.setup.outputs.buildnumber }}" -DMONOLM_PACKAGE="dotnetlm-build-${{ needs.setup.outputs.buildnumber }}-windows-${{ env.GITHUB_SHA_SHORT }}" ..
-          cmake --build . --target dotnet-lang-module --config ${{ env.BUILD_TYPE }} -- /m:16
+          cmake --build . --target dotnet-lang-module --config ${{ env.BUILD_TYPE }} -- /m
 
       - name: Clean build directory
         shell: pwsh
@@ -107,7 +107,7 @@ jobs:
           mkdir -p build
           cd build
           cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DMONOLM_VERSION="${{ needs.setup.outputs.buildnumber }}" -DMONOLM_PACKAGE="dotnetlm-build-${{ needs.setup.outputs.buildnumber }}-linux-${{ env.GITHUB_SHA_SHORT }}" ..
-          cmake --build . --target dotnet-lang-module --config ${{ env.BUILD_TYPE }} -- -j16
+          cmake --build . --target dotnet-lang-module --config ${{ env.BUILD_TYPE }} -- -j
 
       - name: Clean build directory
         run: |
