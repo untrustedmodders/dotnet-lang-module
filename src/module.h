@@ -1,12 +1,12 @@
 #include <plugify/language_module.h>
 #include <plugify/method.h>
 #include <plugify/plugin.h>
-#include <plugify/function.h>
+#include <plugify/jit/call.h>
+#include <plugify/jit/callback.h>
 
 #include "host_instance.h"
 
 #include <asmjit/asmjit.h>
-#include <dyncall/dyncall.h>
 #include <cpptrace/cpptrace.hpp>
 
 namespace netlm {
@@ -33,7 +33,7 @@ namespace netlm {
 	};
 
 	using ScriptMap = std::map<plugify::UniqueId, ScriptInstance>;
-	using FunctionList = std::vector<std::unique_ptr<plugify::Function>>;
+	using FunctionList = std::vector<std::unique_ptr<plugify::JitCallback>>;
 
 	class DotnetLanguageModule final : public plugify::ILanguageModule {
 	public:
@@ -52,13 +52,14 @@ namespace netlm {
 		ScriptInstance* FindScript(plugify::UniqueId pluginId);
 
 		const std::shared_ptr<plugify::IPlugifyProvider>& GetProvider() { return _provider; }
+		const std::shared_ptr<asmjit::JitRuntime>& GetRuntime() { return _rt; }
 
 	private:
 		static void ExceptionCallback(std::string_view message);
 		static void MessageCallback(std::string_view message, MessageLevel level);
 		static void DetectLeaks();
 
-		static void InternalCall(plugify::MethodRef method, plugify::MemAddr data, const plugify::Parameters* p, uint8_t count, const plugify::ReturnValue* ret);
+		static void InternalCall(plugify::MethodRef method, plugify::MemAddr data, const plugify::JitCallback::Parameters* p, uint8_t count, const plugify::JitCallback::ReturnValue* ret);
 
 	private:
 		std::shared_ptr<plugify::IPlugifyProvider> _provider;

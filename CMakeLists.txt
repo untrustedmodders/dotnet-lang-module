@@ -29,15 +29,11 @@ endif()
 include(cmake/cpptrace.cmake)
 
 #
-# Dyncall
-#
-include(cmake/dyncall.cmake)
-
-#
 # Plugify
 #
 set(PLUGIFY_BUILD_SHARED_LIB ON CACHE INTERNAL "")
-set(PLUGIFY_BUILD_FUNCTION ON CACHE INTERNAL "")
+set(PLUGIFY_BUILD_JIT
+        ON CACHE INTERNAL "")
 set(PLUGIFY_BUILD_ASSEMBLY ON CACHE INTERNAL "")
 if(LINUX)
     set(PLUGIFY_USE_STATIC_STDLIB ON CACHE INTERNAL "")
@@ -52,7 +48,7 @@ set(NETLM_PCH_FILE "src/pch.h")
 
 add_library(${PROJECT_NAME} SHARED ${NETLM_SOURCES})
 
-set(NETLM_LINK_LIBRARIES plugify::plugify plugify::plugify-function plugify::plugify-assembly asmjit::asmjit cpptrace::cpptrace dyncall_s)
+set(NETLM_LINK_LIBRARIES plugify::plugify plugify::plugify-jit plugify::plugify-assembly asmjit::asmjit cpptrace::cpptrace)
 
 if(NOT COMPILER_SUPPORTS_FORMAT)
     set(NETLM_LINK_LIBRARIES ${NETLM_LINK_LIBRARIES} fmt::fmt-header-only)

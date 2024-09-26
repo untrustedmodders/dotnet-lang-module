@@ -174,13 +174,13 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 
 		int64_t packed = (static_cast<int64_t>(type.GetTypeId()) << 32) | (static_cast<int64_t>(methodInfo.GetHandle()) & 0xFFFFFFFF);
 
-		auto function = std::make_unique<Function>(_rt);
-		MemAddr methodAddr = function->GetJitFunc(method, &InternalCall, static_cast<uintptr_t>(packed));
+		auto callback = std::make_unique<JitCallback>(_rt);
+		MemAddr methodAddr = callback->GetJitFunc(method, &InternalCall, static_cast<uintptr_t>(packed));
 		if (!methodAddr) {
-			methodErrors.emplace_back(std::format("Method '{}' has JIT generation error: {}", method.GetFunctionName(), function->GetError()));
+			methodErrors.emplace_back(std::format("Method '{}' has JIT generation error: {}", method.GetFunctionName(), callback->GetError()));
 			continue;
 		}
-		_functions.emplace_back(std::move(function));
+		_functions.emplace_back(std::move(callback));
 
 		methods.emplace_back(method, methodAddr);
 	}
@@ -277,7 +277,7 @@ ScriptInstance* DotnetLanguageModule::FindScript(UniqueId pluginId) {
 }
 
 // C++ to C#
-void DotnetLanguageModule::InternalCall(MethodRef method, MemAddr data, const Parameters* p, uint8_t count, const ReturnValue* ret) {
+void DotnetLanguageModule::InternalCall(MethodRef method, MemAddr data, const JitCallback::Parameters* p, uint8_t count, const JitCallback::ReturnValue* ret) {
 	auto combined = data.CCast<int64_t>();
 	auto typeId = static_cast<int32_t>((combined >> 32) & 0xFFFFFFFF);
 	auto methodId = static_cast<int32_t>(combined & 0xFFFFFFFF);
@@ -412,7 +412,7 @@ void DotnetLanguageModule::InternalCall(MethodRef method, MemAddr data, const Pa
 	}
 
 	if (hasRet) {
-		ret->SetReturnPtr(retPtr);
+		ret->SetReturn(retPtr);
 	}
 }
 
@@ -486,7 +486,7 @@ ScriptInstance::ScriptInstance(PluginRef plugin, Type& type) : _plugin{plugin}, 
 		deps.emplace_back(dependency.GetName());
 	}
 
-	_instance.SetPropertyValue("Id", plg::detail::to_string(plugin.GetId()));
+	_instance.SetPropertyValue("Id", plg::to_string(plugin.GetId()));
 	_instance.SetPropertyValue("Name", plg::string(plugin.GetName()));
 	_instance.SetPropertyValue("FullName", plg::string(plugin.GetFriendlyName()));
 	_instance.SetPropertyValue("Description", plg::string(desc.GetDescription()));
