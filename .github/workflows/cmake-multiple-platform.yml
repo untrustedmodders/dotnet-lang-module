@@ -66,14 +66,14 @@ jobs:
           mkdir -p build
           cd build
           cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DMONOLM_VERSION="${{ needs.setup.outputs.buildnumber }}" -DMONOLM_PACKAGE="dotnetlm-build-${{ needs.setup.outputs.buildnumber }}-windows-${{ env.GITHUB_SHA_SHORT }}" ..
-          cmake --build . --target dotnet-lang-module --config ${{ env.BUILD_TYPE }} -- /m
+          cmake --build . --target plugify-module-dotnet --config ${{ env.BUILD_TYPE }} -- /m
 
       - name: Clean build directory
         shell: pwsh
         run: |
           mkdir -p build/output/bin
-          cp build/${{env.BUILD_TYPE}}/dotnet-lang-module.dll build/output/bin
-          cp build/dotnet-lang-module.pmodule build/output
+          cp build/${{env.BUILD_TYPE}}/plugify-module-dotnet.dll build/output/bin
+          cp build/plugify-module-dotnet.pmodule build/output
 
       - uses: actions/upload-artifact@v4
         with:
@@ -107,13 +107,13 @@ jobs:
           mkdir -p build
           cd build
           cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DMONOLM_VERSION="${{ needs.setup.outputs.buildnumber }}" -DMONOLM_PACKAGE="dotnetlm-build-${{ needs.setup.outputs.buildnumber }}-linux-${{ env.GITHUB_SHA_SHORT }}" ..
-          cmake --build . --target dotnet-lang-module --config ${{ env.BUILD_TYPE }} -- -j
+          cmake --build . --target plugify-module-dotnet --config ${{ env.BUILD_TYPE }} -- -j
 
       - name: Clean build directory
         run: |
           mkdir -p build/output/bin
-          mv build/libdotnet-lang-module.so build/output/bin
-          mv build/dotnet-lang-module.pmodule build/output
+          mv build/libplugify-module-dotnet.so build/output/bin
+          mv build/plugify-module-dotnet.pmodule build/output
 
       - uses: actions/upload-artifact@v4
         with:
@@ -268,7 +268,7 @@ jobs:
             package_name = 'dotnetlm-build-${{ needs.setup.outputs.buildnumber }}-{}-${{ env.GITHUB_SHA_SHORT }}'
             checksum_linux = '${{ needs.publish.outputs.checksum_linux }}'
             checksum_windows = '${{ needs.publish.outputs.checksum_windows }}'
-            json_url = 'https://untrustedmodders.github.io/dotnet-lang-module/dotnet-lang-module.json'
+            json_url = 'https://untrustedmodders.github.io/plugify-module-dotnet/plugify-module-dotnet.json'
             
             def load_json_from_url(url):
                 try:
@@ -278,8 +278,8 @@ jobs:
                 except requests.RequestException:
                     return {
                         "content": {
-                            "dotnet-lang-module": {
-                                "name": "dotnet-lang-module",
+                            "plugify-module-dotnet": {
+                                "name": "plugify-module-dotnet",
                                 "type": "csharp-dotnet",
                                 "author": "untrustedmodders",
                                 "description": "Adds support for C# (.NET) plugins",
@@ -296,11 +296,11 @@ jobs:
                 new_version = {
                     "version": version,
                     "checksum": f"{checksum}",
-                    "download": f"https://github.com/untrustedmodders/dotnet-lang-module/releases/download/v{version}/{package.format(platform)}.zip",
+                    "download": f"https://github.com/untrustedmodders/plugify-module-dotnet/releases/download/v{version}/{package.format(platform)}.zip",
                     "platforms": [f"{platform}"]
                 }
             
-                versions = data["content"]["dotnet-lang-module"]["versions"]
+                versions = data["content"]["plugify-module-dotnet"]["versions"]
                 versions.append(new_version)
             
                 if len(versions) > 10:
@@ -311,7 +311,7 @@ jobs:
             data = load_json_from_url(json_url)
             data = append_new_version(data, version_number, checksum_windows, package_name, "windows")
             data = append_new_version(data, version_number, checksum_linux, package_name, "linux")
-            save_json('build/repo/dotnet-lang-module.json', data)
+            save_json('build/repo/plugify-module-dotnet.json', data)
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2

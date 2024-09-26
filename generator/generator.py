@@ -1146,7 +1146,7 @@ def main(manifest_path, output_dir, override):
 
     content = ''
 
-    link = 'https://github.com/untrustedmodders/dotnet-lang-module/blob/main/generator/generator.py'
+    link = 'https://github.com/untrustedmodders/plugify-module-dotnet/blob/main/generator/generator.py'
 
     content += 'using System;\n'
     content += 'using System.Numerics;\n'

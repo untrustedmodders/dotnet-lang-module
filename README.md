@@ -23,8 +23,8 @@ The C# (.NET) Language Module for Plugify facilitates the development of plugins
 1. Clone this repository:
 
     ```bash
-    git clone https://github.com/untrustedmodders/dotnet-lang-module.git
-    cd dotnet-lang-module
+    git clone https://github.com/untrustedmodders/plugify-module-dotnet.git
+    cd plugify-module-dotnet
     git submodule update --init --recursive
     ```
 

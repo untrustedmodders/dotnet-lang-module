@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Plugify;
 
-//generated with https://github.com/untrustedmodders/dotnet-lang-module/blob/main/generator/generator.py from cross_call_master 
+//generated with https://github.com/untrustedmodders/plugify-module-dotnet/blob/main/generator/generator.py from cross_call_master 
 
 namespace cross_call_master
 {

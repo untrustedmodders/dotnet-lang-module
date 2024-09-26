@@ -4,7 +4,7 @@ namespace Plugify;
 
 public static class NativeMethods
 {
-	public const string DllName = "dotnet-lang-module";
+	public const string DllName = "plugify-module-dotnet";
 
 	#region Core functions
 

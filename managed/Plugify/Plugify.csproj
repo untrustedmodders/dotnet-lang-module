@@ -17,9 +17,9 @@
     <SelfContained>true</SelfContained>
     <Authors>untrustedmodders</Authors>
     <Description>This package provides essential functionalities for creating simple plugins using the Plugify framework with the .NET Language Module. It offers a streamlined and efficient way to integrate .NET plugins into your applications to enhance your development workflow.</Description>
-    <PackageTags>plugify;dotnet-lang-module</PackageTags>
+    <PackageTags>plugify;plugify-module-dotnet</PackageTags>
     <PackageProjectUrl>https://github.com/untrustedmodders/</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/untrustedmodders/dotnet-lang-module.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/untrustedmodders/plugify-module-dotnet.git</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
