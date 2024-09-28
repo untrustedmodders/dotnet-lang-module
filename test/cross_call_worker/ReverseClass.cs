@@ -480,6 +480,411 @@ public unsafe class ReverseClass
         return $"{result}";
     }
     
+    // Callback staff
+    
+    
+    public static string CallFuncVoid()
+	{
+		CallFuncVoidCallback(CallbackHolder.MockVoid);
+		return "";
+	}
+
+	public static string CallFuncBool()
+	{
+		var result = CallFuncBoolCallback(CallbackHolder.MockBool);
+		return $"{result}";
+	}
+
+	public static string CallFuncChar8()
+	{
+		var result = CallFuncChar8Callback(CallbackHolder.MockChar8);
+		return $"{result}";
+	}
+
+	public static string CallFuncChar16()
+	{
+		var result = CallFuncChar16Callback(CallbackHolder.MockChar16);
+		return $"{result}";
+	}
+
+	public static string CallFuncInt8()
+	{
+		var result = CallFuncInt8Callback(CallbackHolder.MockInt8);
+		return $"{result}";
+	}
+
+	public static string CallFuncInt16()
+	{
+		var result = CallFuncInt16Callback(CallbackHolder.MockInt16);
+		return $"{result}";
+	}
+
+	public static string CallFuncInt32()
+	{
+		var result = CallFuncInt32Callback(CallbackHolder.MockInt32);
+		return $"{result}";
+	}
+
+	public static string CallFuncInt64()
+	{
+		var result = CallFuncInt64Callback(CallbackHolder.MockInt64);
+		return $"{result}";
+	}
+
+	public static string CallFuncUInt8()
+	{
+		var result = CallFuncUInt8Callback(CallbackHolder.MockUInt8);
+		return $"{result}";
+	}
+
+	public static string CallFuncUInt16()
+	{
+		var result = CallFuncUInt16Callback(CallbackHolder.MockUInt16);
+		return $"{result}";
+	}
+
+	public static string CallFuncUInt32()
+	{
+		var result = CallFuncUInt32Callback(CallbackHolder.MockUInt32);
+		return $"{result}";
+	}
+
+	public static string CallFuncUInt64()
+	{
+		var result = CallFuncUInt64Callback(CallbackHolder.MockUInt64);
+		return $"{result}";
+	}
+
+	public static string CallFuncPtr()
+	{
+		var result = CallFuncPtrCallback(CallbackHolder.MockPtr);
+		return $"{result}";
+	}
+
+	public static string CallFuncFloat()
+	{
+		var result = CallFuncFloatCallback(CallbackHolder.MockFloat);
+		return $"{result}";
+	}
+
+	public static string CallFuncDouble()
+	{
+		var result = CallFuncDoubleCallback(CallbackHolder.MockDouble);
+		return $"{result}";
+	}
+
+	public static string CallFuncString()
+	{
+		var result = CallFuncStringCallback(CallbackHolder.MockString);
+		return result;
+	}
+
+	public static string CallFuncBoolVector()
+	{
+		var result = CallFuncBoolVectorCallback(CallbackHolder.MockBoolArray);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncChar8Vector()
+	{
+		var result = CallFuncChar8VectorCallback(CallbackHolder.MockChar8Array);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncChar16Vector()
+	{
+		var result = CallFuncChar16VectorCallback(CallbackHolder.MockChar16Array);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncInt8Vector()
+	{
+		var result = CallFuncInt8VectorCallback(CallbackHolder.MockInt8Array);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncInt16Vector()
+	{
+		var result = CallFuncInt16VectorCallback(CallbackHolder.MockInt16Array);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncInt32Vector()
+	{
+		var result = CallFuncInt32VectorCallback(CallbackHolder.MockInt32Array);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncInt64Vector()
+	{
+		var result = CallFuncInt64VectorCallback(CallbackHolder.MockInt64Array);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncUInt8Vector()
+	{
+		var result = CallFuncUInt8VectorCallback(CallbackHolder.MockUInt8Array);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncUInt16Vector()
+	{
+		var result = CallFuncUInt16VectorCallback(CallbackHolder.MockUInt16Array);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncUInt32Vector()
+	{
+		var result = CallFuncUInt32VectorCallback(CallbackHolder.MockUInt32Array);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncUInt64Vector()
+	{
+		var result = CallFuncUInt64VectorCallback(CallbackHolder.MockUInt64Array);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncPtrVector()
+	{
+		var result = CallFuncPtrVectorCallback(CallbackHolder.MockPtrArray);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncFloatVector()
+	{
+		var result = CallFuncFloatVectorCallback(CallbackHolder.MockFloatArray);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncDoubleVector()
+	{
+		var result = CallFuncDoubleVectorCallback(CallbackHolder.MockDoubleArray);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncStringVector()
+	{
+		var result = CallFuncStringVectorCallback(CallbackHolder.MockStringArray);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFuncVec2()
+	{
+		var result = CallFuncVec2Callback(CallbackHolder.MockVec2);
+		return $"{ExportClass.PodToString(result)}";
+	}
+
+	public static string CallFuncVec3()
+	{
+		var result = CallFuncVec3Callback(CallbackHolder.MockVec3);
+		return $"{ExportClass.PodToString(result)}";
+	}
+
+	public static string CallFuncVec4()
+	{
+		var result = CallFuncVec4Callback(CallbackHolder.MockVec4);
+		return $"{ExportClass.PodToString(result)}";
+	}
+
+	public static string CallFuncMat4x4()
+	{
+		var result = CallFuncMat4x4Callback(CallbackHolder.MockMat4x4);
+		return $"{ExportClass.PodToString(result)}";
+	}
+
+	public static string CallFunc1()
+	{
+		var result = CallFunc1Callback(CallbackHolder.MockFunc1);
+		return $"{result}";
+	}
+
+	public static string CallFunc2()
+	{
+		var result = CallFunc2Callback(CallbackHolder.MockFunc2);
+		return $"{result}";
+	}
+
+	public static string CallFunc3()
+	{
+		CallFunc3Callback(CallbackHolder.MockFunc3);
+		return "";
+	}
+
+	public static string CallFunc4()
+	{
+		var result = CallFunc4Callback(CallbackHolder.MockFunc4);
+		return $"{ExportClass.PodToString(result)}";
+	}
+
+	public static string CallFunc5()
+	{
+		var result = CallFunc5Callback(CallbackHolder.MockFunc5);
+		return $"{result}";
+	}
+
+	public static string CallFunc6()
+	{
+		var result = CallFunc6Callback(CallbackHolder.MockFunc6);
+		return $"{result}";
+	}
+
+	public static string CallFunc7()
+	{
+		var result = CallFunc7Callback(CallbackHolder.MockFunc7);
+		return $"{result}";
+	}
+
+	public static string CallFunc8()
+	{
+		var result = CallFunc8Callback(CallbackHolder.MockFunc8);
+		return $"{ExportClass.PodToString(result)}";
+	}
+
+	public static string CallFunc9()
+	{
+		CallFunc9Callback(CallbackHolder.MockFunc9);
+		return "";
+	}
+
+	public static string CallFunc10()
+	{
+		var result = CallFunc10Callback(CallbackHolder.MockFunc10);
+		return $"{result}";
+	}
+
+	public static string CallFunc11()
+	{
+		var result = CallFunc11Callback(CallbackHolder.MockFunc11);
+		return $"{result}";
+	}
+
+	public static string CallFunc12()
+	{
+		var result = CallFunc12Callback(CallbackHolder.MockFunc12);
+		return $"{result}";
+	}
+
+	public static string CallFunc13()
+	{
+		var result = CallFunc13Callback(CallbackHolder.MockFunc13);
+		return result;
+	}
+
+	public static string CallFunc14()
+	{
+		var result = CallFunc14Callback(CallbackHolder.MockFunc14);
+		return $"{ExportClass.VectorToString(result)}";
+	}
+
+	public static string CallFunc15()
+	{
+		var result = CallFunc15Callback(CallbackHolder.MockFunc15);
+		return $"{result}";
+	}
+
+	public static string CallFunc16()
+	{
+		var result = CallFunc16Callback(CallbackHolder.MockFunc16);
+		return $"{result}";
+	}
+
+	public static string CallFunc17()
+	{
+		var result = CallFunc17Callback(CallbackHolder.MockFunc17);
+		return result;
+	}
+
+	public static string CallFunc18()
+	{
+		var result = CallFunc18Callback(CallbackHolder.MockFunc18);
+		return result;
+	}
+
+	public static string CallFunc19()
+	{
+		var result = CallFunc19Callback(CallbackHolder.MockFunc19);
+		return result;
+	}
+
+	public static string CallFunc20()
+	{
+		var result = CallFunc20Callback(CallbackHolder.MockFunc20);
+		return result;
+	}
+
+	public static string CallFunc21()
+	{
+		var result = CallFunc21Callback(CallbackHolder.MockFunc21);
+		return result;
+	}
+
+	public static string CallFunc22()
+	{
+		var result = CallFunc22Callback(CallbackHolder.MockFunc22);
+		return result;
+	}
+
+	public static string CallFunc23()
+	{
+		var result = CallFunc23Callback(CallbackHolder.MockFunc23);
+		return result;
+	}
+
+	public static string CallFunc24()
+	{
+		var result = CallFunc24Callback(CallbackHolder.MockFunc24);
+		return result;
+	}
+
+	public static string CallFunc25()
+	{
+		var result = CallFunc25Callback(CallbackHolder.MockFunc25);
+		return result;
+	}
+
+	public static string CallFunc26()
+	{
+		var result = CallFunc26Callback(CallbackHolder.MockFunc26);
+		return result;
+	}
+
+	public static string CallFunc27()
+	{
+		var result = CallFunc27Callback(CallbackHolder.MockFunc27);
+		return result;
+	}
+
+	public static string CallFunc28()
+	{
+		var result = CallFunc28Callback(CallbackHolder.MockFunc28);
+		return result;
+	}
+
+	public static string CallFunc29()
+	{
+		var result = CallFunc29Callback(CallbackHolder.MockFunc29);
+		return result;
+	}
+
+	public static string CallFunc30()
+	{
+		var result = CallFunc30Callback(CallbackHolder.MockFunc30);
+		return result;
+	}
+
+	public static string CallFunc31()
+	{
+		var result = CallFunc31Callback(CallbackHolder.MockFunc31);
+		return result;
+	}
+
+	public static string CallFunc32()
+	{
+		var result = CallFunc32Callback(CallbackHolder.MockFunc32);
+		return result;
+	}
+
      // Define the dictionary mapping strings to methods
     public static readonly Dictionary<string, Func<string>> ReverseTest = new()
     {
@@ -540,7 +945,74 @@ public unsafe class ReverseClass
         { "ParamRef9", ReverseParamRef9 },
         { "ParamRef10", ReverseParamRef10 },
         { "ParamRefArrays", ReverseParamRefVectors },
-        { "ParamAllPrimitives", ReverseParamAllPrimitives }
+        { "ParamAllPrimitives", ReverseParamAllPrimitives },
+        { "CallFuncVoid", CallFuncVoid },
+        { "CallFuncBool", CallFuncBool },
+        { "CallFuncChar8", CallFuncChar8 },
+        { "CallFuncChar16", CallFuncChar16 },
+        { "CallFuncInt8", CallFuncInt8 },
+        { "CallFuncInt16", CallFuncInt16 },
+        { "CallFuncInt32", CallFuncInt32 },
+        { "CallFuncInt64", CallFuncInt64 },
+        { "CallFuncUInt8", CallFuncUInt8 },
+        { "CallFuncUInt16", CallFuncUInt16 },
+        { "CallFuncUInt32", CallFuncUInt32 },
+        { "CallFuncUInt64", CallFuncUInt64 },
+        { "CallFuncPtr", CallFuncPtr },
+        { "CallFuncFloat", CallFuncFloat },
+        { "CallFuncDouble", CallFuncDouble },
+        { "CallFuncString", CallFuncString },
+        { "CallFuncBoolVector", CallFuncBoolVector },
+        { "CallFuncChar8Vector", CallFuncChar8Vector },
+        { "CallFuncChar16Vector", CallFuncChar16Vector },
+        { "CallFuncInt8Vector", CallFuncInt8Vector },
+        { "CallFuncInt16Vector", CallFuncInt16Vector },
+        { "CallFuncInt32Vector", CallFuncInt32Vector },
+        { "CallFuncInt64Vector", CallFuncInt64Vector },
+        { "CallFuncUInt8Vector", CallFuncUInt8Vector },
+        { "CallFuncUInt16Vector", CallFuncUInt16Vector },
+        { "CallFuncUInt32Vector", CallFuncUInt32Vector },
+        { "CallFuncUInt64Vector", CallFuncUInt64Vector },
+        { "CallFuncPtrVector", CallFuncPtrVector },
+        { "CallFuncFloatVector", CallFuncFloatVector },
+        { "CallFuncDoubleVector", CallFuncDoubleVector },
+        { "CallFuncStringVector", CallFuncStringVector },
+        { "CallFuncVec2", CallFuncVec2 },
+        { "CallFuncVec3", CallFuncVec3 },
+        { "CallFuncVec4", CallFuncVec4 },
+        { "CallFuncMat4x4", CallFuncMat4x4 },
+        { "CallFunc1", CallFunc1 },
+        { "CallFunc2", CallFunc2 },
+        { "CallFunc3", CallFunc3 },
+        { "CallFunc4", CallFunc4 },
+        { "CallFunc5", CallFunc5 },
+        { "CallFunc6", CallFunc6 },
+        { "CallFunc7", CallFunc7 },
+        { "CallFunc8", CallFunc8 },
+        { "CallFunc9", CallFunc9 },
+        { "CallFunc10", CallFunc10 },
+        { "CallFunc11", CallFunc11 },
+        { "CallFunc12", CallFunc12 },
+        { "CallFunc13", CallFunc13 },
+        { "CallFunc14", CallFunc14 },
+        { "CallFunc15", CallFunc15 },
+        { "CallFunc16", CallFunc16 },
+        { "CallFunc17", CallFunc17 },
+        { "CallFunc18", CallFunc18 },
+        { "CallFunc19", CallFunc19 },
+        { "CallFunc20", CallFunc20 },
+        { "CallFunc21", CallFunc21 },
+        { "CallFunc22", CallFunc22 },
+        { "CallFunc23", CallFunc23 },
+        { "CallFunc24", CallFunc24 },
+        { "CallFunc25", CallFunc25 },
+        { "CallFunc26", CallFunc26 },
+        { "CallFunc27", CallFunc27 },
+        { "CallFunc28", CallFunc28 },
+        { "CallFunc29", CallFunc29 },
+        { "CallFunc30", CallFunc30 },
+        { "CallFunc31", CallFunc31 },
+        { "CallFunc32", CallFunc32 }
     };
     
 }
