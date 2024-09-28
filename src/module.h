@@ -33,7 +33,7 @@ namespace netlm {
 	};
 
 	using ScriptMap = std::map<plugify::UniqueId, ScriptInstance>;
-	using FunctionList = std::vector<std::unique_ptr<plugify::JitCallback>>;
+	using FunctionList = std::vector<plugify::JitCallback>;
 
 	class DotnetLanguageModule final : public plugify::ILanguageModule {
 	public:

@@ -174,10 +174,10 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 
 		int64_t packed = (static_cast<int64_t>(type.GetTypeId()) << 32) | (static_cast<int64_t>(methodInfo.GetHandle()) & 0xFFFFFFFF);
 
-		auto callback = std::make_unique<JitCallback>(_rt);
-		MemAddr methodAddr = callback->GetJitFunc(method, &InternalCall, static_cast<uintptr_t>(packed));
+		JitCallback callback(_rt);
+		MemAddr methodAddr = callback.GetJitFunc(method, &InternalCall, static_cast<uintptr_t>(packed));
 		if (!methodAddr) {
-			methodErrors.emplace_back(std::format("Method '{}' has JIT generation error: {}", method.GetFunctionName(), callback->GetError()));
+			methodErrors.emplace_back(std::format("Method '{}' has JIT generation error: {}", method.GetFunctionName(), callback.GetError()));
 			continue;
 		}
 		_functions.emplace_back(std::move(callback));

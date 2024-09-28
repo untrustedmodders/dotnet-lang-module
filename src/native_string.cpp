@@ -43,9 +43,9 @@ String::operator std::string() const {
 
 bool String::operator==(std::string_view other) const {
 #if NETLM_PLATFORM_WINDOWS
-	return _length == static_cast<int32_t>(other.size()) && wcscmp(_string, Utils::ConvertUtf8ToWide(other).data()) == 0;
+	return _length == static_cast<int32_t>(other.size()) && std::wcscmp(_string, Utils::ConvertUtf8ToWide(other).data()) == 0;
 #else
-	return _length == static_cast<int32_t>(other.size()) && strcmp(_string, other.data()) == 0;
+	return _length == static_cast<int32_t>(other.size()) && std::strcmp(_string, other.data()) == 0;
 #endif
 }
 
@@ -79,9 +79,9 @@ String::operator std::wstring() const {
 
 bool String::operator==(std::wstring_view other) const {
 #if NETLM_PLATFORM_WINDOWS
-	return _length == static_cast<int32_t>(other.size()) && wcscmp(_string, other.data()) == 0;
+	return _length == static_cast<int32_t>(other.size()) && std::wcscmp(_string, other.data()) == 0;
 #else
-	return _length == static_cast<int32_t>(other.size()) && strcmp(_string, Utils::ConvertWideToUtf8(other).data()) == 0;
+	return _length == static_cast<int32_t>(other.size()) && std::strcmp(_string, Utils::ConvertWideToUtf8(other).data()) == 0;
 #endif
 }
 
@@ -95,8 +95,8 @@ bool String::operator==(const String& other) const {
 		return false;
 
 #if NETLM_PLATFORM_WINDOWS
-	return _length == other._length && wcscmp(_string, other._string) == 0;
+	return _length == other._length && std::wcscmp(_string, other._string) == 0;
 #else
-	return _length == other._length && strcmp(_string, other._string) == 0;
+	return _length == other._length && std::strcmp(_string, other._string) == 0;
 #endif
 }
