@@ -62,7 +62,9 @@ internal static class MethodUtils
             Type paramType = parameters[i].ParameterType;
             bool paramIsByReference = paramType.IsByRef;
             if (paramIsByReference)
+            {
                 paramType = paramType.GetElementType();
+            }
 
             hasRefArgs = hasRefArgs || paramIsByReference;
 

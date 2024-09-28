@@ -252,11 +252,11 @@ internal static class Marshalling
 		    case ValueType.Char16:
 			    if (useAnsi)
 			    {
-				    return (char)*(byte*)inValue;
+				    return (char)*(sbyte*)inValue;
 			    }
 			    else
 			    {
-				    return (char)*(short*)inValue;
+				    return (char)*(ushort*)inValue;
 			    }
 		    case ValueType.Int8:
 			    return *(sbyte*)inValue;
@@ -555,28 +555,32 @@ internal static class Marshalling
 			        }
 			        /*case ValueType.Vector2:
 			        {
-				        nint ptr = Pin<Vector2>(new Vector2(), pins);
+				        var tmp = (object)new Vector2();
+				        nint ptr = Pin(ref tmp, pins);
 				        handlers.Add((ptr, retType));
 				        p[index++] = ptr;
 				        break;
 			        }*/
 			        case ValueType.Vector3:
 			        {
-				        nint ptr = Pin<Vector3>(new Vector3(), pins);
+				        var tmp = (object)new Vector3();
+				        nint ptr = Pin(ref tmp, pins);
 				        handlers.Add((ptr, retType));
 				        p[index++] = ptr;
 				        break;
 			        }
 			        case ValueType.Vector4:
 			        {
-				        nint ptr = Pin<Vector4>(new Vector4(), pins);
+				        var tmp = (object)new Vector4();
+				        nint ptr = Pin(ref tmp, pins);
 				        handlers.Add((ptr, retType));
 				        p[index++] = ptr;
 				        break;
 			        }
 			        case ValueType.Matrix4x4:
 			        {
-				        nint ptr = Pin<Matrix4x4>(new Matrix4x4(), pins);
+				        var tmp = (object)new Matrix4x4();
+				        nint ptr = Pin(ref tmp, pins);
 				        handlers.Add((ptr, retType));
 				        p[index++] = ptr;
 				        break;
@@ -601,65 +605,75 @@ internal static class Marshalling
 			        switch (valueType)
 			        {
 				        case ValueType.Bool:
-					        p[index++] = Pin<bool>(paramValue, pins);
+				        {
+					        var tmp = (object)(byte)((bool)paramValue ? 1 : 0);
+					        var ptr = Pin(ref tmp, pins);
+					        p[index++] = ptr;
+					        handlers.Add((ptr, valueType));
 					        break;
+				        }
 				        case ValueType.Char8:
-					        p[index++] = Pin<char>(paramValue, pins);
+				        {
+					        var tmp = (object)(byte)((char)paramValue);
+					        var ptr = Pin(ref tmp, pins);
+					        p[index++] = ptr;
+					        handlers.Add((ptr, valueType));
 					        break;
+				        }
 				        case ValueType.Char16:
-					        p[index++] = Pin<char>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Int8:
-					        p[index++] = Pin<sbyte>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Int16:
-					        p[index++] = Pin<short>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Int32:
-					        p[index++] = Pin<int>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Int64:
-					        p[index++] = Pin<long>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.UInt8:
-					        p[index++] = Pin<byte>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.UInt16:
-					        p[index++] = Pin<ushort>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.UInt32:
-					        p[index++] = Pin<ulong>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.UInt64:
-					        p[index++] = Pin<ulong>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Pointer:
-					        p[index++] = Pin<nint>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Float:
-					        p[index++] = Pin<float>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Double:
-					        p[index++] = Pin<double>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Vector2:
-					        p[index++] = Pin<Vector2>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Vector3:
-					        p[index++] = Pin<Vector3>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Vector4:
-					        p[index++] = Pin<Vector4>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Matrix4x4:
-					        p[index++] = Pin<Matrix4x4>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
-				        
 				        case ValueType.Function:
 				        {
-					        Delegate d = GetDelegateForMarshalling((Delegate)paramValue);
-					        Pin<Delegate>(d, pins);
-					        p[index++] = Pin<nint>(Marshal.GetFunctionPointerForDelegate(d), pins);
+					        object d = GetDelegateForMarshalling((Delegate)paramValue);
+					        Pin(ref d, pins);
+					        object @delegate = Marshal.GetFunctionPointerForDelegate(d);
+					        p[index++] = Pin(ref @delegate, pins);
 					        break;
 				        }
 				        case ValueType.String:
@@ -798,10 +812,10 @@ internal static class Marshalling
 			        switch (valueType)
 			        {
 				        case ValueType.Bool:
-					        p[index++] = RCast((bool)paramValue);
+					        p[index++] = RCast((byte)((bool)paramValue ? 1 : 0));
 					        break;
 				        case ValueType.Char8:
-					        p[index++] = RCast((char)paramValue);
+					        p[index++] = RCast((byte)((char)paramValue));
 					        break;
 				        case ValueType.Char16:
 					        p[index++] = RCast((char)paramValue);
@@ -840,23 +854,24 @@ internal static class Marshalling
 					        p[index++] = RCast((double)paramValue);
 					        break;
 				        case ValueType.Vector2:
-					        p[index++] = Pin<Vector2>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Vector3:
-					        p[index++] = Pin<Vector3>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Vector4:
-					        p[index++] = Pin<Vector4>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        case ValueType.Matrix4x4:
-					        p[index++] = Pin<Matrix4x4>(paramValue, pins);
+					        p[index++] = Pin(ref paramValue, pins);
 					        break;
 				        
 				        case ValueType.Function:
 				        {
-					        Delegate d = GetDelegateForMarshalling((Delegate)paramValue);
-					        Pin<Delegate>(d, pins);
-					        p[index++] = Pin<nint>(Marshal.GetFunctionPointerForDelegate(d), pins);
+					        object d = GetDelegateForMarshalling((Delegate)paramValue);
+					        Pin(ref d, pins);
+					        object @delegate = Marshal.GetFunctionPointerForDelegate(d);
+					        p[index++] = Pin(ref @delegate, pins);
 					        break;
 				        }
 				        case ValueType.String:
@@ -1008,10 +1023,10 @@ internal static class Marshalling
 			        ret = *(byte*)r == 1;
 			        break;
 		        case ValueType.Char8:
-			        ret = (char)*(byte*)r;
+			        ret = (char)*(sbyte*)r;
 			        break;
 		        case ValueType.Char16:
-			        ret = (char)*(short*)r;
+			        ret = (char)*(ushort*)r;
 			        break;
 		        case ValueType.Int8:
 			        ret = *(sbyte*)r;
@@ -1236,6 +1251,18 @@ internal static class Marshalling
 				        {
 					        switch (paramType.ValueType)
 					        {
+						        case ValueType.Bool:
+						        {
+							        nint ptr = handlers[j++].Item1;
+							        parameters[i] = *(byte*)ptr == 1;
+							        break;
+						        }
+						        case ValueType.Char8:
+						        {
+							        nint ptr = handlers[j++].Item1;
+							        parameters[i] = (char)(*(sbyte*)ptr);
+							        break;
+						        }
 						        case ValueType.String:
 						        {
 							        nint ptr = handlers[j++].Item1;
@@ -1393,9 +1420,9 @@ internal static class Marshalling
         };
     }
     
-    private static nint Pin<T>(object paramValue, List<GCHandle> pins)
+    private static nint Pin(ref object paramValue, List<GCHandle> pins)
     {
-        var handle = GCHandle.Alloc((T)paramValue, GCHandleType.Pinned);
+        var handle = GCHandle.Alloc(paramValue, GCHandleType.Pinned);
         pins.Add(handle);
         return handle.AddrOfPinnedObject();
     }
@@ -1472,6 +1499,10 @@ internal static class Marshalling
             var (ptr, type) = handlers[i];
             switch (type)
             {
+				case ValueType.Bool:
+				case ValueType.Char8:
+					// gc will do job
+					break;
                 case ValueType.String:
                     NativeMethods.DeleteString(ptr);
                     break;
@@ -1587,7 +1618,7 @@ internal static class Marshalling
 		    
 		    for (int i = startIndex, j = 0; i < parameters.Length; i++, j++)
 		    {
-			    args[j] = SetParam(parameterTypes[j], parameters[i]);
+			    args[j] = SetParam(parameterTypes[j], ref parameters[i]);
 		    }
 
 		    object? ret = d.DynamicInvoke(args);
@@ -1596,18 +1627,27 @@ internal static class Marshalling
 		    {
 			    for (int i = startIndex, j = 0; i < parameters.Length; i++, j++)
 			    {
-				    SetReference(parameterTypes[j], parameters[i], args[j]);
+				    SetReference(parameterTypes[j], ref parameters[i], args[j]);
 			    }
 		    }
 		    
-		    return hasRet ? SetReturn(returnType, parameters[0], ret) : ret!;
+		    return hasRet ? SetReturn(returnType, ref parameters[0], ret) : ret!;
 	    };
     }
 
-    private static object SetParam(ManagedType paramType, object paramValue)
+    private static object SetParam(ManagedType paramType, ref object paramValue)
     {
 	    switch (paramType.ValueType)
 	    {
+		    case ValueType.Bool:
+		    {
+			    return (byte)paramValue;
+		    }
+		    case ValueType.Char8:
+		    {
+			    return (sbyte)paramValue;
+		    }
+		    
 		    case ValueType.String:
 		    {
 				return NativeMethods.GetStringData((nint)paramValue);
@@ -1722,7 +1762,7 @@ internal static class Marshalling
 	    }
     }
 
-    private static void SetReference(ManagedType paramType, object paramValue, object arg)
+    private static void SetReference(ManagedType paramType, ref object paramValue, object arg)
     {
 	    if (!paramType.IsByRef)
 	    {
@@ -1731,6 +1771,16 @@ internal static class Marshalling
 	    
 	    switch (paramType.ValueType)
 	    {
+		    case ValueType.Bool:
+		    {
+			    paramValue = (byte)arg == 1;
+			    break;
+		    }
+		    case ValueType.Char8:
+		    {
+			    paramValue = (char)(sbyte)arg;
+			    break;
+		    }
 		    case ValueType.String:
 		    {
 			    NativeMethods.AssignString((nint)paramValue, (string)arg);
@@ -1829,7 +1879,7 @@ internal static class Marshalling
 	    }
     }
 
-    private static nint SetReturn(ManagedType returnType, object returnValue, object? ret)
+    private static nint SetReturn(ManagedType returnType, ref object returnValue, object? ret)
     {
 	    if (ret == null)
 	    {
@@ -1952,6 +2002,7 @@ internal static class Marshalling
 			    return true;
 		    }
 	    }
-	    return valueType is >= ValueType.String and <= ValueType.ArrayString;
+
+	    return (valueType is >= ValueType.String and <= ValueType.ArrayString or ValueType.Bool or ValueType.Char8);
     }
 }
