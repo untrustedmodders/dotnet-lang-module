@@ -1042,7 +1042,7 @@ internal static class TypeInterface
 			HandleException(e);
 		}
 	}
-        
+		
 	[UnmanagedCallersOnly]
 	private static unsafe void GetEnumValues(int typeId, int* outValueArrayPtr, int* outCount)
 	{

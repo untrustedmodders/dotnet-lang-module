@@ -63,74 +63,74 @@ public enum ValueType : byte {
 
 internal static class TypeUtils
 {
-    private static readonly Dictionary<Type, ValueType> TypeSwitcher = new()
-    {
-	    [typeof(void)] = ValueType.Void,
-	    [typeof(bool)] = ValueType.Bool,
-	    //[typeof(char)] = ValueType.Char8,
-	    [typeof(char)] = ValueType.Char16,
-	    [typeof(sbyte)] = ValueType.Int8,
-	    [typeof(short)] = ValueType.Int16,
-	    [typeof(int)] = ValueType.Int32,
-	    [typeof(long)] = ValueType.Int64,
-	    [typeof(byte)] = ValueType.UInt8,
-	    [typeof(ushort)] = ValueType.UInt16,
-	    [typeof(uint)] = ValueType.UInt32,
-	    [typeof(ulong)] = ValueType.UInt64,
-	    [typeof(nuint)] = ValueType.Pointer,
-	    [typeof(nint)] = ValueType.Pointer,
-	    [typeof(float)] = ValueType.Float,
-	    [typeof(double)] = ValueType.Double,
-	    [typeof(Delegate)] = ValueType.Function,
-	    [typeof(MulticastDelegate)] = ValueType.Function,
-	    // std::string
-	    [typeof(string)] = ValueType.String,
-	    // std::vector
-	    [typeof(bool[])] = ValueType.ArrayBool,
-	    //[typeof(char[])] = ValueType.ArrayChar8,
-	    [typeof(char[])] = ValueType.ArrayChar16,
-	    [typeof(sbyte[])] = ValueType.ArrayInt8,
-	    [typeof(short[])] = ValueType.ArrayInt16,
-	    [typeof(int[])] = ValueType.ArrayInt32,
-	    [typeof(long[])] = ValueType.ArrayInt64,
-	    [typeof(byte[])] = ValueType.ArrayUInt8,
-	    [typeof(ushort[])] = ValueType.ArrayUInt16,
-	    [typeof(uint[])] = ValueType.ArrayUInt32,
-	    [typeof(ulong[])] = ValueType.ArrayUInt64,
-	    [typeof(nuint[])] = ValueType.ArrayPointer,
-	    [typeof(nint[])] = ValueType.ArrayPointer,
-	    [typeof(float[])] = ValueType.ArrayFloat,
-	    [typeof(double[])] = ValueType.ArrayDouble,
-	    [typeof(string[])] = ValueType.ArrayString,
-	    // glm:vec
-	    [typeof(Vector2)] = ValueType.Vector2,
-	    [typeof(Vector3)] = ValueType.Vector3,
-	    [typeof(Vector4)] = ValueType.Vector4,
-	    // glm:mat
-	    [typeof(Matrix4x4)] = ValueType.Matrix4x4
-    };
+	private static readonly Dictionary<Type, ValueType> TypeSwitcher = new()
+	{
+		[typeof(void)] = ValueType.Void,
+		[typeof(bool)] = ValueType.Bool,
+		//[typeof(char)] = ValueType.Char8,
+		[typeof(char)] = ValueType.Char16,
+		[typeof(sbyte)] = ValueType.Int8,
+		[typeof(short)] = ValueType.Int16,
+		[typeof(int)] = ValueType.Int32,
+		[typeof(long)] = ValueType.Int64,
+		[typeof(byte)] = ValueType.UInt8,
+		[typeof(ushort)] = ValueType.UInt16,
+		[typeof(uint)] = ValueType.UInt32,
+		[typeof(ulong)] = ValueType.UInt64,
+		[typeof(nuint)] = ValueType.Pointer,
+		[typeof(nint)] = ValueType.Pointer,
+		[typeof(float)] = ValueType.Float,
+		[typeof(double)] = ValueType.Double,
+		[typeof(Delegate)] = ValueType.Function,
+		[typeof(MulticastDelegate)] = ValueType.Function,
+		// std::string
+		[typeof(string)] = ValueType.String,
+		// std::vector
+		[typeof(bool[])] = ValueType.ArrayBool,
+		//[typeof(char[])] = ValueType.ArrayChar8,
+		[typeof(char[])] = ValueType.ArrayChar16,
+		[typeof(sbyte[])] = ValueType.ArrayInt8,
+		[typeof(short[])] = ValueType.ArrayInt16,
+		[typeof(int[])] = ValueType.ArrayInt32,
+		[typeof(long[])] = ValueType.ArrayInt64,
+		[typeof(byte[])] = ValueType.ArrayUInt8,
+		[typeof(ushort[])] = ValueType.ArrayUInt16,
+		[typeof(uint[])] = ValueType.ArrayUInt32,
+		[typeof(ulong[])] = ValueType.ArrayUInt64,
+		[typeof(nuint[])] = ValueType.ArrayPointer,
+		[typeof(nint[])] = ValueType.ArrayPointer,
+		[typeof(float[])] = ValueType.ArrayFloat,
+		[typeof(double[])] = ValueType.ArrayDouble,
+		[typeof(string[])] = ValueType.ArrayString,
+		// glm:vec
+		[typeof(Vector2)] = ValueType.Vector2,
+		[typeof(Vector3)] = ValueType.Vector3,
+		[typeof(Vector4)] = ValueType.Vector4,
+		// glm:mat
+		[typeof(Matrix4x4)] = ValueType.Matrix4x4
+	};
 
-    internal static ValueType ConvertToValueType(Type type)
-    {
-	    var elementType = type.IsByRef ? type.GetElementType() : type;
-	    if (TypeSwitcher.TryGetValue(elementType, out var valueType))
-	    {
-		    return valueType;
-	    }
+	internal static ValueType ConvertToValueType(Type type)
+	{
+		var elementType = type.IsByRef ? type.GetElementType() : type;
+		if (TypeSwitcher.TryGetValue(elementType, out var valueType))
+		{
+			return valueType;
+		}
 
-	    return type.IsDelegate() ? ValueType.Function : ValueType.Invalid;
-    }
+		return type.IsDelegate() ? ValueType.Function : ValueType.Invalid;
+	}
 
-    internal static bool IsUseAnsi(object[] customAttributes)
-    {
-	    foreach (var attribute in customAttributes)
-	    {
-		    if (attribute is CharSetAttribute a)
-		    {
-			    return a.Value is CharSet.Ansi;
-		    }
-	    }
+	internal static bool IsUseAnsi(object[] customAttributes)
+	{
+		foreach (var attribute in customAttributes)
+		{
+			if (attribute is CharSetAttribute a)
+			{
+				return a.Value is CharSet.Ansi;
+			}
+		}
 
-	    return false;
-    }
+		return false;
+	}
 }
