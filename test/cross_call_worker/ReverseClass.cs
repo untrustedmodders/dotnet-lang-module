@@ -258,37 +258,39 @@ public unsafe class ReverseClass
 
     public static string ReverseParam5()
     {
-        Param5Callback(555, 6.6f, 7.6598, new Vector4(-105.1f, -205.2f, -305.3f, -405.4f), new long[]{});
+        Param5Callback(555, 6.6f, 7.6598, new Vector4(-105.1f, -205.2f, -305.3f, -405.4f), []);
         return string.Empty;
     }
 
     public static string ReverseParam6()
     {
-        Param6Callback(444, 5.5f, 6.5987, new Vector4(110.1f, 210.2f, 310.3f, 410.4f), new long[] { 90000, -100, 20000 }, 'A');
+        Param6Callback(444, 5.5f, 6.5987, new Vector4(110.1f, 210.2f, 310.3f, 410.4f), [90000, -100, 20000], 'A');
         return string.Empty;
     }
 
     public static string ReverseParam7()
     {
-        Param7Callback(333, 4.4f, 5.9876, new Vector4(-115.1f, -215.2f, -315.3f, -415.4f), new long[] { 800000, 30000, -4000000 }, 'B', "red gold");
+        Param7Callback(333, 4.4f, 5.9876, new Vector4(-115.1f, -215.2f, -315.3f, -415.4f), [800000, 30000, -4000000], 'B', "red gold");
         return string.Empty;
     }
 
     public static string ReverseParam8()
     {
-        Param8Callback(222, 3.3f, 1.2345, new Vector4(120.1f, 220.2f, 320.3f, 420.4f), new long[] { 7000000, 5000000, -600000000 }, 'C', "blue ice", 'Z');
+        Param8Callback(222, 3.3f, 1.2345, new Vector4(120.1f, 220.2f, 320.3f, 420.4f), [7000000, 5000000, -600000000], 'C', "blue ice", 'Z');
         return string.Empty;
     }
 
     public static string ReverseParam9()
     {
-        Param9Callback(111, 2.2f, 5.1234, new Vector4(-125.1f, -225.2f, -325.3f, -425.4f), new long[] { 60000000, -700000000, 80000000000 }, 'D', "pink metal", 'Y', -100);
+        Param9Callback(111, 2.2f, 5.1234, new Vector4(-125.1f, -225.2f, -325.3f, -425.4f), [60000000, -700000000, 80000000000
+        ], 'D', "pink metal", 'Y', -100);
         return string.Empty;
     }
 
     public static string ReverseParam10()
     {
-        Param10Callback(1234, 1.1f, 4.5123, new Vector4(130.1f, 230.2f, 330.3f, 430.4f), new long[] { 500000000, 90000000000, 1000000000000 }, 'E', "green wood", 'X', -200, 0xabeba);
+        Param10Callback(1234, 1.1f, 4.5123, new Vector4(130.1f, 230.2f, 330.3f, 430.4f), [500000000, 90000000000, 1000000000000
+        ], 'E', "green wood", 'X', -200, 0xabeba);
         return string.Empty;
     }
 
@@ -492,19 +494,19 @@ public unsafe class ReverseClass
 	public static string CallFuncBool()
 	{
 		var result = CallFuncBoolCallback(CallbackHolder.MockBool);
-		return $"{result}";
+		return $"{ExportClass.BStr(result)}";
 	}
 
 	public static string CallFuncChar8()
 	{
 		var result = CallFuncChar8Callback(CallbackHolder.MockChar8);
-		return $"{result}";
+		return $"{(int)result}";
 	}
 
 	public static string CallFuncChar16()
 	{
 		var result = CallFuncChar16Callback(CallbackHolder.MockChar16);
-		return $"{result}";
+		return $"{(int)result}";
 	}
 
 	public static string CallFuncInt8()
@@ -558,7 +560,7 @@ public unsafe class ReverseClass
 	public static string CallFuncPtr()
 	{
 		var result = CallFuncPtrCallback(CallbackHolder.MockPtr);
-		return $"{result}";
+		return $"{"0x" + result.ToString("x")}";
 	}
 
 	public static string CallFuncFloat()
@@ -702,7 +704,7 @@ public unsafe class ReverseClass
 	public static string CallFunc2()
 	{
 		var result = CallFunc2Callback(CallbackHolder.MockFunc2);
-		return $"{result}";
+		return $"{(int)result}";
 	}
 
 	public static string CallFunc3()
@@ -720,7 +722,7 @@ public unsafe class ReverseClass
 	public static string CallFunc5()
 	{
 		var result = CallFunc5Callback(CallbackHolder.MockFunc5);
-		return $"{result}";
+		return $"{ExportClass.BStr(result)}";
 	}
 
 	public static string CallFunc6()
@@ -756,13 +758,13 @@ public unsafe class ReverseClass
 	public static string CallFunc11()
 	{
 		var result = CallFunc11Callback(CallbackHolder.MockFunc11);
-		return $"{result}";
+		return $"{"0x" + result.ToString("x")}";
 	}
 
 	public static string CallFunc12()
 	{
 		var result = CallFunc12Callback(CallbackHolder.MockFunc12);
-		return $"{result}";
+		return $"{ExportClass.BStr(result)}";
 	}
 
 	public static string CallFunc13()
@@ -786,7 +788,7 @@ public unsafe class ReverseClass
 	public static string CallFunc16()
 	{
 		var result = CallFunc16Callback(CallbackHolder.MockFunc16);
-		return $"{result}";
+		return $"{"0x" + result.ToString("x")}";
 	}
 
 	public static string CallFunc17()

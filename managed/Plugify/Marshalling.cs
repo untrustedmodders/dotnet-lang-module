@@ -385,7 +385,7 @@ internal static class Marshalling
 	    }
 
 	    MethodInfo methodInfo = delegateType.GetMethod("Invoke");
-	    if (IsNeedMarshal(methodInfo.ReturnType) || methodInfo.GetParameters().Any(p => IsNeedMarshal(p.ParameterType)))
+	    if (IsNeedMarshal(methodInfo.ReturnType, true) || methodInfo.GetParameters().Any(p => IsNeedMarshal(p.ParameterType, true)))
 	    {
 		    @delegate = MethodUtils.CreateObjectArrayDelegate(delegateType, ExternalInvoke(funcAddress, methodInfo));
 		    CachedFunctions.Add(funcAddress, @delegate);
@@ -406,7 +406,7 @@ internal static class Marshalling
     {
 	    ManagedType returnType =  new ManagedType(methodInfo.ReturnType, methodInfo.ReturnTypeCustomAttributes.GetCustomAttributes(false));
 	    ManagedType[] parameterTypes = methodInfo.GetParameters().Select(p => new ManagedType(p.ParameterType, p.GetCustomAttributes(false))).ToArray();
-	    
+
 	    bool hasRet = returnType.ValueType is >= ValueType.String and <= ValueType.ArrayString;
 	    bool hasRefs = parameterTypes.Any(t => t.IsByRef);
 
@@ -415,15 +415,13 @@ internal static class Marshalling
 		    ValueType firstHidden = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ValueType.Vector3 : ValueType.Matrix4x4;
 		    hasRet = returnType.ValueType >= firstHidden && returnType.ValueType <= ValueType.Matrix4x4;
 	    }
-	    
+
 	    JitCall call = new JitCall(funcAddress, parameterTypes, returnType);
 	    if (call.Function == null)
 	    {
 		    throw new InvalidOperationException($"Method '{methodInfo.Name}' has JIT generation error: {call.Error}");
 	    }
-	    
-	    // TODO: Check new calling feature
-	    
+
         return parameters =>
         {
 	        List<GCHandle> pins = [];
@@ -433,7 +431,7 @@ internal static class Marshalling
 	        nint* p = stackalloc nint[hasRet ? parameters.Length + 1 : parameters.Length];
 	        int index = 0;
 	        nint* r = stackalloc nint[2]{ 0, 0 };
-	        
+
 	        #region Allocate Memory for Return
 
 	        ValueType retType = returnType.ValueType;
@@ -553,14 +551,14 @@ internal static class Marshalling
 				        p[index++] = ptr;
 				        break;
 			        }
-			        /*case ValueType.Vector2:
+			        case ValueType.Vector2:
 			        {
 				        var tmp = (object)new Vector2();
 				        nint ptr = Pin(ref tmp, pins);
 				        handlers.Add((ptr, retType));
 				        p[index++] = ptr;
 				        break;
-			        }*/
+			        }
 			        case ValueType.Vector3:
 			        {
 				        var tmp = (object)new Vector3();
@@ -589,10 +587,10 @@ internal static class Marshalling
 				        throw new TypeNotFoundException();
 		        }
 	        }
-	        
+
 	        #endregion
 
-	        #region Set Parameters 
+	        #region Set Parameters
 
 	        for (int i = 0; i < parameters.Length; i++)
 	        {
@@ -865,7 +863,7 @@ internal static class Marshalling
 				        case ValueType.Matrix4x4:
 					        p[index++] = Pin(ref paramValue, pins);
 					        break;
-				        
+
 				        case ValueType.Function:
 				        {
 					        object d = GetDelegateForMarshalling((Delegate)paramValue);
@@ -1006,13 +1004,13 @@ internal static class Marshalling
 			        }
 		        }
 	        }
-	        
+
 	        #endregion
 
 	        #region Call Function
 
 	        call.Function(p, r);
-	        
+
 	        object? ret = null;
 
 	        switch (retType)
@@ -1089,7 +1087,7 @@ internal static class Marshalling
 			        {
 				        nint ptr = handlers[0].Item1;
 				        ret = *(Vector4*)ptr;
-				        
+
 			        }
 			        else
 			        {
@@ -1232,7 +1230,7 @@ internal static class Marshalling
 		        default:
 			        throw new TypeNotFoundException();
 	        }
-	        
+
 	        #endregion
 
 	        #region Pull Refererences Back
@@ -1397,7 +1395,7 @@ internal static class Marshalling
 			        }
 		        }
 	        }
-	        
+
 	        #endregion
 
 	        #region Cleanup Temp Storage
@@ -1413,7 +1411,7 @@ internal static class Marshalling
 	        {
 		        pin.Free();
 	        }
-	        
+
 	        #endregion
 
 	        return ret;
@@ -1639,14 +1637,14 @@ internal static class Marshalling
     {
 	    switch (paramType.ValueType)
 	    {
-		    case ValueType.Bool:
+		    /*case ValueType.Bool:
 		    {
 			    return (byte)paramValue;
 		    }
 		    case ValueType.Char8:
 		    {
 			    return (sbyte)paramValue;
-		    }
+		    }*/
 		    
 		    case ValueType.String:
 		    {
@@ -1771,7 +1769,7 @@ internal static class Marshalling
 	    
 	    switch (paramType.ValueType)
 	    {
-		    case ValueType.Bool:
+		    /*case ValueType.Bool:
 		    {
 			    paramValue = (byte)arg == 1;
 			    break;
@@ -1780,7 +1778,7 @@ internal static class Marshalling
 		    {
 			    paramValue = (char)(sbyte)arg;
 			    break;
-		    }
+		    }*/
 		    case ValueType.String:
 		    {
 			    NativeMethods.AssignString((nint)paramValue, (string)arg);
@@ -1991,18 +1989,23 @@ internal static class Marshalling
 
     #endregion
     
-    private static bool IsNeedMarshal(Type paramType)
+    private static bool IsNeedMarshal(Type paramType, bool external = false)
     {
 	    ValueType valueType = TypeUtils.ConvertToValueType(paramType);
 	    if (valueType == ValueType.Function)
 	    {
 		    var methodInfo = paramType.GetMethod("Invoke");
-		    if (IsNeedMarshal(methodInfo.ReturnType) || methodInfo.GetParameters().Any(p => IsNeedMarshal(p.ParameterType)))
+		    if (IsNeedMarshal(methodInfo.ReturnType, external) || methodInfo.GetParameters().Any(p => IsNeedMarshal(p.ParameterType, external)))
 		    {
 			    return true;
 		    }
 	    }
 
-	    return (valueType is >= ValueType.String and <= ValueType.ArrayString or ValueType.Bool or ValueType.Char8);
+	    if (external && valueType is ValueType.Bool or ValueType.Char8)
+	    {
+		    return true;
+	    }
+	    
+	    return valueType is >= ValueType.String and <= ValueType.ArrayString;
     }
 }

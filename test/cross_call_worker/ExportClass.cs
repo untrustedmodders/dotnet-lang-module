@@ -115,96 +115,96 @@ public class ExportClass
     public static bool[] NoParamReturnArrayBool()
     {
         Console.WriteLine("NoParamReturnArrayBool");
-        return new bool[] { true, false };
+        return [true, false];
     }
 
     [return: CharSet(CharSet.Ansi)]
     public static char[] NoParamReturnArrayChar8()
     {
         Console.WriteLine("NoParamReturnArrayChar8");
-        return new char[] { 'a', 'b', 'c', 'd' };
+        return ['a', 'b', 'c', 'd'];
     }
 
     public static char[] NoParamReturnArrayChar16()
     {
         Console.WriteLine("NoParamReturnArrayChar16");
-        return new char[] { 'a', 'b', 'c', 'd' };
+        return ['a', 'b', 'c', 'd'];
     }
 
     public static sbyte[] NoParamReturnArrayInt8()
     {
         Console.WriteLine("NoParamReturnArrayInt8");
-        return new sbyte[] { -3, -2, -1, 0, 1 };
+        return [-3, -2, -1, 0, 1];
     }
 
     public static short[] NoParamReturnArrayInt16()
     {
         Console.WriteLine("NoParamReturnArrayInt16");
-        return new short[] { -4, -3, -2, -1, 0, 1 };
+        return [-4, -3, -2, -1, 0, 1];
     }
 
     public static int[] NoParamReturnArrayInt32()
     {
         Console.WriteLine("NoParamReturnArrayInt32");
-        return new int[] { -5, -4, -3, -2, -1, 0, 1 };
+        return [-5, -4, -3, -2, -1, 0, 1];
     }
 
     public static long[] NoParamReturnArrayInt64()
     {
         Console.WriteLine("NoParamReturnArrayInt64");
-        return new long[] { -6, -5, -4, -3, -2, -1, 0, 1 };
+        return [-6, -5, -4, -3, -2, -1, 0, 1];
     }
 
     public static byte[] NoParamReturnArrayUInt8()
     {
         Console.WriteLine("NoParamReturnArrayUInt8");
-        return new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+        return [0, 1, 2, 3, 4, 5, 6, 7, 8];
     }
 
     public static ushort[] NoParamReturnArrayUInt16()
     {
         Console.WriteLine("NoParamReturnArrayUInt16");
-        return new ushort[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     }
 
     public static uint[] NoParamReturnArrayUInt32()
     {
         Console.WriteLine("NoParamReturnArrayUInt32");
-        return new uint[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     }
 
     public static ulong[] NoParamReturnArrayUInt64()
     {
         Console.WriteLine("NoParamReturnArrayUInt64");
-        return new ulong[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+        return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
     }
 
     public static IntPtr[] NoParamReturnArrayPointer()
     {
         Console.WriteLine("NoParamReturnArrayPointer");
-        return new IntPtr[] { IntPtr.Zero, IntPtr.Zero + 1, IntPtr.Zero + 2, IntPtr.Zero + 3 };
+        return [IntPtr.Zero, IntPtr.Zero + 1, IntPtr.Zero + 2, IntPtr.Zero + 3];
     }
 
     public static float[] NoParamReturnArrayFloat()
     {
         Console.WriteLine("NoParamReturnArrayFloat");
-        return new float[] { -12.34f, 0.0f, 12.34f };
+        return [-12.34f, 0.0f, 12.34f];
     }
 
     public static double[] NoParamReturnArrayDouble()
     {
         Console.WriteLine("NoParamReturnArrayDouble");
-        return new double[] { -12.345, 0.0, 12.345 };
+        return [-12.345, 0.0, 12.345];
     }
 
     public static string[] NoParamReturnArrayString()
     {
         Console.WriteLine("NoParamReturnArrayString");
-        return new []
-        {
+        return
+        [
             "1st string", "2nd string",
             "3rd element string (Should be big enough to avoid small string optimization)"
-        };
+        ];
     }
 
     public static Vector2 NoParamReturnVector2()
@@ -351,7 +351,7 @@ public class ExportClass
         b = -10.5f;
         c = 2.71828;
         d = new Vector4(-1.0f, -2.0f, -3.0f, -4.0f);
-        e = new long[]{ -6, -5, -4, -3, -2, -1, 0, 1 };
+        e = [-6, -5, -4, -3, -2, -1, 0, 1];
     }
 
     public static void ParamRef6(ref int a, ref float b, ref double c, ref Vector4 d, ref long[] e, [CharSet(CharSet.Ansi)] ref char f)
@@ -360,7 +360,7 @@ public class ExportClass
         b = 20.0f;
         c = 1.23456;
         d = new Vector4(10.0f, 20.0f, 30.0f, 40.0f);
-        e = new long[]{ -6, -5, -4 };
+        e = [-6, -5, -4];
         f = 'Z';
     }
 
@@ -370,7 +370,7 @@ public class ExportClass
         b = 3.0f;
         c = -1.0;
         d = new Vector4(100.0f, 200.0f, 300.0f, 400.0f);
-        e = new long[]{ -6, -5, -4, -3 };
+        e = [-6, -5, -4, -3];
         f = 'Y';
         g = "Hello, World!";
     }
@@ -381,7 +381,7 @@ public class ExportClass
         b = -7.5f;
         c = 0.123456;
         d = new Vector4(-100.0f, -200.0f, -300.0f, -400.0f);
-        e = new long[]{ -6, -5, -4, -3, -2, -1 };
+        e = [-6, -5, -4, -3, -2, -1];
         f = 'X';
         g = "Goodbye, World!";
         h = 'A';
@@ -393,7 +393,7 @@ public class ExportClass
         b = 123.45f;
         c = -678.9;
         d = new Vector4(987.65f, 432.1f, 123.456f, 789.123f);
-        e = new long[]{ -6, -5, -4, -3, -2, -1, 0, 1, 5, 9 };
+        e = [-6, -5, -4, -3, -2, -1, 0, 1, 5, 9];
         f = 'W';
         g = "Testing, 1 2 3";
         h = 'B';
@@ -406,7 +406,7 @@ public class ExportClass
         b = -0.123f;
         c = 456.789;
         d = new Vector4(-123.456f, 0.987f, 654.321f, -789.123f);
-        e = new long[]{ -6, -5, -4, -3, -2, -1, 0, 1, 5, 9, 4, -7 };
+        e = [-6, -5, -4, -3, -2, -1, 0, 1, 5, 9, 4, -7];
         f = 'V';
         g = "Another string";
         h = 'C';
@@ -418,21 +418,21 @@ public class ExportClass
         
     public static void ParamRefVectors(ref bool[] p1, [CharSet(CharSet.Ansi)] ref char[] p2, ref char[] p3, ref sbyte[] p4, ref short[] p5, ref int[] p6, ref long[] p7, ref byte[] p8, ref ushort[] p9, ref uint[] p10, ref ulong[] p11, ref IntPtr[] p12, ref float[] p13, ref double[] p14, ref string[] p15)
     {
-        p1 = new bool[] { true };
-        p2 = new char[] { 'a', 'b', 'c' };
-        p3 = new char[] { 'd', 'e', 'f' };
-        p4 = new sbyte[] { -3, -2, -1, 0, 1, 2, 3 };
-        p5 = new short[] { -4, -3, -2, -1, 0, 1, 2, 3, 4 };
-        p6 = new int[] { -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5 };
-        p7 = new long[] { -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6 };
-        p8 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7 };
-        p9 = new ushort[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-        p10 = new uint[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        p11 = new ulong[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-        p12 = new IntPtr[] { IntPtr.Zero, new IntPtr(1), new IntPtr(2) };
-        p13 = new float[] { -12.34f, 0.0f, 12.34f };
-        p14 = new double[] { -12.345, 0.0, 12.345 };
-        p15 = new [] { "1", "12", "123", "1234", "12345", "123456" };
+        p1 = [true];
+        p2 = ['a', 'b', 'c'];
+        p3 = ['d', 'e', 'f'];
+        p4 = [-3, -2, -1, 0, 1, 2, 3];
+        p5 = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
+        p6 = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5];
+        p7 = [-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6];
+        p8 = [0, 1, 2, 3, 4, 5, 6, 7];
+        p9 = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+        p10 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        p11 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        p12 = [IntPtr.Zero, new(1), new(2)];
+        p13 = [-12.34f, 0.0f, 12.34f];
+        p14 = [-12.345, 0.0, 12.345];
+        p15 = ["1", "12", "123", "1234", "12345", "123456"];
     }
 
     // Parameters and Return (all primitive types)
@@ -670,7 +670,7 @@ public class ExportClass
         Vector2 vec2 = new Vector2(3.4f, 5.6f);
         IntPtr ptr = new IntPtr(67890);
         double d = 1.618;
-        ulong[] vec64 = { 4, 5, 6 };
+        ulong[] vec64 = [4, 5, 6];
         return func(i8, vec2, ptr, d, vec64);
     }
 
@@ -679,9 +679,9 @@ public class ExportClass
     {
         string str = "AnotherString";
         float f = 4.56f;
-        float[] vecF = { 4.0f, 5.0f, 6.0f };
+        float[] vecF = [4.0f, 5.0f, 6.0f];
         short i16 = 30;
-        byte[] vecU8 = { 3, 4, 5 };
+        byte[] vecU8 = [3, 4, 5];
         IntPtr ptr = new IntPtr(24680);
         return func(str, f, vecF, i16, vecU8, ptr);
     }
@@ -689,10 +689,10 @@ public class ExportClass
     // 7 parameters
     public static double CallFunc7(cross_call_master.Func7 func)
     {
-        char[] vecC = { 'X', 'Y', 'Z' };
+        char[] vecC = ['X', 'Y', 'Z'];
         ushort u16 = 20;
         char ch16 = 'C';
-        uint[] vecU32 = { 4, 5, 6 };
+        uint[] vecU32 = [4, 5, 6];
         Vector4 vec4 = new Vector4(4.5f, 5.6f, 6.7f, 7.8f);
         bool b = false;
         ulong u64 = 200;
@@ -703,11 +703,11 @@ public class ExportClass
     public static Matrix4x4 CallFunc8(cross_call_master.Func8 func)
     {
         Vector3 vec3 = new Vector3(4.0f, 5.0f, 6.0f);
-        uint[] vecU32 = { 4, 5, 6 };
+        uint[] vecU32 = [4, 5, 6];
         short i16 = 30;
         bool b = false;
         Vector4 vec4 = new Vector4(4.5f, 5.6f, 6.7f, 7.8f);
-        char[] vecC16 = { 'D', 'E' };
+        char[] vecC16 = ['D', 'E'];
         char ch16 = 'B';
         int i32 = 50;
         return func(vec3, vecU32, i16, b, vec4, vecC16, ch16, i32);
@@ -718,7 +718,7 @@ public class ExportClass
     {
         float f = 2.71f;
         Vector2 vec2 = new Vector2(3.4f, 5.6f);
-        sbyte[] vecI8 = { 4, 5, 6 };
+        sbyte[] vecI8 = [4, 5, 6];
         ulong u64 = 250;
         bool b = false;
         string str = "Random";
@@ -733,9 +733,9 @@ public class ExportClass
     {
         Vector4 vec4 = new Vector4(5.6f, 7.8f, 8.9f, 9.0f);
         Matrix4x4 mat = Matrix4x4.Identity;
-        uint[] vecU32 = { 4, 5, 6 };
+        uint[] vecU32 = [4, 5, 6];
         ulong u64 = 150;
-        char[] vecC = { 'X', 'Y', 'Z' };
+        char[] vecC = ['X', 'Y', 'Z'];
         int i32 = 60;
         bool b = false;
         Vector2 vec2 = new Vector2(3.4f, 5.6f);
@@ -747,12 +747,12 @@ public class ExportClass
     // 11 parameters
     public static IntPtr CallFunc11(cross_call_master.Func11 func)
     {
-        bool[] vecB = { false, true, false };
+        bool[] vecB = [false, true, false];
         char ch16 = 'C';
         byte u8 = 10;
         double d = 2.71;
         Vector3 vec3 = new Vector3(4.0f, 5.0f, 6.0f);
-        sbyte[] vecI8 = { 3, 4, 5 };
+        sbyte[] vecI8 = [3, 4, 5];
         long i64 = 150;
         ushort u16 = 20;
         float f = 2.0f;
@@ -765,7 +765,7 @@ public class ExportClass
     public static bool CallFunc12(cross_call_master.Func12 func)
     {
         IntPtr ptr = new IntPtr(98765);
-        double[] vecD = { 4.0, 5.0, 6.0 };
+        double[] vecD = [4.0, 5.0, 6.0];
         uint u32 = 30;
         double d = 1.41;
         bool b = false;
@@ -773,7 +773,7 @@ public class ExportClass
         sbyte i8 = 10;
         ulong u64 = 300;
         float f = 2.72f;
-        IntPtr[] vecPtr = { new IntPtr(2), new IntPtr(3), new IntPtr(4) };
+        IntPtr[] vecPtr = [new(2), new(3), new(4)];
         long i64 = 200;
         char ch = 'B';
         return func(ptr, vecD, u32, d, b, i32, i8, u64, f, vecPtr, i64, ch);
@@ -783,17 +783,17 @@ public class ExportClass
     public static string CallFunc13(cross_call_master.Func13 func)
     {
         long i64 = 75;
-        char[] vecC = { 'D', 'E', 'F' };
+        char[] vecC = ['D', 'E', 'F'];
         ushort u16 = 20;
         float f = 2.71f;
-        bool[] vecB = { false, true, false };
+        bool[] vecB = [false, true, false];
         Vector4 vec4 = new Vector4(5.6f, 7.8f, 9.0f, 10.1f);
         string str = "RandomString";
         int i32 = 30;
         Vector3 vec3 = new Vector3(4.0f, 5.0f, 6.0f);
         IntPtr ptr = new IntPtr(13579);
         Vector2 vec2 = new Vector2(4.5f, 6.7f);
-        byte[] vecU8 = { 2, 3, 4 };
+        byte[] vecU8 = [2, 3, 4];
         short i16 = 20;
         return func(i64, vecC, u16, f, vecB, vec4, str, i32, vec3, ptr, vec2, vecU8, i16);
     }
@@ -801,15 +801,15 @@ public class ExportClass
     // 14 parameters
     public static string[] CallFunc14(cross_call_master.Func14 func)
     {
-        char[] vecC = { 'D', 'E', 'F' };
-        uint[] vecU32 = { 4, 5, 6 };
+        char[] vecC = ['D', 'E', 'F'];
+        uint[] vecU32 = [4, 5, 6];
         Matrix4x4 mat = Matrix4x4.Identity;
         bool b = false;
         char ch16 = 'B';
         int i32 = 25;
-        float[] vecF = { 4.0f, 5.0f, 6.0f };
+        float[] vecF = [4.0f, 5.0f, 6.0f];
         ushort u16 = 30;
-        byte[] vecU8 = { 3, 4, 5 };
+        byte[] vecU8 = [3, 4, 5];
         sbyte i8 = 10;
         Vector3 vec3 = new Vector3(4.0f, 5.0f, 6.0f);
         Vector4 vec4 = new Vector4(5.6f, 7.8f, 9.0f, 10.1f);
@@ -821,38 +821,38 @@ public class ExportClass
     // 15 parameters
     public static short CallFunc15(cross_call_master.Func15 func)
     {
-        short[] vecI16 = { 4, 5, 6 };
+        short[] vecI16 = [4, 5, 6];
         Matrix4x4 mat = Matrix4x4.Identity;
         Vector4 vec4 = new Vector4(7.8f, 8.9f, 9.0f, 10.1f);
         IntPtr ptr = new IntPtr(12345);
         ulong u64 = 200;
-        uint[] vecU32 = { 5, 6, 7 };
+        uint[] vecU32 = [5, 6, 7];
         bool b = false;
         float f = 3.14f;
-        char[] vecC16 = { 'D', 'E' };
+        char[] vecC16 = ['D', 'E'];
         byte u8 = 6;
         int i32 = 25;
         Vector2 vec2 = new Vector2(5.6f, 7.8f);
         ushort u16 = 40;
         double d = 2.71;
-        byte[] vecU8 = { 1, 3, 5 };
+        byte[] vecU8 = [1, 3, 5];
         return func(vecI16, mat, vec4, ptr, u64, vecU32, b, f, vecC16, u8, i32, vec2, u16, d, vecU8);
     }
 
     // 16 parameters
     public static IntPtr CallFunc16(cross_call_master.Func16 func)
     {
-        bool[] vecB = { true, true, false };
+        bool[] vecB = [true, true, false];
         short i16 = 20;
-        sbyte[] vecI8 = { 2, 3, 4 };
+        sbyte[] vecI8 = [2, 3, 4];
         Vector4 vec4 = new Vector4(7.8f, 8.9f, 9.0f, 10.1f);
         Matrix4x4 mat = Matrix4x4.Identity;
         Vector2 vec2 = new Vector2(5.6f, 7.8f);
-        ulong[] vecU64 = { 5, 6, 7 };
-        char[] vecC = { 'D', 'E', 'F' };
+        ulong[] vecU64 = [5, 6, 7];
+        char[] vecC = ['D', 'E', 'F'];
         string str = "DifferentString";
         long i64 = 300;
-        uint[] vecU32 = { 6, 7, 8 };
+        uint[] vecU32 = [6, 7, 8];
         Vector3 vec3 = new Vector3(5.0f, 6.0f, 7.0f);
         float f = 3.14f;
         double d = 2.718;
@@ -865,6 +865,22 @@ public class ExportClass
     {
         return $"{{{string.Join(", ", array)}}}";
     }
+    
+    public static string VectorToString(bool[] array)
+    {
+        if (array.Length == 0)
+            return "{{{}}}";
+        
+        var result = new StringBuilder();
+        result.Append($"{BStr(array[0])}");
+
+        for (int i = 1; i < array.Length; i++)
+        {
+            result.Append($", {BStr(array[i])}");
+        }
+
+        return $"{{{result}}}";
+    }    
     
     public static string VectorToString(nint[] array)
     {
@@ -970,7 +986,7 @@ public class ExportClass
     {
         uint u32 = 75;
         Vector3 vec3 = new Vector3(4.0f, 5.0f, 6.0f);
-        uint[] vecU32 = { 4, 5, 6 };
+        uint[] vecU32 = [4, 5, 6];
         func(ref u32, ref vec3, ref vecU32);
         return $"{u32}|{PodToString(vec3)}|{VectorToString(vecU32)}";
     }
@@ -980,7 +996,7 @@ public class ExportClass
     {
         char ch16 = 'Z';
         Vector4 vec4 = new Vector4(5.0f, 6.0f, 7.0f, 8.0f);
-        ulong[] vecU64 = { 4, 5, 6 };
+        ulong[] vecU64 = [4, 5, 6];
         char ch = 'X';
         int ret = func(ref ch16, ref vec4, ref vecU64, ref ch);
         return $"{ret}|{(ushort)ch16}|{PodToString(vec4)}|{VectorToString(vecU64)}|{ch}";
@@ -990,7 +1006,7 @@ public class ExportClass
     public static string CallFunc21(cross_call_master.Func21 func)
     {
         Matrix4x4 mat = Matrix4x4.Identity;
-        int[] vecI32 = { 4, 5, 6 };
+        int[] vecI32 = [4, 5, 6];
         Vector2 vec2 = new Vector2(3.0f, 4.0f);
         bool b = false;
         double d = 6.28;
@@ -1003,7 +1019,7 @@ public class ExportClass
     {
         IntPtr ptr = new IntPtr(1);
         uint u32 = 20;
-        double[] vecD = { 4.0, 5.0, 6.0 };
+        double[] vecD = [4.0, 5.0, 6.0];
         short i16 = 15;
         string str = "Updated Test";
         Vector4 vec4 = new Vector4(5.0f, 6.0f, 7.0f, 8.0f);
@@ -1016,11 +1032,11 @@ public class ExportClass
     {
         ulong u64 = 200;
         Vector2 vec2 = new Vector2(3.0f, 4.0f);
-        short[] vecI16 = { 4, 5, 6 };
+        short[] vecI16 = [4, 5, 6];
         char ch16 = 'Y';
         float f = 2.34f;
         sbyte i8 = 10;
-        byte[] vecU8 = { 3, 4, 5 };
+        byte[] vecU8 = [3, 4, 5];
         func(ref u64, ref vec2, ref vecI16, ref ch16, ref f, ref i8, ref vecU8);
         return $"{u64}|{PodToString(vec2)}|{VectorToString(vecI16)}|{(ushort)ch16}|{f}|{i8}|{VectorToString(vecU8)}";
     }
@@ -1028,23 +1044,23 @@ public class ExportClass
     // 8 parameters
     public static string CallFunc24(cross_call_master.Func24 func)
     {
-        char[] vecC = { 'D', 'E', 'F' };
+        char[] vecC = ['D', 'E', 'F'];
         long i64 = 100;
-        byte[] vecU8 = { 3, 4, 5 };
+        byte[] vecU8 = [3, 4, 5];
         Vector4 vec4 = new Vector4(5.0f, 6.0f, 7.0f, 8.0f);
         ulong u64 = 200;
-        IntPtr[] vecPtr = { new IntPtr(3), new IntPtr(4), new IntPtr(5) };
+        IntPtr[] vecPtr = [new(3), new(4), new(5)];
         double d = 6.28;
-        IntPtr[] vecV2 = { new IntPtr(4), new IntPtr(5), new IntPtr(6), new IntPtr(7) };
+        IntPtr[] vecV2 = [new(4), new(5), new(6), new(7)];
         Matrix4x4 ret = func(ref vecC, ref i64, ref vecU8, ref vec4, ref u64, ref vecPtr, ref d, ref vecV2);
-        return $"{ret}|{new string(vecC)}|{i64}|{VectorToString(vecU8)}|{PodToString(vec4)}|{u64}|{VectorToString(vecPtr)}|{d}|{VectorToString(vecV2)}";
+        return $"{PodToString(ret)}|{VectorToString(vecC)}|{i64}|{VectorToString(vecU8)}|{PodToString(vec4)}|{u64}|{VectorToString(vecPtr)}|{d}|{VectorToString(vecV2)}";
     }
 
     // 9 parameters
     public static string CallFunc25(cross_call_master.Func25 func)
     {
         int i32 = 50;
-        IntPtr[] vecPtr = { new IntPtr(3), new IntPtr(4), new IntPtr(5) };
+        IntPtr[] vecPtr = [new(3), new(4), new(5)];
         bool b = false;
         byte u8 = 10;
         string str = "Updated Test String";
@@ -1062,11 +1078,11 @@ public class ExportClass
         char ch16 = 'B';
         Vector2 vec2 = new Vector2(3.0f, 4.0f);
         Matrix4x4 mat = Matrix4x4.Identity;
-        float[] vecF = { 4.0f, 5.0f, 6.0f };
+        float[] vecF = [4.0f, 5.0f, 6.0f];
         short i16 = 20;
         ulong u64 = 200;
         uint u32 = 20;
-        ushort[] vecU16 = { 3, 4, 5 };
+        ushort[] vecU16 = [3, 4, 5];
         IntPtr ptr = new IntPtr((void*)0xDEADBEAFDEADBEAF);
         bool b = false;
         char ret = func(ref ch16, ref vec2, ref mat, ref vecF, ref i16, ref u64, ref u32, ref vecU16, ref ptr, ref b);
@@ -1080,13 +1096,13 @@ public class ExportClass
         Vector3 vec3 = new Vector3(4.0f, 5.0f, 6.0f);
         IntPtr ptr = IntPtr.Zero; // Example pointer
         Vector2 vec2 = new Vector2(3.0f, 4.0f);
-        short[] vecI16 = { 4, 5, 6 };
+        short[] vecI16 = [4, 5, 6];
         Matrix4x4 mat = new Matrix4x4(); // Assume initialized
         bool b = false;
         Vector4 vec4 = new Vector4(5.0f, 6.0f, 7.0f, 8.0f);
         sbyte i8 = 10;
         int i32 = 40;
-        byte[] vecU8 = { 3, 4, 5 };
+        byte[] vecU8 = [3, 4, 5];
 
         byte ret = func(ref f, ref vec3, ref ptr, ref vec2, ref vecI16, ref mat, ref b, ref vec4, ref i8, ref i32, ref vecU8);
         return $"{ret}|{f}|{PodToString(vec3)}|{"0x" + ptr.ToString("x")}|{PodToString(vec2)}|{VectorToString(vecI16)}|{PodToString(mat)}|{BStr(b)}|{PodToString(vec4)}|{i8}|{i32}|{VectorToString(vecU8)}";
@@ -1097,16 +1113,16 @@ public class ExportClass
     {
         IntPtr ptr = new IntPtr(1);
         ushort u16 = 20;
-        uint[] vecU32 = { 4, 5, 6 };
+        uint[] vecU32 = [4, 5, 6];
         Matrix4x4 mat = new Matrix4x4();
         float f = 2.71f;
         Vector4 vec4 = new Vector4(5.0f, 6.0f, 7.0f, 8.0f);
         string str = "New example string";
-        ulong[] vecU64 = { 400, 500, 600 };
+        ulong[] vecU64 = [400, 500, 600];
         long i64 = 987654321;
         bool b = false;
         Vector3 vec3 = new Vector3(4.0f, 5.0f, 6.0f);
-        float[] vecF = { 4.0f, 5.0f, 6.0f };
+        float[] vecF = [4.0f, 5.0f, 6.0f];
 
         string ret = func(ref ptr, ref u16, ref vecU32, ref mat, ref f, ref vec4, ref str, ref vecU64, ref i64, ref b, ref vec3, ref vecF);
         return $"{ret}|{"0x" + ptr.ToString("x")}|{u16}|{VectorToString(vecU32)}|{PodToString(mat)}|{f}|{PodToString(vec4)}|{str}|{VectorToString(vecU64)}|{i64}|{BStr(b)}|{PodToString(vec3)}|{VectorToString(vecF)}";
@@ -1117,17 +1133,17 @@ public class ExportClass
     {
         Vector4 vec4 = new Vector4(2.0f, 3.0f, 4.0f, 5.0f);
         int i32 = 99;
-        sbyte[] vecI8 = { 4, 5, 6 };
+        sbyte[] vecI8 = [4, 5, 6];
         double d = 2.71;
         bool b = false;
         sbyte i8 = 10;
-        ushort[] vecU16 = { 4, 5, 6 };
+        ushort[] vecU16 = [4, 5, 6];
         float f = 3.21f;
         string str = "Yet another example string";
         Matrix4x4 mat = new Matrix4x4();
         ulong u64 = 200;
         Vector3 vec3 = new Vector3(5.0f, 6.0f, 7.0f);
-        long[] vecI64 = { 2000, 3000, 4000 };
+        long[] vecI64 = [2000, 3000, 4000];
 
         string[] ret = func(ref vec4, ref i32, ref vecI8, ref d, ref b, ref i8, ref vecU16, ref f, ref str, ref mat, ref u64, ref vec3, ref vecI64);
         return $"{VectorToString(ret)}|{PodToString(vec4)}|{i32}|{VectorToString(vecI8)}|{d}|{BStr(b)}|{i8}|{VectorToString(vecU16)}|{f}|{str}|{PodToString(mat)}|{u64}|{PodToString(vec3)}|{VectorToString(vecI64)}";
@@ -1139,16 +1155,16 @@ public class ExportClass
         IntPtr ptr = new IntPtr(1);
         Vector4 vec4 = new Vector4(2.0f, 3.0f, 4.0f, 5.0f);
         long i64 = 987654321;
-        uint[] vecU32 = { 4, 5, 6 };
+        uint[] vecU32 = [4, 5, 6];
         bool b = false;
         string str = "Updated String for Func30";
         Vector3 vec3 = new Vector3(5.0f, 6.0f, 7.0f);
-        byte[] vecU8 = { 1, 2, 3 };
+        byte[] vecU8 = [1, 2, 3];
         float f = 5.67f;
         Vector2 vec2 = new Vector2(3.0f, 4.0f);
         Matrix4x4 mat = new Matrix4x4();
         sbyte i8 = 10;
-        float[] vecF = { 4.0f, 5.0f, 6.0f };
+        float[] vecF = [4.0f, 5.0f, 6.0f];
         double d = 8.90;
 
         int ret = func(ref ptr, ref vec4, ref i64, ref vecU32, ref b, ref str, ref vec3, ref vecU8, ref f, ref vec2, ref mat, ref i8, ref vecF, ref d);
@@ -1160,7 +1176,7 @@ public class ExportClass
     {
         char ch = 'B';
         uint u32 = 200;
-        ulong[] vecU64 = { 4, 5, 6 };
+        ulong[] vecU64 = [4, 5, 6];
         Vector4 vec4 = new Vector4(2.0f, 3.0f, 4.0f, 5.0f);
         string str = "Updated String for Func31";
         bool b = true;
@@ -1168,11 +1184,11 @@ public class ExportClass
         Vector2 vec2 = new Vector2(3.0f, 4.0f);
         sbyte i8 = 10;
         ushort u16 = 20;
-        short[] vecI16 = { 4, 5, 6 };
+        short[] vecI16 = [4, 5, 6];
         Matrix4x4 mat = new Matrix4x4();
         Vector3 vec3 = new Vector3(4.0f, 5.0f, 6.0f);
         float f = 5.67f;
-        double[] vecD = { 4.0, 5.0, 6.0 };
+        double[] vecD = [4.0, 5.0, 6.0];
 
         Vector3 ret = func(ref ch, ref u32, ref vecU64, ref vec4, ref str, ref b, ref i64, ref vec2, ref i8, ref u16, ref vecI16, ref mat, ref vec3, ref f, ref vecD);
         return $"{PodToString(ret)}|{ch}|{u32}|{VectorToString(vecU64)}|{PodToString(vec4)}|{str}|{BStr(b)}|{i64}|{PodToString(vec2)}|{i8}|{u16}|{VectorToString(vecI16)}|{PodToString(mat)}|{PodToString(vec3)}|{f}|{VectorToString(vecD)}";
@@ -1183,20 +1199,20 @@ public class ExportClass
     {
         int i32 = 30;
         ushort u16 = 20;
-        sbyte[] vecI8 = { 4, 5, 6 };
+        sbyte[] vecI8 = [4, 5, 6];
         Vector4 vec4 = new Vector4(2.0f, 3.0f, 4.0f, 5.0f);
         IntPtr ptr = new IntPtr(1);
-        uint[] vecU32 = { 4, 5, 6 };
+        uint[] vecU32 = [4, 5, 6];
         Matrix4x4 mat = new Matrix4x4();
         ulong u64 = 200;
         string str = "Updated String for Func32";
         long i64 = 987654321;
         Vector2 vec2 = new Vector2(3.0f, 4.0f);
-        sbyte[] vecI8_2 = { 7, 8, 9 };
+        sbyte[] vecI8_2 = [7, 8, 9];
         bool b = false;
         Vector3 vec3 = new Vector3(4.0f, 5.0f, 6.0f);
         byte u8 = 128;
-        char[] vecC16 = { 'D', 'E', 'F' };
+        char[] vecC16 = ['D', 'E', 'F'];
 
         func(ref i32, ref u16, ref vecI8, ref vec4, ref ptr, ref vecU32, ref mat, ref u64, ref str, ref i64, ref vec2, ref vecI8_2, ref b, ref vec3, ref u8, ref vecC16);
         return $"{i32}|{u16}|{VectorToString(vecI8)}|{PodToString(vec4)}|{"0x" + ptr.ToString("x")}|{VectorToString(vecU32)}|{PodToString(mat)}|{u64}|{str}|{i64}|{PodToString(vec2)}|{VectorToString(vecI8_2)}|{BStr(b)}|{PodToString(vec3)}|{u8}|{VectorToString(vecC16)}";

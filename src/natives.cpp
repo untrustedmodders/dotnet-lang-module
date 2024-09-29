@@ -248,21 +248,21 @@ extern "C" {
 
 	// Construct Functions
 
-	NETLM_EXPORT void ConstructVectorDataBool(std::vector<bool>* vector, bool* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataChar8(std::vector<char>* vector, char* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataChar16(std::vector<char16_t>* vector, char16_t* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataInt8(std::vector<int8_t>* vector, int8_t* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataInt16(std::vector<int16_t>* vector, int16_t* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataInt32(std::vector<int32_t>* vector, int32_t* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataInt64(std::vector<int64_t>* vector, int64_t* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataUInt8(std::vector<uint8_t>* vector, uint8_t* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataUInt16(std::vector<uint16_t>* vector, uint16_t* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataUInt32(std::vector<uint32_t>* vector, uint32_t* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataUInt64(std::vector<uint64_t>* vector, uint64_t* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataFloat(std::vector<float>* vector, float* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataDouble(std::vector<double>* vector, double* arr, int len) { ConstructVector(vector, arr, len); }
-	NETLM_EXPORT void ConstructVectorDataString(std::vector<plg::string>* vector, char* arr[], int len)  { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorBool(std::vector<bool>* vector, bool* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorChar8(std::vector<char>* vector, char* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorChar16(std::vector<char16_t>* vector, char16_t* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorInt8(std::vector<int8_t>* vector, int8_t* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorInt16(std::vector<int16_t>* vector, int16_t* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorInt32(std::vector<int32_t>* vector, int32_t* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorInt64(std::vector<int64_t>* vector, int64_t* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorUInt8(std::vector<uint8_t>* vector, uint8_t* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorUInt16(std::vector<uint16_t>* vector, uint16_t* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorUInt32(std::vector<uint32_t>* vector, uint32_t* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorUInt64(std::vector<uint64_t>* vector, uint64_t* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorIntPtr(std::vector<uintptr_t>* vector, uintptr_t* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorFloat(std::vector<float>* vector, float* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorDouble(std::vector<double>* vector, double* arr, int len) { ConstructVector(vector, arr, len); }
+	NETLM_EXPORT void ConstructVectorString(std::vector<plg::string>* vector, char* arr[], int len)  { ConstructVector(vector, arr, len); }
 
 	// AssignVector Functions
 

@@ -101,34 +101,34 @@ namespace cross_call_master
 	public delegate void Func17(ref int i32);
 	public delegate Vector2 Func18(ref sbyte i8, ref short i16);
 	public delegate void Func19(ref uint u32, ref Vector3 vec3, ref uint[] vecU32);
-	public delegate void Func19Wrapper(ref uint u32, ref Vector3 vec3, ref nint vecU32);
+	public delegate void Func19Wrapper(ref uint u32, ref Vector3 vec3, nint vecU32);
 	public delegate int Func20(ref char ch16, ref Vector4 vec4, ref ulong[] vecU64, [CharSet(CharSet.Ansi)] ref char ch);
-	public delegate int Func20Wrapper(ref ushort ch16, ref Vector4 vec4, ref nint vecU64, ref sbyte ch);
+	public delegate int Func20Wrapper(ref ushort ch16, ref Vector4 vec4, nint vecU64, ref sbyte ch);
 	public delegate float Func21(ref Matrix4x4 mat, ref int[] vecI32, ref Vector2 vec2, ref bool b, ref double extraParam);
-	public delegate float Func21Wrapper(ref Matrix4x4 mat, ref nint vecI32, ref Vector2 vec2, ref byte b, ref double extraParam);
+	public delegate float Func21Wrapper(ref Matrix4x4 mat, nint vecI32, ref Vector2 vec2, ref byte b, ref double extraParam);
 	public delegate ulong Func22(ref nint ptr64Ref, ref uint uint32Ref, ref double[] vectorDoubleRef, ref short int16Ref, ref string plgStringRef, ref Vector4 plgVector4Ref);
-	public delegate ulong Func22Wrapper(ref nint ptr64Ref, ref uint uint32Ref, ref nint vectorDoubleRef, ref short int16Ref, ref nint plgStringRef, ref Vector4 plgVector4Ref);
+	public delegate ulong Func22Wrapper(ref nint ptr64Ref, ref uint uint32Ref, nint vectorDoubleRef, ref short int16Ref, nint plgStringRef, ref Vector4 plgVector4Ref);
 	public delegate void Func23(ref ulong uint64Ref, ref Vector2 plgVector2Ref, ref short[] vectorInt16Ref, ref char char16Ref, ref float floatRef, ref sbyte int8Ref, ref byte[] vectorUInt8Ref);
-	public delegate void Func23Wrapper(ref ulong uint64Ref, ref Vector2 plgVector2Ref, ref nint vectorInt16Ref, ref ushort char16Ref, ref float floatRef, ref sbyte int8Ref, ref nint vectorUInt8Ref);
+	public delegate void Func23Wrapper(ref ulong uint64Ref, ref Vector2 plgVector2Ref, nint vectorInt16Ref, ref ushort char16Ref, ref float floatRef, ref sbyte int8Ref, nint vectorUInt8Ref);
 	public delegate Matrix4x4 Func24([CharSet(CharSet.Ansi)] ref char[] vectorCharRef, ref long int64Ref, ref byte[] vectorUInt8Ref, ref Vector4 plgVector4Ref, ref ulong uint64Ref, ref nint[] vectorptr64Ref, ref double doubleRef, ref nint[] vectorptr64Ref2);
-	public delegate Matrix4x4 Func24Wrapper(ref nint vectorCharRef, ref long int64Ref, ref nint vectorUInt8Ref, ref Vector4 plgVector4Ref, ref ulong uint64Ref, ref nint vectorptr64Ref, ref double doubleRef, ref nint vectorptr64Ref2);
+	public delegate Matrix4x4 Func24Wrapper(nint vectorCharRef, ref long int64Ref, nint vectorUInt8Ref, ref Vector4 plgVector4Ref, ref ulong uint64Ref, nint vectorptr64Ref, ref double doubleRef, nint vectorptr64Ref2);
 	public delegate double Func25(ref int int32Ref, ref nint[] vectorptr64Ref, ref bool boolRef, ref byte uint8Ref, ref string plgStringRef, ref Vector3 plgVector3Ref, ref long int64Ref, ref Vector4 plgVector4Ref, ref ushort uint16Ref);
-	public delegate double Func25Wrapper(ref int int32Ref, ref nint vectorptr64Ref, ref byte boolRef, ref byte uint8Ref, ref nint plgStringRef, ref Vector3 plgVector3Ref, ref long int64Ref, ref Vector4 plgVector4Ref, ref ushort uint16Ref);
+	public delegate double Func25Wrapper(ref int int32Ref, nint vectorptr64Ref, ref byte boolRef, ref byte uint8Ref, nint plgStringRef, ref Vector3 plgVector3Ref, ref long int64Ref, ref Vector4 plgVector4Ref, ref ushort uint16Ref);
 	[return: CharSet(CharSet.Ansi)]
 	public delegate char Func26(ref char char16Ref, ref Vector2 plgVector2Ref, ref Matrix4x4 plgMatrix4x4Ref, ref float[] vectorFloatRef, ref short int16Ref, ref ulong uint64Ref, ref uint uint32Ref, ref ushort[] vectorUInt16Ref, ref nint ptr64Ref, ref bool boolRef);
-	public delegate sbyte Func26Wrapper(ref ushort char16Ref, ref Vector2 plgVector2Ref, ref Matrix4x4 plgMatrix4x4Ref, ref nint vectorFloatRef, ref short int16Ref, ref ulong uint64Ref, ref uint uint32Ref, ref nint vectorUInt16Ref, ref nint ptr64Ref, ref byte boolRef);
+	public delegate sbyte Func26Wrapper(ref ushort char16Ref, ref Vector2 plgVector2Ref, ref Matrix4x4 plgMatrix4x4Ref, nint vectorFloatRef, ref short int16Ref, ref ulong uint64Ref, ref uint uint32Ref, nint vectorUInt16Ref, ref nint ptr64Ref, ref byte boolRef);
 	public delegate byte Func27(ref float floatRef, ref Vector3 plgVector3Ref, ref nint ptr64Ref, ref Vector2 plgVector2Ref, ref short[] vectorInt16Ref, ref Matrix4x4 plgMatrix4x4Ref, ref bool boolRef, ref Vector4 plgVector4Ref, ref sbyte int8Ref, ref int int32Ref, ref byte[] vectorUInt8Ref);
-	public delegate byte Func27Wrapper(ref float floatRef, ref Vector3 plgVector3Ref, ref nint ptr64Ref, ref Vector2 plgVector2Ref, ref nint vectorInt16Ref, ref Matrix4x4 plgMatrix4x4Ref, ref byte boolRef, ref Vector4 plgVector4Ref, ref sbyte int8Ref, ref int int32Ref, ref nint vectorUInt8Ref);
+	public delegate byte Func27Wrapper(ref float floatRef, ref Vector3 plgVector3Ref, ref nint ptr64Ref, ref Vector2 plgVector2Ref, nint vectorInt16Ref, ref Matrix4x4 plgMatrix4x4Ref, ref byte boolRef, ref Vector4 plgVector4Ref, ref sbyte int8Ref, ref int int32Ref, nint vectorUInt8Ref);
 	public delegate string Func28(ref nint ptr64Ref, ref ushort uint16Ref, ref uint[] vectorUInt32Ref, ref Matrix4x4 plgMatrix4x4Ref, ref float floatRef, ref Vector4 plgVector4Ref, ref string plgStringRef, ref ulong[] vectorUInt64Ref, ref long int64Ref, ref bool boolRef, ref Vector3 plgVector3Ref, ref float[] vectorFloatRef);
-	public delegate nint Func28Wrapper(nint __output, ref nint ptr64Ref, ref ushort uint16Ref, ref nint vectorUInt32Ref, ref Matrix4x4 plgMatrix4x4Ref, ref float floatRef, ref Vector4 plgVector4Ref, ref nint plgStringRef, ref nint vectorUInt64Ref, ref long int64Ref, ref byte boolRef, ref Vector3 plgVector3Ref, ref nint vectorFloatRef);
+	public delegate nint Func28Wrapper(nint __output, ref nint ptr64Ref, ref ushort uint16Ref, nint vectorUInt32Ref, ref Matrix4x4 plgMatrix4x4Ref, ref float floatRef, ref Vector4 plgVector4Ref, nint plgStringRef, nint vectorUInt64Ref, ref long int64Ref, ref byte boolRef, ref Vector3 plgVector3Ref, nint vectorFloatRef);
 	public delegate string[] Func29(ref Vector4 plgVector4Ref, ref int int32Ref, ref sbyte[] vectorInt8Ref, ref double doubleRef, ref bool boolRef, ref sbyte int8Ref, ref ushort[] vectorUInt16Ref, ref float floatRef, ref string plgStringRef, ref Matrix4x4 plgMatrix4x4Ref, ref ulong uint64Ref, ref Vector3 plgVector3Ref, ref long[] vectorInt64Ref);
-	public delegate nint Func29Wrapper(nint __output, ref Vector4 plgVector4Ref, ref int int32Ref, ref nint vectorInt8Ref, ref double doubleRef, ref byte boolRef, ref sbyte int8Ref, ref nint vectorUInt16Ref, ref float floatRef, ref nint plgStringRef, ref Matrix4x4 plgMatrix4x4Ref, ref ulong uint64Ref, ref Vector3 plgVector3Ref, ref nint vectorInt64Ref);
+	public delegate nint Func29Wrapper(nint __output, ref Vector4 plgVector4Ref, ref int int32Ref, nint vectorInt8Ref, ref double doubleRef, ref byte boolRef, ref sbyte int8Ref, nint vectorUInt16Ref, ref float floatRef, nint plgStringRef, ref Matrix4x4 plgMatrix4x4Ref, ref ulong uint64Ref, ref Vector3 plgVector3Ref, nint vectorInt64Ref);
 	public delegate int Func30(ref nint ptr64Ref, ref Vector4 plgVector4Ref, ref long int64Ref, ref uint[] vectorUInt32Ref, ref bool boolRef, ref string plgStringRef, ref Vector3 plgVector3Ref, ref byte[] vectorUInt8Ref, ref float floatRef, ref Vector2 plgVector2Ref, ref Matrix4x4 plgMatrix4x4Ref, ref sbyte int8Ref, ref float[] vectorFloatRef, ref double doubleRef);
-	public delegate int Func30Wrapper(ref nint ptr64Ref, ref Vector4 plgVector4Ref, ref long int64Ref, ref nint vectorUInt32Ref, ref byte boolRef, ref nint plgStringRef, ref Vector3 plgVector3Ref, ref nint vectorUInt8Ref, ref float floatRef, ref Vector2 plgVector2Ref, ref Matrix4x4 plgMatrix4x4Ref, ref sbyte int8Ref, ref nint vectorFloatRef, ref double doubleRef);
+	public delegate int Func30Wrapper(ref nint ptr64Ref, ref Vector4 plgVector4Ref, ref long int64Ref, nint vectorUInt32Ref, ref byte boolRef, nint plgStringRef, ref Vector3 plgVector3Ref, nint vectorUInt8Ref, ref float floatRef, ref Vector2 plgVector2Ref, ref Matrix4x4 plgMatrix4x4Ref, ref sbyte int8Ref, nint vectorFloatRef, ref double doubleRef);
 	public delegate Vector3 Func31([CharSet(CharSet.Ansi)] ref char charRef, ref uint uint32Ref, ref ulong[] vectorUInt64Ref, ref Vector4 plgVector4Ref, ref string plgStringRef, ref bool boolRef, ref long int64Ref, ref Vector2 vec2Ref, ref sbyte int8Ref, ref ushort uint16Ref, ref short[] vectorInt16Ref, ref Matrix4x4 mat4x4Ref, ref Vector3 vec3Ref, ref float floatRef, ref double[] vectorDoubleRef);
-	public delegate Vector3 Func31Wrapper(ref sbyte charRef, ref uint uint32Ref, ref nint vectorUInt64Ref, ref Vector4 plgVector4Ref, ref nint plgStringRef, ref byte boolRef, ref long int64Ref, ref Vector2 vec2Ref, ref sbyte int8Ref, ref ushort uint16Ref, ref nint vectorInt16Ref, ref Matrix4x4 mat4x4Ref, ref Vector3 vec3Ref, ref float floatRef, ref nint vectorDoubleRef);
+	public delegate Vector3 Func31Wrapper(ref sbyte charRef, ref uint uint32Ref, nint vectorUInt64Ref, ref Vector4 plgVector4Ref, nint plgStringRef, ref byte boolRef, ref long int64Ref, ref Vector2 vec2Ref, ref sbyte int8Ref, ref ushort uint16Ref, nint vectorInt16Ref, ref Matrix4x4 mat4x4Ref, ref Vector3 vec3Ref, ref float floatRef, nint vectorDoubleRef);
 	public delegate double Func32(ref int p1, ref ushort p2, ref sbyte[] p3, ref Vector4 p4, ref nint p5, ref uint[] p6, ref Matrix4x4 p7, ref ulong p8, ref string p9, ref long p10, ref Vector2 p11, ref sbyte[] p12, ref bool p13, ref Vector3 p14, ref byte p15, ref char[] p16);
-	public delegate double Func32Wrapper(ref int p1, ref ushort p2, ref nint p3, ref Vector4 p4, ref nint p5, ref nint p6, ref Matrix4x4 p7, ref ulong p8, ref nint p9, ref long p10, ref Vector2 p11, ref nint p12, ref byte p13, ref Vector3 p14, ref byte p15, ref nint p16);
+	public delegate double Func32Wrapper(ref int p1, ref ushort p2, nint p3, ref Vector4 p4, ref nint p5, nint p6, ref Matrix4x4 p7, ref ulong p8, nint p9, ref long p10, ref Vector2 p11, nint p12, ref byte p13, ref Vector3 p14, ref byte p15, nint p16);
 
 	internal static unsafe class cross_call_master
 	{
@@ -1734,7 +1734,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc19Callback;
 		private static string ___CallFunc19Callback(Func19 func)
 		{
-			var CallFunc19Callback_func = s_DelegateHolder.GetOrAdd(func, new Func19Wrapper((ref uint @__u32, ref Vector3 @__vec3, ref nint @__vecU32) => {
+			var CallFunc19Callback_func = s_DelegateHolder.GetOrAdd(func, new Func19Wrapper((ref uint @__u32, ref Vector3 @__vec3, nint @__vecU32) => {
 				var __vecU32__ = new uint[NativeMethods.GetVectorSizeUInt32(@__vecU32)];
 				NativeMethods.GetVectorDataUInt32(@__vecU32, __vecU32__);
 
@@ -1756,7 +1756,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc20Callback;
 		private static string ___CallFunc20Callback(Func20 func)
 		{
-			var CallFunc20Callback_func = s_DelegateHolder.GetOrAdd(func, new Func20Wrapper((ref ushort @__ch16, ref Vector4 @__vec4, ref nint @__vecU64, ref sbyte @__ch) => {
+			var CallFunc20Callback_func = s_DelegateHolder.GetOrAdd(func, new Func20Wrapper((ref ushort @__ch16, ref Vector4 @__vec4, nint @__vecU64, ref sbyte @__ch) => {
 				var __ch16__ = Convert.ToChar(@__ch16);
 				var __vecU64__ = new ulong[NativeMethods.GetVectorSizeUInt64(@__vecU64)];
 				NativeMethods.GetVectorDataUInt64(@__vecU64, __vecU64__);
@@ -1783,7 +1783,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc21Callback;
 		private static string ___CallFunc21Callback(Func21 func)
 		{
-			var CallFunc21Callback_func = s_DelegateHolder.GetOrAdd(func, new Func21Wrapper((ref Matrix4x4 @__mat, ref nint @__vecI32, ref Vector2 @__vec2, ref byte @__b, ref double @__extraParam) => {
+			var CallFunc21Callback_func = s_DelegateHolder.GetOrAdd(func, new Func21Wrapper((ref Matrix4x4 @__mat, nint @__vecI32, ref Vector2 @__vec2, ref byte @__b, ref double @__extraParam) => {
 				var __vecI32__ = new int[NativeMethods.GetVectorSizeInt32(@__vecI32)];
 				NativeMethods.GetVectorDataInt32(@__vecI32, __vecI32__);
 				var __b__ = Convert.ToBoolean(@__b);
@@ -1808,7 +1808,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc22Callback;
 		private static string ___CallFunc22Callback(Func22 func)
 		{
-			var CallFunc22Callback_func = s_DelegateHolder.GetOrAdd(func, new Func22Wrapper((ref nint @__ptr64Ref, ref uint @__uint32Ref, ref nint @__vectorDoubleRef, ref short @__int16Ref, ref nint @__plgStringRef, ref Vector4 @__plgVector4Ref) => {
+			var CallFunc22Callback_func = s_DelegateHolder.GetOrAdd(func, new Func22Wrapper((ref nint @__ptr64Ref, ref uint @__uint32Ref, nint @__vectorDoubleRef, ref short @__int16Ref, nint @__plgStringRef, ref Vector4 @__plgVector4Ref) => {
 				var __vectorDoubleRef__ = new double[NativeMethods.GetVectorSizeDouble(@__vectorDoubleRef)];
 				NativeMethods.GetVectorDataDouble(@__vectorDoubleRef, __vectorDoubleRef__);
 				var __plgStringRef__ = NativeMethods.GetStringData(@__plgStringRef);
@@ -1833,7 +1833,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc23Callback;
 		private static string ___CallFunc23Callback(Func23 func)
 		{
-			var CallFunc23Callback_func = s_DelegateHolder.GetOrAdd(func, new Func23Wrapper((ref ulong @__uint64Ref, ref Vector2 @__plgVector2Ref, ref nint @__vectorInt16Ref, ref ushort @__char16Ref, ref float @__floatRef, ref sbyte @__int8Ref, ref nint @__vectorUInt8Ref) => {
+			var CallFunc23Callback_func = s_DelegateHolder.GetOrAdd(func, new Func23Wrapper((ref ulong @__uint64Ref, ref Vector2 @__plgVector2Ref, nint @__vectorInt16Ref, ref ushort @__char16Ref, ref float @__floatRef, ref sbyte @__int8Ref, nint @__vectorUInt8Ref) => {
 				var __vectorInt16Ref__ = new short[NativeMethods.GetVectorSizeInt16(@__vectorInt16Ref)];
 				NativeMethods.GetVectorDataInt16(@__vectorInt16Ref, __vectorInt16Ref__);
 				var __char16Ref__ = Convert.ToChar(@__char16Ref);
@@ -1860,7 +1860,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc24Callback;
 		private static string ___CallFunc24Callback(Func24 func)
 		{
-			var CallFunc24Callback_func = s_DelegateHolder.GetOrAdd(func, new Func24Wrapper((ref nint @__vectorCharRef, ref long @__int64Ref, ref nint @__vectorUInt8Ref, ref Vector4 @__plgVector4Ref, ref ulong @__uint64Ref, ref nint @__vectorptr64Ref, ref double @__doubleRef, ref nint @__vectorptr64Ref2) => {
+			var CallFunc24Callback_func = s_DelegateHolder.GetOrAdd(func, new Func24Wrapper((nint @__vectorCharRef, ref long @__int64Ref, nint @__vectorUInt8Ref, ref Vector4 @__plgVector4Ref, ref ulong @__uint64Ref, nint @__vectorptr64Ref, ref double @__doubleRef, nint @__vectorptr64Ref2) => {
 				var __vectorCharRef__ = new char[NativeMethods.GetVectorSizeChar8(@__vectorCharRef)];
 				NativeMethods.GetVectorDataChar8(@__vectorCharRef, __vectorCharRef__);
 				var __vectorUInt8Ref__ = new byte[NativeMethods.GetVectorSizeUInt8(@__vectorUInt8Ref)];
@@ -1892,7 +1892,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc25Callback;
 		private static string ___CallFunc25Callback(Func25 func)
 		{
-			var CallFunc25Callback_func = s_DelegateHolder.GetOrAdd(func, new Func25Wrapper((ref int @__int32Ref, ref nint @__vectorptr64Ref, ref byte @__boolRef, ref byte @__uint8Ref, ref nint @__plgStringRef, ref Vector3 @__plgVector3Ref, ref long @__int64Ref, ref Vector4 @__plgVector4Ref, ref ushort @__uint16Ref) => {
+			var CallFunc25Callback_func = s_DelegateHolder.GetOrAdd(func, new Func25Wrapper((ref int @__int32Ref, nint @__vectorptr64Ref, ref byte @__boolRef, ref byte @__uint8Ref, nint @__plgStringRef, ref Vector3 @__plgVector3Ref, ref long @__int64Ref, ref Vector4 @__plgVector4Ref, ref ushort @__uint16Ref) => {
 				var __vectorptr64Ref__ = new nint[NativeMethods.GetVectorSizeIntPtr(@__vectorptr64Ref)];
 				NativeMethods.GetVectorDataIntPtr(@__vectorptr64Ref, __vectorptr64Ref__);
 				var __boolRef__ = Convert.ToBoolean(@__boolRef);
@@ -1919,7 +1919,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc26Callback;
 		private static string ___CallFunc26Callback(Func26 func)
 		{
-			var CallFunc26Callback_func = s_DelegateHolder.GetOrAdd(func, new Func26Wrapper((ref ushort @__char16Ref, ref Vector2 @__plgVector2Ref, ref Matrix4x4 @__plgMatrix4x4Ref, ref nint @__vectorFloatRef, ref short @__int16Ref, ref ulong @__uint64Ref, ref uint @__uint32Ref, ref nint @__vectorUInt16Ref, ref nint @__ptr64Ref, ref byte @__boolRef) => {
+			var CallFunc26Callback_func = s_DelegateHolder.GetOrAdd(func, new Func26Wrapper((ref ushort @__char16Ref, ref Vector2 @__plgVector2Ref, ref Matrix4x4 @__plgMatrix4x4Ref, nint @__vectorFloatRef, ref short @__int16Ref, ref ulong @__uint64Ref, ref uint @__uint32Ref, nint @__vectorUInt16Ref, ref nint @__ptr64Ref, ref byte @__boolRef) => {
 				var __char16Ref__ = Convert.ToChar(@__char16Ref);
 				var __vectorFloatRef__ = new float[NativeMethods.GetVectorSizeFloat(@__vectorFloatRef)];
 				NativeMethods.GetVectorDataFloat(@__vectorFloatRef, __vectorFloatRef__);
@@ -1949,7 +1949,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc27Callback;
 		private static string ___CallFunc27Callback(Func27 func)
 		{
-			var CallFunc27Callback_func = s_DelegateHolder.GetOrAdd(func, new Func27Wrapper((ref float @__floatRef, ref Vector3 @__plgVector3Ref, ref nint @__ptr64Ref, ref Vector2 @__plgVector2Ref, ref nint @__vectorInt16Ref, ref Matrix4x4 @__plgMatrix4x4Ref, ref byte @__boolRef, ref Vector4 @__plgVector4Ref, ref sbyte @__int8Ref, ref int @__int32Ref, ref nint @__vectorUInt8Ref) => {
+			var CallFunc27Callback_func = s_DelegateHolder.GetOrAdd(func, new Func27Wrapper((ref float @__floatRef, ref Vector3 @__plgVector3Ref, ref nint @__ptr64Ref, ref Vector2 @__plgVector2Ref, nint @__vectorInt16Ref, ref Matrix4x4 @__plgMatrix4x4Ref, ref byte @__boolRef, ref Vector4 @__plgVector4Ref, ref sbyte @__int8Ref, ref int @__int32Ref, nint @__vectorUInt8Ref) => {
 				var __vectorInt16Ref__ = new short[NativeMethods.GetVectorSizeInt16(@__vectorInt16Ref)];
 				NativeMethods.GetVectorDataInt16(@__vectorInt16Ref, __vectorInt16Ref__);
 				var __boolRef__ = Convert.ToBoolean(@__boolRef);
@@ -1977,7 +1977,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc28Callback;
 		private static string ___CallFunc28Callback(Func28 func)
 		{
-			var CallFunc28Callback_func = s_DelegateHolder.GetOrAdd(func, new Func28Wrapper((nint @__output, ref nint @__ptr64Ref, ref ushort @__uint16Ref, ref nint @__vectorUInt32Ref, ref Matrix4x4 @__plgMatrix4x4Ref, ref float @__floatRef, ref Vector4 @__plgVector4Ref, ref nint @__plgStringRef, ref nint @__vectorUInt64Ref, ref long @__int64Ref, ref byte @__boolRef, ref Vector3 @__plgVector3Ref, ref nint @__vectorFloatRef) => {
+			var CallFunc28Callback_func = s_DelegateHolder.GetOrAdd(func, new Func28Wrapper((nint @__output, ref nint @__ptr64Ref, ref ushort @__uint16Ref, nint @__vectorUInt32Ref, ref Matrix4x4 @__plgMatrix4x4Ref, ref float @__floatRef, ref Vector4 @__plgVector4Ref, nint @__plgStringRef, nint @__vectorUInt64Ref, ref long @__int64Ref, ref byte @__boolRef, ref Vector3 @__plgVector3Ref, nint @__vectorFloatRef) => {
 				var __vectorUInt32Ref__ = new uint[NativeMethods.GetVectorSizeUInt32(@__vectorUInt32Ref)];
 				NativeMethods.GetVectorDataUInt32(@__vectorUInt32Ref, __vectorUInt32Ref__);
 				var __plgStringRef__ = NativeMethods.GetStringData(@__plgStringRef);
@@ -2011,7 +2011,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc29Callback;
 		private static string ___CallFunc29Callback(Func29 func)
 		{
-			var CallFunc29Callback_func = s_DelegateHolder.GetOrAdd(func, new Func29Wrapper((nint @__output, ref Vector4 @__plgVector4Ref, ref int @__int32Ref, ref nint @__vectorInt8Ref, ref double @__doubleRef, ref byte @__boolRef, ref sbyte @__int8Ref, ref nint @__vectorUInt16Ref, ref float @__floatRef, ref nint @__plgStringRef, ref Matrix4x4 @__plgMatrix4x4Ref, ref ulong @__uint64Ref, ref Vector3 @__plgVector3Ref, ref nint @__vectorInt64Ref) => {
+			var CallFunc29Callback_func = s_DelegateHolder.GetOrAdd(func, new Func29Wrapper((nint @__output, ref Vector4 @__plgVector4Ref, ref int @__int32Ref, nint @__vectorInt8Ref, ref double @__doubleRef, ref byte @__boolRef, ref sbyte @__int8Ref, nint @__vectorUInt16Ref, ref float @__floatRef, nint @__plgStringRef, ref Matrix4x4 @__plgMatrix4x4Ref, ref ulong @__uint64Ref, ref Vector3 @__plgVector3Ref, nint @__vectorInt64Ref) => {
 				var __vectorInt8Ref__ = new sbyte[NativeMethods.GetVectorSizeInt8(@__vectorInt8Ref)];
 				NativeMethods.GetVectorDataInt8(@__vectorInt8Ref, __vectorInt8Ref__);
 				var __boolRef__ = Convert.ToBoolean(@__boolRef);
@@ -2045,7 +2045,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc30Callback;
 		private static string ___CallFunc30Callback(Func30 func)
 		{
-			var CallFunc30Callback_func = s_DelegateHolder.GetOrAdd(func, new Func30Wrapper((ref nint @__ptr64Ref, ref Vector4 @__plgVector4Ref, ref long @__int64Ref, ref nint @__vectorUInt32Ref, ref byte @__boolRef, ref nint @__plgStringRef, ref Vector3 @__plgVector3Ref, ref nint @__vectorUInt8Ref, ref float @__floatRef, ref Vector2 @__plgVector2Ref, ref Matrix4x4 @__plgMatrix4x4Ref, ref sbyte @__int8Ref, ref nint @__vectorFloatRef, ref double @__doubleRef) => {
+			var CallFunc30Callback_func = s_DelegateHolder.GetOrAdd(func, new Func30Wrapper((ref nint @__ptr64Ref, ref Vector4 @__plgVector4Ref, ref long @__int64Ref, nint @__vectorUInt32Ref, ref byte @__boolRef, nint @__plgStringRef, ref Vector3 @__plgVector3Ref, nint @__vectorUInt8Ref, ref float @__floatRef, ref Vector2 @__plgVector2Ref, ref Matrix4x4 @__plgMatrix4x4Ref, ref sbyte @__int8Ref, nint @__vectorFloatRef, ref double @__doubleRef) => {
 				var __vectorUInt32Ref__ = new uint[NativeMethods.GetVectorSizeUInt32(@__vectorUInt32Ref)];
 				NativeMethods.GetVectorDataUInt32(@__vectorUInt32Ref, __vectorUInt32Ref__);
 				var __boolRef__ = Convert.ToBoolean(@__boolRef);
@@ -2078,7 +2078,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc31Callback;
 		private static string ___CallFunc31Callback(Func31 func)
 		{
-			var CallFunc31Callback_func = s_DelegateHolder.GetOrAdd(func, new Func31Wrapper((ref sbyte @__charRef, ref uint @__uint32Ref, ref nint @__vectorUInt64Ref, ref Vector4 @__plgVector4Ref, ref nint @__plgStringRef, ref byte @__boolRef, ref long @__int64Ref, ref Vector2 @__vec2Ref, ref sbyte @__int8Ref, ref ushort @__uint16Ref, ref nint @__vectorInt16Ref, ref Matrix4x4 @__mat4x4Ref, ref Vector3 @__vec3Ref, ref float @__floatRef, ref nint @__vectorDoubleRef) => {
+			var CallFunc31Callback_func = s_DelegateHolder.GetOrAdd(func, new Func31Wrapper((ref sbyte @__charRef, ref uint @__uint32Ref, nint @__vectorUInt64Ref, ref Vector4 @__plgVector4Ref, nint @__plgStringRef, ref byte @__boolRef, ref long @__int64Ref, ref Vector2 @__vec2Ref, ref sbyte @__int8Ref, ref ushort @__uint16Ref, nint @__vectorInt16Ref, ref Matrix4x4 @__mat4x4Ref, ref Vector3 @__vec3Ref, ref float @__floatRef, nint @__vectorDoubleRef) => {
 				var __charRef__ = Convert.ToChar(@__charRef);
 				var __vectorUInt64Ref__ = new ulong[NativeMethods.GetVectorSizeUInt64(@__vectorUInt64Ref)];
 				NativeMethods.GetVectorDataUInt64(@__vectorUInt64Ref, __vectorUInt64Ref__);
@@ -2113,7 +2113,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc32Callback;
 		private static string ___CallFunc32Callback(Func32 func)
 		{
-			var CallFunc32Callback_func = s_DelegateHolder.GetOrAdd(func, new Func32Wrapper((ref int @__p1, ref ushort @__p2, ref nint @__p3, ref Vector4 @__p4, ref nint @__p5, ref nint @__p6, ref Matrix4x4 @__p7, ref ulong @__p8, ref nint @__p9, ref long @__p10, ref Vector2 @__p11, ref nint @__p12, ref byte @__p13, ref Vector3 @__p14, ref byte @__p15, ref nint @__p16) => {
+			var CallFunc32Callback_func = s_DelegateHolder.GetOrAdd(func, new Func32Wrapper((ref int @__p1, ref ushort @__p2, nint @__p3, ref Vector4 @__p4, ref nint @__p5, nint @__p6, ref Matrix4x4 @__p7, ref ulong @__p8, nint @__p9, ref long @__p10, ref Vector2 @__p11, nint @__p12, ref byte @__p13, ref Vector3 @__p14, ref byte @__p15, nint @__p16) => {
 				var __p3__ = new sbyte[NativeMethods.GetVectorSizeInt8(@__p3)];
 				NativeMethods.GetVectorDataInt8(@__p3, __p3__);
 				var __p6__ = new uint[NativeMethods.GetVectorSizeUInt32(@__p6)];

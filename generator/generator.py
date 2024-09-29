@@ -60,23 +60,23 @@ WTYPES_MAP = {
     'ptr64': 'nint',
     'float': 'float',
     'double': 'double',
-    'function': 'nint',
-    'string': 'nint',
-    'bool*': 'nint',
-    'char8*': 'nint',
-    'char16*': 'nint',
-    'int8*': 'nint',
-    'int16*': 'nint',
-    'int32*': 'nint',
-    'int64*': 'nint',
-    'uint8*': 'nint',
-    'uint16*': 'nint',
-    'uint32*': 'nint',
-    'uint64*': 'nint',
-    'ptr64*': 'nint',
-    'float*': 'nint',
-    'double*': 'nint',
-    'string*': 'nint',
+    'function': '*',
+    'string': '*',
+    'bool*': '*',
+    'char8*': '*',
+    'char16*': '*',
+    'int8*': '*',
+    'int16*': '*',
+    'int32*': '*',
+    'int64*': '*',
+    'uint8*': '*',
+    'uint16*': '*',
+    'uint32*': '*',
+    'uint64*': '*',
+    'ptr64*': '*',
+    'float*': '*',
+    'double*': '*',
+    'string*': '*',
     'vec2': 'Vector2',
     'vec3': 'Vector3',
     'vec4': 'Vector4',
@@ -707,7 +707,9 @@ def convert_dtype(type_name, is_ref=False):
 
 def convert_wtype(type_name, is_ref=False):
     type = WTYPES_MAP.get(type_name, 'int')
-    if is_ref:
+    if type == '*':
+        return 'nint'
+    elif is_ref:
         return 'ref ' + type
     else:
         return type
