@@ -676,6 +676,19 @@ INVALID_NAMES = {
     #'yield'
 }
 
+
+def is_obj_return(type_name):
+    return '*' in type_name or type_name == 'string'
+
+
+def is_special_type(type_name):
+    return type_name == 'char8' or type_name == 'char16' or type_name == 'bool'
+
+
+def is_pod_type(type_name):
+    return type_name == 'vec2' or type_name == 'vec3' or type_name == 'vec4' or type_name == 'mat4x4'
+
+
 def validate_manifest(pplugin):
     parse_errors = []
     methods = pplugin.get('exportedMethods')
@@ -698,14 +711,18 @@ def convert_type(type_name, is_ref=False):
     else:
         return type
 
-def convert_dtype(type_name, is_ref=False):
+def convert_dtype(type_name, is_ref=False, is_ret=False):
+    if is_ret == False and is_pod_type(type_name):
+        is_ref = True
     type = TYPES_MAP.get(type_name, 'int')
     if is_ref:
         return 'ref ' + type
     else:
         return type
 
-def convert_wtype(type_name, is_ref=False):
+def convert_wtype(type_name, is_ref=False, is_ret=False):
+    if is_ret == False and is_pod_type(type_name):
+        is_ref = True
     type = WTYPES_MAP.get(type_name, 'int')
     if type == '*':
         return 'nint'
@@ -731,14 +748,6 @@ def convert_ctype(type_name, is_ref=False, is_ret=False):
             return type[:-1]
         else:
             return type
-
-
-def is_obj_return(type_name):
-    return '*' in type_name or type_name == 'string'
-
-
-def is_special_type(type_name):
-    return type_name == 'char8' or type_name == 'char16' or type_name == 'bool'
 
 
 def is_need_marshal(method):
@@ -776,14 +785,14 @@ def gen_delegate(prototype):
     attr = ''
     if 'char8' in ret_type['type']:
         attr = f'\t[return: CharSet(CharSet.Ansi)]\n'
-    return_type = convert_dtype(ret_type['type'], 'ref' in ret_type and ret_type['ref'] is True)
+    return_type = convert_dtype(ret_type['type'], 'ref' in ret_type and ret_type['ref'] is True, True)
     return (f'{attr}\tpublic delegate {return_type} '
             f'{prototype["name"]}({gen_params_string(prototype, ParamGen.TypesCastNames)});\n')
 
 
 def gen_wrapper_delegate(prototype):
     ret_type = prototype['retType']
-    return_type = convert_wtype(ret_type['type'], 'ref' in ret_type and ret_type['ref'] is True)
+    return_type = convert_wtype(ret_type['type'], 'ref' in ret_type and ret_type['ref'] is True, True)
     if is_obj_return(ret_type['type']):
         params = gen_params_string(prototype, ParamGen.WrapperTypes)
         if (params != ''):
@@ -811,7 +820,7 @@ def gen_params_string(method, param_gen: ParamGen):
                 else:
                     return '__' + generate_name(param['name']) + '__'
             else:
-                if 'ref' in param and param['ref'] is True:
+                if 'ref' in param and param['ref'] is True or is_pod_type(param['type']):
                     return 'ref @__' + generate_name(param['name'])
                 else:
                     return '@__' + generate_name(param['name'])

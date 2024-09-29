@@ -67,37 +67,37 @@ namespace cross_call_master
 	public delegate Vector3 FuncVec3();
 	public delegate Vector4 FuncVec4();
 	public delegate Matrix4x4 FuncMat4x4();
-	public delegate int Func1(Vector3 a);
+	public delegate int Func1(ref Vector3 a);
 	[return: CharSet(CharSet.Ansi)]
 	public delegate char Func2(float a, long b);
 	public delegate sbyte Func2Wrapper(float a, long b);
-	public delegate void Func3(nint a, Vector4 b, string c);
-	public delegate void Func3Wrapper(nint a, Vector4 b, nint c);
-	public delegate Vector4 Func4(bool a, int b, char c, Matrix4x4 d);
-	public delegate bool Func5(sbyte a, Vector2 b, nint c, double d, ulong[] e);
-	public delegate byte Func5Wrapper(sbyte a, Vector2 b, nint c, double d, nint e);
+	public delegate void Func3(nint a, ref Vector4 b, string c);
+	public delegate void Func3Wrapper(nint a, ref Vector4 b, nint c);
+	public delegate Vector4 Func4(bool a, int b, char c, ref Matrix4x4 d);
+	public delegate bool Func5(sbyte a, ref Vector2 b, nint c, double d, ulong[] e);
+	public delegate byte Func5Wrapper(sbyte a, ref Vector2 b, nint c, double d, nint e);
 	public delegate long Func6(string a, float b, float[] c, short d, byte[] e, nint f);
 	public delegate long Func6Wrapper(nint a, float b, nint c, short d, nint e, nint f);
-	public delegate double Func7([CharSet(CharSet.Ansi)] char[] vecC, ushort u16, char ch16, uint[] vecU32, Vector4 vec4, bool b, ulong u64);
-	public delegate double Func7Wrapper(nint vecC, ushort u16, ushort ch16, nint vecU32, Vector4 vec4, byte b, ulong u64);
-	public delegate Matrix4x4 Func8(Vector3 vec3, uint[] vecU32, short i16, bool b, Vector4 vec4, char[] vecC16, char ch16, int i32);
-	public delegate Matrix4x4 Func8Wrapper(Vector3 vec3, nint vecU32, short i16, byte b, Vector4 vec4, nint vecC16, ushort ch16, int i32);
-	public delegate void Func9(float f, Vector2 vec2, sbyte[] vecI8, ulong u64, bool b, string str, Vector4 vec4, short i16, nint ptr);
-	public delegate void Func9Wrapper(float f, Vector2 vec2, nint vecI8, ulong u64, byte b, nint str, Vector4 vec4, short i16, nint ptr);
-	public delegate uint Func10(Vector4 vec4, Matrix4x4 mat, uint[] vecU32, ulong u64, [CharSet(CharSet.Ansi)] char[] vecC, int i32, bool b, Vector2 vec2, long i64, double d);
-	public delegate uint Func10Wrapper(Vector4 vec4, Matrix4x4 mat, nint vecU32, ulong u64, nint vecC, int i32, byte b, Vector2 vec2, long i64, double d);
-	public delegate nint Func11(bool[] vecB, char ch16, byte u8, double d, Vector3 vec3, sbyte[] vecI8, long i64, ushort u16, float f, Vector2 vec2, uint u32);
-	public delegate nint Func11Wrapper(nint vecB, ushort ch16, byte u8, double d, Vector3 vec3, nint vecI8, long i64, ushort u16, float f, Vector2 vec2, uint u32);
+	public delegate double Func7([CharSet(CharSet.Ansi)] char[] vecC, ushort u16, char ch16, uint[] vecU32, ref Vector4 vec4, bool b, ulong u64);
+	public delegate double Func7Wrapper(nint vecC, ushort u16, ushort ch16, nint vecU32, ref Vector4 vec4, byte b, ulong u64);
+	public delegate Matrix4x4 Func8(ref Vector3 vec3, uint[] vecU32, short i16, bool b, ref Vector4 vec4, char[] vecC16, char ch16, int i32);
+	public delegate Matrix4x4 Func8Wrapper(ref Vector3 vec3, nint vecU32, short i16, byte b, ref Vector4 vec4, nint vecC16, ushort ch16, int i32);
+	public delegate void Func9(float f, ref Vector2 vec2, sbyte[] vecI8, ulong u64, bool b, string str, ref Vector4 vec4, short i16, nint ptr);
+	public delegate void Func9Wrapper(float f, ref Vector2 vec2, nint vecI8, ulong u64, byte b, nint str, ref Vector4 vec4, short i16, nint ptr);
+	public delegate uint Func10(ref Vector4 vec4, ref Matrix4x4 mat, uint[] vecU32, ulong u64, [CharSet(CharSet.Ansi)] char[] vecC, int i32, bool b, ref Vector2 vec2, long i64, double d);
+	public delegate uint Func10Wrapper(ref Vector4 vec4, ref Matrix4x4 mat, nint vecU32, ulong u64, nint vecC, int i32, byte b, ref Vector2 vec2, long i64, double d);
+	public delegate nint Func11(bool[] vecB, char ch16, byte u8, double d, ref Vector3 vec3, sbyte[] vecI8, long i64, ushort u16, float f, ref Vector2 vec2, uint u32);
+	public delegate nint Func11Wrapper(nint vecB, ushort ch16, byte u8, double d, ref Vector3 vec3, nint vecI8, long i64, ushort u16, float f, ref Vector2 vec2, uint u32);
 	public delegate bool Func12(nint ptr, double[] vecD, uint u32, double d, bool b, int i32, sbyte i8, ulong u64, float f, nint[] vecPtr, long i64, [CharSet(CharSet.Ansi)] char ch);
 	public delegate byte Func12Wrapper(nint ptr, nint vecD, uint u32, double d, byte b, int i32, sbyte i8, ulong u64, float f, nint vecPtr, long i64, sbyte ch);
-	public delegate string Func13(long i64, [CharSet(CharSet.Ansi)] char[] vecC, ushort d, float f, bool[] b, Vector4 vec4, string str, int int32, Vector3 vec3, nint ptr, Vector2 vec2, byte[] arr, short i16);
-	public delegate nint Func13Wrapper(nint __output, long i64, nint vecC, ushort d, float f, nint b, Vector4 vec4, nint str, int int32, Vector3 vec3, nint ptr, Vector2 vec2, nint arr, short i16);
-	public delegate string[] Func14([CharSet(CharSet.Ansi)] char[] vecC, uint[] vecU32, Matrix4x4 mat, bool b, char ch16, int i32, float[] vecF, ushort u16, byte[] vecU8, sbyte i8, Vector3 vec3, Vector4 vec4, double d, nint ptr);
-	public delegate nint Func14Wrapper(nint __output, nint vecC, nint vecU32, Matrix4x4 mat, byte b, ushort ch16, int i32, nint vecF, ushort u16, nint vecU8, sbyte i8, Vector3 vec3, Vector4 vec4, double d, nint ptr);
-	public delegate short Func15(short[] vecI16, Matrix4x4 mat, Vector4 vec4, nint ptr, ulong u64, uint[] vecU32, bool b, float f, char[] vecC16, byte u8, int i32, Vector2 vec2, ushort u16, double d, byte[] vecU8);
-	public delegate short Func15Wrapper(nint vecI16, Matrix4x4 mat, Vector4 vec4, nint ptr, ulong u64, nint vecU32, byte b, float f, nint vecC16, byte u8, int i32, Vector2 vec2, ushort u16, double d, nint vecU8);
-	public delegate nint Func16(bool[] vecB, short i16, sbyte[] vecI8, Vector4 vec4, Matrix4x4 mat, Vector2 vec2, ulong[] vecU64, [CharSet(CharSet.Ansi)] char[] vecC, string str, long i64, uint[] vecU32, Vector3 vec3, float f, double d, sbyte i8, ushort u16);
-	public delegate nint Func16Wrapper(nint vecB, short i16, nint vecI8, Vector4 vec4, Matrix4x4 mat, Vector2 vec2, nint vecU64, nint vecC, nint str, long i64, nint vecU32, Vector3 vec3, float f, double d, sbyte i8, ushort u16);
+	public delegate string Func13(long i64, [CharSet(CharSet.Ansi)] char[] vecC, ushort d, float f, bool[] b, ref Vector4 vec4, string str, int int32, ref Vector3 vec3, nint ptr, ref Vector2 vec2, byte[] arr, short i16);
+	public delegate nint Func13Wrapper(nint __output, long i64, nint vecC, ushort d, float f, nint b, ref Vector4 vec4, nint str, int int32, ref Vector3 vec3, nint ptr, ref Vector2 vec2, nint arr, short i16);
+	public delegate string[] Func14([CharSet(CharSet.Ansi)] char[] vecC, uint[] vecU32, ref Matrix4x4 mat, bool b, char ch16, int i32, float[] vecF, ushort u16, byte[] vecU8, sbyte i8, ref Vector3 vec3, ref Vector4 vec4, double d, nint ptr);
+	public delegate nint Func14Wrapper(nint __output, nint vecC, nint vecU32, ref Matrix4x4 mat, byte b, ushort ch16, int i32, nint vecF, ushort u16, nint vecU8, sbyte i8, ref Vector3 vec3, ref Vector4 vec4, double d, nint ptr);
+	public delegate short Func15(short[] vecI16, ref Matrix4x4 mat, ref Vector4 vec4, nint ptr, ulong u64, uint[] vecU32, bool b, float f, char[] vecC16, byte u8, int i32, ref Vector2 vec2, ushort u16, double d, byte[] vecU8);
+	public delegate short Func15Wrapper(nint vecI16, ref Matrix4x4 mat, ref Vector4 vec4, nint ptr, ulong u64, nint vecU32, byte b, float f, nint vecC16, byte u8, int i32, ref Vector2 vec2, ushort u16, double d, nint vecU8);
+	public delegate nint Func16(bool[] vecB, short i16, sbyte[] vecI8, ref Vector4 vec4, ref Matrix4x4 mat, ref Vector2 vec2, ulong[] vecU64, [CharSet(CharSet.Ansi)] char[] vecC, string str, long i64, uint[] vecU32, ref Vector3 vec3, float f, double d, sbyte i8, ushort u16);
+	public delegate nint Func16Wrapper(nint vecB, short i16, nint vecI8, ref Vector4 vec4, ref Matrix4x4 mat, ref Vector2 vec2, nint vecU64, nint vecC, nint str, long i64, nint vecU32, ref Vector3 vec3, float f, double d, sbyte i8, ushort u16);
 	public delegate void Func17(ref int i32);
 	public delegate Vector2 Func18(ref sbyte i8, ref short i16);
 	public delegate void Func19(ref uint u32, ref Vector3 vec3, ref uint[] vecU32);
@@ -1451,10 +1451,10 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, void> __CallFunc3Callback;
 		private static void ___CallFunc3Callback(Func3 func)
 		{
-			var CallFunc3Callback_func = s_DelegateHolder.GetOrAdd(func, new Func3Wrapper((nint @__a, Vector4 @__b, nint @__c) => {
+			var CallFunc3Callback_func = s_DelegateHolder.GetOrAdd(func, new Func3Wrapper((nint @__a, ref Vector4 @__b, nint @__c) => {
 				var __c__ = NativeMethods.GetStringData(@__c);
 
-				func(@__a, @__b, __c__);
+				func(@__a, ref @__b, __c__);
 			}));
 			__CallFunc3Callback(Marshal.GetFunctionPointerForDelegate(CallFunc3Callback_func));
 		}
@@ -1469,11 +1469,11 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, byte> __CallFunc5Callback;
 		private static bool ___CallFunc5Callback(Func5 func)
 		{
-			var CallFunc5Callback_func = s_DelegateHolder.GetOrAdd(func, new Func5Wrapper((sbyte @__a, Vector2 @__b, nint @__c, double @__d, nint @__e) => {
+			var CallFunc5Callback_func = s_DelegateHolder.GetOrAdd(func, new Func5Wrapper((sbyte @__a, ref Vector2 @__b, nint @__c, double @__d, nint @__e) => {
 				var __e__ = new ulong[NativeMethods.GetVectorSizeUInt64(@__e)];
 				NativeMethods.GetVectorDataUInt64(@__e, __e__);
 
-				var __result__ = func(@__a, @__b, @__c, @__d, __e__);
+				var __result__ = func(@__a, ref @__b, @__c, @__d, __e__);
 				return Convert.ToByte(__result__);
 			}));
 			var __result = __CallFunc5Callback(Marshal.GetFunctionPointerForDelegate(CallFunc5Callback_func));
@@ -1500,7 +1500,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, double> __CallFunc7Callback;
 		private static double ___CallFunc7Callback(Func7 func)
 		{
-			var CallFunc7Callback_func = s_DelegateHolder.GetOrAdd(func, new Func7Wrapper((nint @__vecC, ushort @__u16, ushort @__ch16, nint @__vecU32, Vector4 @__vec4, byte @__b, ulong @__u64) => {
+			var CallFunc7Callback_func = s_DelegateHolder.GetOrAdd(func, new Func7Wrapper((nint @__vecC, ushort @__u16, ushort @__ch16, nint @__vecU32, ref Vector4 @__vec4, byte @__b, ulong @__u64) => {
 				var __vecC__ = new char[NativeMethods.GetVectorSizeChar8(@__vecC)];
 				NativeMethods.GetVectorDataChar8(@__vecC, __vecC__);
 				var __ch16__ = Convert.ToChar(@__ch16);
@@ -1508,7 +1508,7 @@ namespace cross_call_master
 				NativeMethods.GetVectorDataUInt32(@__vecU32, __vecU32__);
 				var __b__ = Convert.ToBoolean(@__b);
 
-				var __result__ = func(__vecC__, @__u16, __ch16__, __vecU32__, @__vec4, __b__, @__u64);
+				var __result__ = func(__vecC__, @__u16, __ch16__, __vecU32__, ref @__vec4, __b__, @__u64);
 				return __result__;
 			}));
 			var __result = __CallFunc7Callback(Marshal.GetFunctionPointerForDelegate(CallFunc7Callback_func));
@@ -1518,7 +1518,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, Matrix4x4> __CallFunc8Callback;
 		private static Matrix4x4 ___CallFunc8Callback(Func8 func)
 		{
-			var CallFunc8Callback_func = s_DelegateHolder.GetOrAdd(func, new Func8Wrapper((Vector3 @__vec3, nint @__vecU32, short @__i16, byte @__b, Vector4 @__vec4, nint @__vecC16, ushort @__ch16, int @__i32) => {
+			var CallFunc8Callback_func = s_DelegateHolder.GetOrAdd(func, new Func8Wrapper((ref Vector3 @__vec3, nint @__vecU32, short @__i16, byte @__b, ref Vector4 @__vec4, nint @__vecC16, ushort @__ch16, int @__i32) => {
 				var __vecU32__ = new uint[NativeMethods.GetVectorSizeUInt32(@__vecU32)];
 				NativeMethods.GetVectorDataUInt32(@__vecU32, __vecU32__);
 				var __b__ = Convert.ToBoolean(@__b);
@@ -1526,7 +1526,7 @@ namespace cross_call_master
 				NativeMethods.GetVectorDataChar16(@__vecC16, __vecC16__);
 				var __ch16__ = Convert.ToChar(@__ch16);
 
-				var __result__ = func(@__vec3, __vecU32__, @__i16, __b__, @__vec4, __vecC16__, __ch16__, @__i32);
+				var __result__ = func(ref @__vec3, __vecU32__, @__i16, __b__, ref @__vec4, __vecC16__, __ch16__, @__i32);
 				return __result__;
 			}));
 			var __result = __CallFunc8Callback(Marshal.GetFunctionPointerForDelegate(CallFunc8Callback_func));
@@ -1536,13 +1536,13 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, void> __CallFunc9Callback;
 		private static void ___CallFunc9Callback(Func9 func)
 		{
-			var CallFunc9Callback_func = s_DelegateHolder.GetOrAdd(func, new Func9Wrapper((float @__f, Vector2 @__vec2, nint @__vecI8, ulong @__u64, byte @__b, nint @__str, Vector4 @__vec4, short @__i16, nint @__ptr) => {
+			var CallFunc9Callback_func = s_DelegateHolder.GetOrAdd(func, new Func9Wrapper((float @__f, ref Vector2 @__vec2, nint @__vecI8, ulong @__u64, byte @__b, nint @__str, ref Vector4 @__vec4, short @__i16, nint @__ptr) => {
 				var __vecI8__ = new sbyte[NativeMethods.GetVectorSizeInt8(@__vecI8)];
 				NativeMethods.GetVectorDataInt8(@__vecI8, __vecI8__);
 				var __b__ = Convert.ToBoolean(@__b);
 				var __str__ = NativeMethods.GetStringData(@__str);
 
-				func(@__f, @__vec2, __vecI8__, @__u64, __b__, __str__, @__vec4, @__i16, @__ptr);
+				func(@__f, ref @__vec2, __vecI8__, @__u64, __b__, __str__, ref @__vec4, @__i16, @__ptr);
 			}));
 			__CallFunc9Callback(Marshal.GetFunctionPointerForDelegate(CallFunc9Callback_func));
 		}
@@ -1550,14 +1550,14 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, uint> __CallFunc10Callback;
 		private static uint ___CallFunc10Callback(Func10 func)
 		{
-			var CallFunc10Callback_func = s_DelegateHolder.GetOrAdd(func, new Func10Wrapper((Vector4 @__vec4, Matrix4x4 @__mat, nint @__vecU32, ulong @__u64, nint @__vecC, int @__i32, byte @__b, Vector2 @__vec2, long @__i64, double @__d) => {
+			var CallFunc10Callback_func = s_DelegateHolder.GetOrAdd(func, new Func10Wrapper((ref Vector4 @__vec4, ref Matrix4x4 @__mat, nint @__vecU32, ulong @__u64, nint @__vecC, int @__i32, byte @__b, ref Vector2 @__vec2, long @__i64, double @__d) => {
 				var __vecU32__ = new uint[NativeMethods.GetVectorSizeUInt32(@__vecU32)];
 				NativeMethods.GetVectorDataUInt32(@__vecU32, __vecU32__);
 				var __vecC__ = new char[NativeMethods.GetVectorSizeChar8(@__vecC)];
 				NativeMethods.GetVectorDataChar8(@__vecC, __vecC__);
 				var __b__ = Convert.ToBoolean(@__b);
 
-				var __result__ = func(@__vec4, @__mat, __vecU32__, @__u64, __vecC__, @__i32, __b__, @__vec2, @__i64, @__d);
+				var __result__ = func(ref @__vec4, ref @__mat, __vecU32__, @__u64, __vecC__, @__i32, __b__, ref @__vec2, @__i64, @__d);
 				return __result__;
 			}));
 			var __result = __CallFunc10Callback(Marshal.GetFunctionPointerForDelegate(CallFunc10Callback_func));
@@ -1567,14 +1567,14 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint> __CallFunc11Callback;
 		private static nint ___CallFunc11Callback(Func11 func)
 		{
-			var CallFunc11Callback_func = s_DelegateHolder.GetOrAdd(func, new Func11Wrapper((nint @__vecB, ushort @__ch16, byte @__u8, double @__d, Vector3 @__vec3, nint @__vecI8, long @__i64, ushort @__u16, float @__f, Vector2 @__vec2, uint @__u32) => {
+			var CallFunc11Callback_func = s_DelegateHolder.GetOrAdd(func, new Func11Wrapper((nint @__vecB, ushort @__ch16, byte @__u8, double @__d, ref Vector3 @__vec3, nint @__vecI8, long @__i64, ushort @__u16, float @__f, ref Vector2 @__vec2, uint @__u32) => {
 				var __vecB__ = new bool[NativeMethods.GetVectorSizeBool(@__vecB)];
 				NativeMethods.GetVectorDataBool(@__vecB, __vecB__);
 				var __ch16__ = Convert.ToChar(@__ch16);
 				var __vecI8__ = new sbyte[NativeMethods.GetVectorSizeInt8(@__vecI8)];
 				NativeMethods.GetVectorDataInt8(@__vecI8, __vecI8__);
 
-				var __result__ = func(__vecB__, __ch16__, @__u8, @__d, @__vec3, __vecI8__, @__i64, @__u16, @__f, @__vec2, @__u32);
+				var __result__ = func(__vecB__, __ch16__, @__u8, @__d, ref @__vec3, __vecI8__, @__i64, @__u16, @__f, ref @__vec2, @__u32);
 				return __result__;
 			}));
 			var __result = __CallFunc11Callback(Marshal.GetFunctionPointerForDelegate(CallFunc11Callback_func));
@@ -1602,7 +1602,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc13Callback;
 		private static string ___CallFunc13Callback(Func13 func)
 		{
-			var CallFunc13Callback_func = s_DelegateHolder.GetOrAdd(func, new Func13Wrapper((nint @__output, long @__i64, nint @__vecC, ushort @__d, float @__f, nint @__b, Vector4 @__vec4, nint @__str, int @__int32, Vector3 @__vec3, nint @__ptr, Vector2 @__vec2, nint @__arr, short @__i16) => {
+			var CallFunc13Callback_func = s_DelegateHolder.GetOrAdd(func, new Func13Wrapper((nint @__output, long @__i64, nint @__vecC, ushort @__d, float @__f, nint @__b, ref Vector4 @__vec4, nint @__str, int @__int32, ref Vector3 @__vec3, nint @__ptr, ref Vector2 @__vec2, nint @__arr, short @__i16) => {
 				var __vecC__ = new char[NativeMethods.GetVectorSizeChar8(@__vecC)];
 				NativeMethods.GetVectorDataChar8(@__vecC, __vecC__);
 				var __b__ = new bool[NativeMethods.GetVectorSizeBool(@__b)];
@@ -1611,7 +1611,7 @@ namespace cross_call_master
 				var __arr__ = new byte[NativeMethods.GetVectorSizeUInt8(@__arr)];
 				NativeMethods.GetVectorDataUInt8(@__arr, __arr__);
 
-				var __result__ = func(@__i64, __vecC__, @__d, @__f, __b__, @__vec4, __str__, @__int32, @__vec3, @__ptr, @__vec2, __arr__, @__i16);
+				var __result__ = func(@__i64, __vecC__, @__d, @__f, __b__, ref @__vec4, __str__, @__int32, ref @__vec3, @__ptr, ref @__vec2, __arr__, @__i16);
 
 				NativeMethods.ConstructString(@__output, __result__);
 				return @__output;
@@ -1630,7 +1630,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint, void> __CallFunc14Callback;
 		private static string[] ___CallFunc14Callback(Func14 func)
 		{
-			var CallFunc14Callback_func = s_DelegateHolder.GetOrAdd(func, new Func14Wrapper((nint @__output, nint @__vecC, nint @__vecU32, Matrix4x4 @__mat, byte @__b, ushort @__ch16, int @__i32, nint @__vecF, ushort @__u16, nint @__vecU8, sbyte @__i8, Vector3 @__vec3, Vector4 @__vec4, double @__d, nint @__ptr) => {
+			var CallFunc14Callback_func = s_DelegateHolder.GetOrAdd(func, new Func14Wrapper((nint @__output, nint @__vecC, nint @__vecU32, ref Matrix4x4 @__mat, byte @__b, ushort @__ch16, int @__i32, nint @__vecF, ushort @__u16, nint @__vecU8, sbyte @__i8, ref Vector3 @__vec3, ref Vector4 @__vec4, double @__d, nint @__ptr) => {
 				var __vecC__ = new char[NativeMethods.GetVectorSizeChar8(@__vecC)];
 				NativeMethods.GetVectorDataChar8(@__vecC, __vecC__);
 				var __vecU32__ = new uint[NativeMethods.GetVectorSizeUInt32(@__vecU32)];
@@ -1642,7 +1642,7 @@ namespace cross_call_master
 				var __vecU8__ = new byte[NativeMethods.GetVectorSizeUInt8(@__vecU8)];
 				NativeMethods.GetVectorDataUInt8(@__vecU8, __vecU8__);
 
-				var __result__ = func(__vecC__, __vecU32__, @__mat, __b__, __ch16__, @__i32, __vecF__, @__u16, __vecU8__, @__i8, @__vec3, @__vec4, @__d, @__ptr);
+				var __result__ = func(__vecC__, __vecU32__, ref @__mat, __b__, __ch16__, @__i32, __vecF__, @__u16, __vecU8__, @__i8, ref @__vec3, ref @__vec4, @__d, @__ptr);
 
 				NativeMethods.ConstructVectorString(@__output, __result__, __result__.Length);
 				return @__output;
@@ -1662,7 +1662,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, short> __CallFunc15Callback;
 		private static short ___CallFunc15Callback(Func15 func)
 		{
-			var CallFunc15Callback_func = s_DelegateHolder.GetOrAdd(func, new Func15Wrapper((nint @__vecI16, Matrix4x4 @__mat, Vector4 @__vec4, nint @__ptr, ulong @__u64, nint @__vecU32, byte @__b, float @__f, nint @__vecC16, byte @__u8, int @__i32, Vector2 @__vec2, ushort @__u16, double @__d, nint @__vecU8) => {
+			var CallFunc15Callback_func = s_DelegateHolder.GetOrAdd(func, new Func15Wrapper((nint @__vecI16, ref Matrix4x4 @__mat, ref Vector4 @__vec4, nint @__ptr, ulong @__u64, nint @__vecU32, byte @__b, float @__f, nint @__vecC16, byte @__u8, int @__i32, ref Vector2 @__vec2, ushort @__u16, double @__d, nint @__vecU8) => {
 				var __vecI16__ = new short[NativeMethods.GetVectorSizeInt16(@__vecI16)];
 				NativeMethods.GetVectorDataInt16(@__vecI16, __vecI16__);
 				var __vecU32__ = new uint[NativeMethods.GetVectorSizeUInt32(@__vecU32)];
@@ -1673,7 +1673,7 @@ namespace cross_call_master
 				var __vecU8__ = new byte[NativeMethods.GetVectorSizeUInt8(@__vecU8)];
 				NativeMethods.GetVectorDataUInt8(@__vecU8, __vecU8__);
 
-				var __result__ = func(__vecI16__, @__mat, @__vec4, @__ptr, @__u64, __vecU32__, __b__, @__f, __vecC16__, @__u8, @__i32, @__vec2, @__u16, @__d, __vecU8__);
+				var __result__ = func(__vecI16__, ref @__mat, ref @__vec4, @__ptr, @__u64, __vecU32__, __b__, @__f, __vecC16__, @__u8, @__i32, ref @__vec2, @__u16, @__d, __vecU8__);
 				return __result__;
 			}));
 			var __result = __CallFunc15Callback(Marshal.GetFunctionPointerForDelegate(CallFunc15Callback_func));
@@ -1683,7 +1683,7 @@ namespace cross_call_master
 		internal static delegate* unmanaged[Cdecl]<nint, nint> __CallFunc16Callback;
 		private static nint ___CallFunc16Callback(Func16 func)
 		{
-			var CallFunc16Callback_func = s_DelegateHolder.GetOrAdd(func, new Func16Wrapper((nint @__vecB, short @__i16, nint @__vecI8, Vector4 @__vec4, Matrix4x4 @__mat, Vector2 @__vec2, nint @__vecU64, nint @__vecC, nint @__str, long @__i64, nint @__vecU32, Vector3 @__vec3, float @__f, double @__d, sbyte @__i8, ushort @__u16) => {
+			var CallFunc16Callback_func = s_DelegateHolder.GetOrAdd(func, new Func16Wrapper((nint @__vecB, short @__i16, nint @__vecI8, ref Vector4 @__vec4, ref Matrix4x4 @__mat, ref Vector2 @__vec2, nint @__vecU64, nint @__vecC, nint @__str, long @__i64, nint @__vecU32, ref Vector3 @__vec3, float @__f, double @__d, sbyte @__i8, ushort @__u16) => {
 				var __vecB__ = new bool[NativeMethods.GetVectorSizeBool(@__vecB)];
 				NativeMethods.GetVectorDataBool(@__vecB, __vecB__);
 				var __vecI8__ = new sbyte[NativeMethods.GetVectorSizeInt8(@__vecI8)];
@@ -1696,7 +1696,7 @@ namespace cross_call_master
 				var __vecU32__ = new uint[NativeMethods.GetVectorSizeUInt32(@__vecU32)];
 				NativeMethods.GetVectorDataUInt32(@__vecU32, __vecU32__);
 
-				var __result__ = func(__vecB__, @__i16, __vecI8__, @__vec4, @__mat, @__vec2, __vecU64__, __vecC__, __str__, @__i64, __vecU32__, @__vec3, @__f, @__d, @__i8, @__u16);
+				var __result__ = func(__vecB__, @__i16, __vecI8__, ref @__vec4, ref @__mat, ref @__vec2, __vecU64__, __vecC__, __str__, @__i64, __vecU32__, ref @__vec3, @__f, @__d, @__i8, @__u16);
 				return __result__;
 			}));
 			var __result = __CallFunc16Callback(Marshal.GetFunctionPointerForDelegate(CallFunc16Callback_func));

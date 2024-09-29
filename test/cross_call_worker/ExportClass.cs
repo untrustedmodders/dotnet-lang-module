@@ -632,7 +632,7 @@ public class ExportClass
     public static int CallFunc1(cross_call_master.Func1 func)
     {
         Vector3 vec = new Vector3(4.5f, 5.6f, 6.7f); // Random values
-        return func(vec);
+        return func(ref vec);
     }
 
     // 2 parameters
@@ -650,7 +650,7 @@ public class ExportClass
         IntPtr ptr = new IntPtr(12345);
         Vector4 vec4 = new Vector4(7.8f, 8.9f, 9.1f, 10.2f);
         string str = "RandomString";
-        func(ptr, vec4, str);
+        func(ptr, ref vec4, str);
     }
 
     // 4 parameters
@@ -660,7 +660,7 @@ public class ExportClass
         int u32 = 42;
         char ch16 = 'B';
         Matrix4x4 mat = Matrix4x4.Identity; // Assume it's initialized properly
-        return func(b, u32, ch16, mat);
+        return func(b, u32, ch16, ref mat);
     }
 
     // 5 parameters
@@ -671,7 +671,7 @@ public class ExportClass
         IntPtr ptr = new IntPtr(67890);
         double d = 1.618;
         ulong[] vec64 = [4, 5, 6];
-        return func(i8, vec2, ptr, d, vec64);
+        return func(i8, ref vec2, ptr, d, vec64);
     }
 
     // 6 parameters
@@ -696,7 +696,7 @@ public class ExportClass
         Vector4 vec4 = new Vector4(4.5f, 5.6f, 6.7f, 7.8f);
         bool b = false;
         ulong u64 = 200;
-        return func(vecC, u16, ch16, vecU32, vec4, b, u64);
+        return func(vecC, u16, ch16, vecU32, ref vec4, b, u64);
     }
 
     // 8 parameters
@@ -710,7 +710,7 @@ public class ExportClass
         char[] vecC16 = ['D', 'E'];
         char ch16 = 'B';
         int i32 = 50;
-        return func(vec3, vecU32, i16, b, vec4, vecC16, ch16, i32);
+        return func(ref vec3, vecU32, i16, b, ref vec4, vecC16, ch16, i32);
     }
 
     // 9 parameters
@@ -725,7 +725,7 @@ public class ExportClass
         Vector4 vec4 = new Vector4(4.5f, 5.6f, 6.7f, 7.8f);
         short i16 = 30;
         IntPtr ptr = new IntPtr(13579);
-        func(f, vec2, vecI8, u64, b, str, vec4, i16, ptr);
+        func(f, ref vec2, vecI8, u64, b, str, ref vec4, i16, ptr);
     }
 
     // 10 parameters
@@ -741,7 +741,7 @@ public class ExportClass
         Vector2 vec2 = new Vector2(3.4f, 5.6f);
         long i64 = 75;
         double d = 2.71;
-        return func(vec4, mat, vecU32, u64, vecC, i32, b, vec2, i64, d);
+        return func(ref vec4, ref mat, vecU32, u64, vecC, i32, b, ref vec2, i64, d);
     }
 
     // 11 parameters
@@ -758,7 +758,7 @@ public class ExportClass
         float f = 2.0f;
         Vector2 vec2 = new Vector2(4.5f, 6.7f);
         uint u32 = 30;
-        return func(vecB, ch16, u8, d, vec3, vecI8, i64, u16, f, vec2, u32);
+        return func(vecB, ch16, u8, d, ref vec3, vecI8, i64, u16, f, ref vec2, u32);
     }
 
     // 12 parameters
@@ -795,7 +795,7 @@ public class ExportClass
         Vector2 vec2 = new Vector2(4.5f, 6.7f);
         byte[] vecU8 = [2, 3, 4];
         short i16 = 20;
-        return func(i64, vecC, u16, f, vecB, vec4, str, i32, vec3, ptr, vec2, vecU8, i16);
+        return func(i64, vecC, u16, f, vecB, ref vec4, str, i32, ref vec3, ptr, ref vec2, vecU8, i16);
     }
 
     // 14 parameters
@@ -815,7 +815,7 @@ public class ExportClass
         Vector4 vec4 = new Vector4(5.6f, 7.8f, 9.0f, 10.1f);
         double d = 2.72;
         IntPtr ptr = new IntPtr(54321);
-        return func(vecC, vecU32, mat, b, ch16, i32, vecF, u16, vecU8, i8, vec3, vec4, d, ptr);
+        return func(vecC, vecU32, ref mat, b, ch16, i32, vecF, u16, vecU8, i8, ref vec3, ref vec4, d, ptr);
     }
 
     // 15 parameters
@@ -836,7 +836,7 @@ public class ExportClass
         ushort u16 = 40;
         double d = 2.71;
         byte[] vecU8 = [1, 3, 5];
-        return func(vecI16, mat, vec4, ptr, u64, vecU32, b, f, vecC16, u8, i32, vec2, u16, d, vecU8);
+        return func(vecI16, ref mat, ref vec4, ptr, u64, vecU32, b, f, vecC16, u8, i32, ref vec2, u16, d, vecU8);
     }
 
     // 16 parameters
@@ -858,7 +858,7 @@ public class ExportClass
         double d = 2.718;
         sbyte i8 = 6;
         ushort u16 = 30;
-        return func(vecB, i16, vecI8, vec4, mat, vec2, vecU64, vecC, str, i64, vecU32, vec3, f, d, i8, u16);
+        return func(vecB, i16, vecI8, ref vec4, ref mat, ref vec2, vecU64, vecC, str, i64, vecU32, ref vec3, f, d, i8, u16);
     }
     
     public static string VectorToString<T>(T[] array)

@@ -66,8 +66,6 @@ internal static class ManagedObject
 				return nint.Zero;
 			}
 			
-			
-
 			ConstructorInfo? constructor = null;
 
 			var currentType = type;

@@ -427,7 +427,6 @@ internal static class Marshalling
 	        List<GCHandle> pins = [];
 	        List<(nint, ValueType)> handlers = [];
 
-	        // TODO: Check that approach work. I think it will be faster to build arg array here instead of C++
 	        nint* p = stackalloc nint[hasRet ? parameters.Length + 1 : parameters.Length];
 	        int index = 0;
 	        nint* r = stackalloc nint[2]{ 0, 0 };

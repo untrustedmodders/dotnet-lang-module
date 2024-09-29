@@ -59,7 +59,7 @@ public static unsafe class CallbackHolder
         );
     }
     
-    public static int MockFunc1(Vector3 v)
+    public static int MockFunc1(ref Vector3 v)
     {
         string buffer = string.Format("{0}{1}{2}", v.X, v.Y, v.Z);
         return (int)(v.X + v.Y + v.Z);
@@ -73,20 +73,20 @@ public static unsafe class CallbackHolder
     }
 
     // Mock implementation for 3 parameter function
-    public static void MockFunc3(IntPtr p, Vector4 v, string s)
+    public static void MockFunc3(IntPtr p, ref Vector4 v, string s)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}", p, v.X, v.Y, v.Z, v.W, s);
     }
 
     // Mock implementation for 4 parameter function
-    public static Vector4 MockFunc4(bool flag, int u, char c, Matrix4x4 m)
+    public static Vector4 MockFunc4(bool flag, int u, char c, ref Matrix4x4 m)
     {
         string buffer = string.Format("{0}{1}{2}{3}", flag, u, (ushort)c, m.M11);
         return new Vector4(1.0f, 2.0f, 3.0f, 4.0f);
     }
 
     // Mock implementation for 5 parameter function
-    public static bool MockFunc5(sbyte i, Vector2 v, IntPtr p, double d, ulong[] vec)
+    public static bool MockFunc5(sbyte i, ref Vector2 v, IntPtr p, double d, ulong[] vec)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}", i, v.X, v.Y, p, d, vec.Length);
         return true;
@@ -100,34 +100,34 @@ public static unsafe class CallbackHolder
     }
 
     // Mock implementation for 7 parameter function
-    public static double MockFunc7(char[] vec, ushort u, char c, uint[] uVec, Vector4 v, bool flag, ulong l)
+    public static double MockFunc7(char[] vec, ushort u, char c, uint[] uVec, ref Vector4 v, bool flag, ulong l)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}", vec.Length, u, (ushort)c, uVec.Length, v.X, v.Y, v.Z, v.W);
         return 3.14;
     }
 
     // Mock implementation for 8 parameter function
-    public static Matrix4x4 MockFunc8(Vector3 v, uint[] uVec, short i, bool flag, Vector4 v4, char[] cVec, char c, int a)
+    public static Matrix4x4 MockFunc8(ref Vector3 v, uint[] uVec, short i, bool flag, ref Vector4 v4, char[] cVec, char c, int a)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}{8}", v.X, v.Y, v.Z, uVec.Length, i, flag, v4.W, cVec.Length, (ushort)c);
         return new Matrix4x4(); // Return a dummy matrix
     }
 
     // Mock implementation for 9 parameter function
-    public static void MockFunc9(float f, Vector2 v, sbyte[] iVec, ulong l, bool flag, string s, Vector4 v4, short i, IntPtr p)
+    public static void MockFunc9(float f, ref Vector2 v, sbyte[] iVec, ulong l, bool flag, string s, ref Vector4 v4, short i, IntPtr p)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}{8}", f, v.X, v.Y, iVec.Length, l, flag, s, v4.W, i, p);
     }
 
     // Mock implementation for 10 parameter function
-    public static uint MockFunc10(Vector4 v4, Matrix4x4 m, uint[] uVec, ulong l, char[] cVec, int a, bool flag, Vector2 v, long i, double d)
+    public static uint MockFunc10(ref Vector4 v4, ref Matrix4x4 m, uint[] uVec, ulong l, char[] cVec, int a, bool flag, ref Vector2 v, long i, double d)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}", v4.X, v4.Y, v4.Z, v4.W, m.M22, uVec.Length, l, cVec.Length, a, flag);
         return 42; // Return a dummy value
     }
 
     // Mock implementation for 11 parameter function
-    public static IntPtr MockFunc11(bool[] bVec, char c, byte u, double d, Vector3 v3, sbyte[] iVec, long i, ushort u16, float f, Vector2 v, uint u32)
+    public static IntPtr MockFunc11(bool[] bVec, char c, byte u, double d, ref Vector3 v3, sbyte[] iVec, long i, ushort u16, float f, ref Vector2 v, uint u32)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}", bVec.Length, (ushort)c, u, d, v3.X, iVec.Length, i, u16, f, v.X, u32);
         return new IntPtr(0); // Return a dummy non-null pointer
@@ -141,28 +141,28 @@ public static unsafe class CallbackHolder
     }
 
     // Mock implementation for 13 parameter function
-    public static string MockFunc13(long i64, char[] cVec, ushort u16, float f, bool[] bVec, Vector4 v4, string s, int a, Vector3 v3, IntPtr p, Vector2 v2, byte[] u8Vec, short i16)
+    public static string MockFunc13(long i64, char[] cVec, ushort u16, float f, bool[] bVec, ref Vector4 v4, string s, int a, ref Vector3 v3, IntPtr p, ref Vector2 v2, byte[] u8Vec, short i16)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}{11}{12}", i64, cVec.Length, u16, f, bVec.Length, v4.Z, s, a, v3.X, p, v2.X, u8Vec.Length, i16);
         return "Dummy String"; // Return a dummy string
     }
 
     // Mock implementation for 14 parameter function
-    public static string[] MockFunc14(char[] cVec, uint[] uVec, Matrix4x4 m, bool flag, char c, int a, float[] fVec, ushort u16, byte[] u8Vec, sbyte i8, Vector3 v3, Vector4 v4, double d, IntPtr p)
+    public static string[] MockFunc14(char[] cVec, uint[] uVec, ref Matrix4x4 m, bool flag, char c, int a, float[] fVec, ushort u16, byte[] u8Vec, sbyte i8, ref Vector3 v3, ref Vector4 v4, double d, IntPtr p)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}{11}{12}{13}", cVec.Length, uVec.Length, m.M33, flag, (ushort)c, a, fVec.Length, u16, u8Vec.Length, i8, v3.X, v4.X, d, p);
         return ["String1", "String2"]; // Return dummy strings
     }
 
     // Mock implementation for 15 parameter function
-    public static short MockFunc15(short[] iVec, Matrix4x4 m, Vector4 v4, IntPtr p, ulong l, uint[] uVec, bool flag, float f, char[] cVec, byte u, int a, Vector2 v2, ushort u16, double d, byte[] u8Vec)
+    public static short MockFunc15(short[] iVec, ref Matrix4x4 m, ref Vector4 v4, IntPtr p, ulong l, uint[] uVec, bool flag, float f, char[] cVec, byte u, int a, ref Vector2 v2, ushort u16, double d, byte[] u8Vec)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}{11}{12}{13}{14}", iVec.Length, m.M21, v4.X, p, l, uVec.Length, flag, f, cVec.Length, u, a, v2.X, u16, d, u8Vec.Length);
         return 257; // Return a dummy value
     }
 
     // Mock implementation for 16 parameter function
-    public static IntPtr MockFunc16(bool[] bVec, short i16, sbyte[] iVec, Vector4 v4, Matrix4x4 m, Vector2 v2, ulong[] uVec, char[] cVec, string s, long i64, uint[] u32Vec, Vector3 v3, float f, double d, sbyte i8, ushort u16)
+    public static IntPtr MockFunc16(bool[] bVec, short i16, sbyte[] iVec, ref Vector4 v4, ref Matrix4x4 m, ref Vector2 v2, ulong[] uVec, char[] cVec, string s, long i64, uint[] u32Vec, ref Vector3 v3, float f, double d, sbyte i8, ushort u16)
     {
         string buffer = string.Format("{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}{11}{12}{13}{14}{15}", bVec.Length, i16, iVec.Length, v4.X, v4.Y, v4.Z, v4.W, m.M34, v2.X, uVec.Length, cVec.Length, s, i64, u32Vec.Length, v3.X, f, d, i8, u16);
         return new IntPtr(0); // Return a different non-null pointer
