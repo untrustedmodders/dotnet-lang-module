@@ -5,14 +5,14 @@
 using namespace netlm;
 
 std::string Type::GetFullName() const {
-	auto name = Managed.GetFullTypeNameFptr(_id);
+	auto name = Managed.GetFullTypeNameFptr(_handle);
 	std::string str(name);
 	String::Free(name);
 	return str;
 }
 
 std::string Type::GetAssemblyQualifiedName() const {
-	auto name = Managed.GetAssemblyQualifiedNameFptr(_id);
+	auto name = Managed.GetAssemblyQualifiedNameFptr(_handle);
 	std::string str(name);
 	String::Free(name);
 	return str;
@@ -21,71 +21,71 @@ std::string Type::GetAssemblyQualifiedName() const {
 Type& Type::GetBaseType() {
 	if (!_baseType) {
 		_baseType = std::make_unique<Type>();
-		Managed.GetBaseTypeFptr(_id, &_baseType->_id);
+		Managed.GetBaseTypeFptr(_handle, &_baseType->_handle);
 	}
 
 	return *_baseType;
 }
 
 int32_t Type::GetSize() const {
-	return Managed.GetTypeSizeFptr(_id);
+	return Managed.GetTypeSizeFptr(_handle);
 }
 
 bool Type::IsSubclassOf(const Type& other) const {
-	return Managed.IsTypeSubclassOfFptr(_id, other._id);
+	return Managed.IsTypeSubclassOfFptr(_handle, other._handle);
 }
 
 bool Type::IsAssignableTo(const Type& other) const {
-	return Managed.IsTypeAssignableToFptr(_id, other._id);
+	return Managed.IsTypeAssignableToFptr(_handle, other._handle);
 }
 
 bool Type::IsAssignableFrom(const Type& other) const {
-	return Managed.IsTypeAssignableFromFptr(_id, other._id);
+	return Managed.IsTypeAssignableFromFptr(_handle, other._handle);
 }
 
 std::vector<MethodInfo> Type::GetMethods() const {
 	int32_t methodCount = 0;
-	Managed.GetTypeMethodsFptr(_id, nullptr, &methodCount);
-	std::vector<ManagedHandle> handles(static_cast<size_t>(methodCount));
-	Managed.GetTypeMethodsFptr(_id, handles.data(), &methodCount);
+	Managed.GetTypeMethodsFptr(_handle, nullptr, &methodCount);
+	std::vector<ManagedHandle> methodHandles(static_cast<size_t>(methodCount));
+	Managed.GetTypeMethodsFptr(_handle, methodHandles.data(), &methodCount);
 
-	std::vector<MethodInfo> methods(handles.size());
-	for (size_t i = 0; i < handles.size(); i++)
-		methods[i]._handle = handles[i];
+	std::vector<MethodInfo> methods(methodHandles.size());
+	for (size_t i = 0; i < methodHandles.size(); i++)
+		methods[i]._handle = methodHandles[i];
 
 	return methods;
 }
 
 std::vector<FieldInfo> Type::GetFields() const {
 	int32_t fieldCount = 0;
-	Managed.GetTypeFieldsFptr(_id, nullptr, &fieldCount);
-	std::vector<ManagedHandle> handles(static_cast<size_t>(fieldCount));
-	Managed.GetTypeFieldsFptr(_id, handles.data(), &fieldCount);
+	Managed.GetTypeFieldsFptr(_handle, nullptr, &fieldCount);
+	std::vector<ManagedHandle> fieldHandles(static_cast<size_t>(fieldCount));
+	Managed.GetTypeFieldsFptr(_handle, fieldHandles.data(), &fieldCount);
 
-	std::vector<FieldInfo> fields(handles.size());
-	for (size_t i = 0; i < handles.size(); i++)
-		fields[i]._handle = handles[i];
+	std::vector<FieldInfo> fields(fieldHandles.size());
+	for (size_t i = 0; i < fieldHandles.size(); i++)
+		fields[i]._handle = fieldHandles[i];
 
 	return fields;
 }
 
 std::vector<PropertyInfo> Type::GetProperties() const {
 	int32_t propertyCount = 0;
-	Managed.GetTypePropertiesFptr(_id, nullptr, &propertyCount);
-	std::vector<ManagedHandle> handles(static_cast<size_t>(propertyCount));
-	Managed.GetTypePropertiesFptr(_id, handles.data(), &propertyCount);
+	Managed.GetTypePropertiesFptr(_handle, nullptr, &propertyCount);
+	std::vector<ManagedHandle> propertyHandles(static_cast<size_t>(propertyCount));
+	Managed.GetTypePropertiesFptr(_handle, propertyHandles.data(), &propertyCount);
 
-	std::vector<PropertyInfo> properties(handles.size());
-	for (size_t i = 0; i < handles.size(); i++)
-		properties[i]._handle = handles[i];
+	std::vector<PropertyInfo> properties(propertyHandles.size());
+	for (size_t i = 0; i < propertyHandles.size(); i++)
+		properties[i]._handle = propertyHandles[i];
 
 	return properties;
 }
 
 MethodInfo Type::GetMethod(std::string_view methodName) const {
 	auto name = String::New(methodName);
-	ManagedHandle handle = -1;
-	Managed.GetTypeMethodFptr(_id, name, &handle);
+	ManagedHandle handle{};
+	Managed.GetTypeMethodFptr(_handle, name, &handle);
 	String::Free(name);
 
 	MethodInfo result;
@@ -96,8 +96,8 @@ MethodInfo Type::GetMethod(std::string_view methodName) const {
 
 FieldInfo Type::GetField(std::string_view fieldName) const {
 	auto name = String::New(fieldName);
-	ManagedHandle handle = -1;
-	Managed.GetTypeFieldFptr(_id, name, &handle);
+	ManagedHandle handle{};
+	Managed.GetTypeFieldFptr(_handle, name, &handle);
 	String::Free(name);
 
 	FieldInfo result;
@@ -108,8 +108,8 @@ FieldInfo Type::GetField(std::string_view fieldName) const {
 
 PropertyInfo Type::GetProperty(std::string_view propertyName) const {
 	auto name = String::New(propertyName);
-	ManagedHandle handle = -1;
-	Managed.GetTypePropertyFptr(_id, name, &handle);
+	ManagedHandle handle{};
+	Managed.GetTypePropertyFptr(_handle, name, &handle);
 	String::Free(name);
 
 	PropertyInfo result;
@@ -119,14 +119,14 @@ PropertyInfo Type::GetProperty(std::string_view propertyName) const {
 }
 
 bool Type::HasAttribute(const Type& attributeType) const {
-	return Managed.HasTypeAttributeFptr(_id, attributeType._id);
+	return Managed.HasTypeAttributeFptr(_handle, attributeType._handle);
 }
 
 std::vector<Attribute> Type::GetAttributes() const {
 	int32_t attributeCount;
-	Managed.GetTypeAttributesFptr(_id, nullptr, &attributeCount);
+	Managed.GetTypeAttributesFptr(_handle, nullptr, &attributeCount);
 	std::vector<ManagedHandle> attributeHandles(static_cast<size_t>(attributeCount));
-	Managed.GetTypeAttributesFptr(_id, attributeHandles.data(), &attributeCount);
+	Managed.GetTypeAttributesFptr(_handle, attributeHandles.data(), &attributeCount);
 
 	std::vector<Attribute> result(attributeHandles.size());
 	for (size_t i = 0; i < attributeHandles.size(); i++)
@@ -136,34 +136,34 @@ std::vector<Attribute> Type::GetAttributes() const {
 }
 
 ManagedType Type::GetManagedType() const {
-	return Managed.GetTypeManagedTypeFptr(_id);
+	return Managed.GetTypeManagedTypeFptr(_handle);
 }
 
 bool Type::IsClass() const {
-	return Managed.IsClassFptr(_id);
+	return Managed.IsClassFptr(_handle);
 }
 
 bool Type::IsEnum() const {
-	return Managed.IsEnumFptr(_id);
+	return Managed.IsEnumFptr(_handle);
 }
 
 bool Type::IsValueType() const {
-	return Managed.IsValueTypeFptr(_id);
+	return Managed.IsValueTypeFptr(_handle);
 }
 
 bool Type::IsSZArray() const {
-	return Managed.IsTypeSZArrayFptr(_id);
+	return Managed.IsTypeSZArrayFptr(_handle);
 }
 
 bool Type::IsByRef() const {
-	return Managed.IsTypeByRefFptr(_id);
+	return Managed.IsTypeByRefFptr(_handle);
 }
 
 std::vector<std::string> Type::GetEnumNames() const {
 	int size;
-	Managed.GetEnumNamesFptr(_id, nullptr, &size);
+	Managed.GetEnumNamesFptr(_handle, nullptr, &size);
 	std::vector<String> names(static_cast<size_t>(size));
-	Managed.GetEnumNamesFptr(_id, names.data(), &size);
+	Managed.GetEnumNamesFptr(_handle, names.data(), &size);
 	std::vector<std::string> namesStr;
 	namesStr.reserve(static_cast<size_t>(size));
 	for (auto& name : names) {
@@ -175,16 +175,16 @@ std::vector<std::string> Type::GetEnumNames() const {
 
 std::vector<int> Type::GetEnumValues() const {
 	int size;
-	Managed.GetEnumValuesFptr(_id, nullptr, &size);
+	Managed.GetEnumValuesFptr(_handle, nullptr, &size);
 	std::vector<int> values(static_cast<size_t>(size));
-	Managed.GetEnumValuesFptr(_id, values.data(), &size);
+	Managed.GetEnumValuesFptr(_handle, values.data(), &size);
 	return values;
 }
 
 Type& Type::GetElementType() {
 	if (!_elementType) {
 		_elementType = std::make_unique<Type>();
-		Managed.GetElementTypeFptr(_id, &_elementType->_id);
+		Managed.GetElementTypeFptr(_handle, &_elementType->_handle);
 	}
 
 	return *_elementType;
@@ -194,15 +194,15 @@ Type& Type::GetElementType() {
 
 ManagedObject Type::CreateInstanceInternal(const void** parameters, size_t length) const {
 	ManagedObject result;
-	result._handle = Managed.CreateObjectFptr(_id, false, parameters, static_cast<int32_t>(length));
+	result._handle = Managed.CreateObjectFptr(_handle, false, parameters, static_cast<int32_t>(length));
 	result._type = const_cast<Type*>(this);
 	return result;
 }
 
-void Type::InvokeStaticMethodInternal(ManagedHandle methodId, const void** parameters, size_t length) const {
-	Managed.InvokeStaticMethodFptr(_id, methodId, parameters, static_cast<int32_t>(length));
+void Type::InvokeStaticMethodInternal(ManagedHandle methodHandle, const void** parameters, size_t length) const {
+	Managed.InvokeStaticMethodFptr(_handle, methodHandle, parameters, static_cast<int32_t>(length));
 }
 
-void Type::InvokeStaticMethodRetInternal(ManagedHandle methodId, const void** parameters, size_t length, void* resultStorage) const {
-	Managed.InvokeStaticMethodRetFptr(_id, methodId, parameters, static_cast<int32_t>(length), resultStorage);
+void Type::InvokeStaticMethodRetInternal(ManagedHandle methodHandle, const void** parameters, size_t length, void* resultStorage) const {
+	Managed.InvokeStaticMethodRetFptr(_handle, methodHandle, parameters, static_cast<int32_t>(length), resultStorage);
 }

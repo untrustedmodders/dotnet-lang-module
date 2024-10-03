@@ -218,7 +218,7 @@ AssemblyLoadContext HostInstance::CreateAssemblyLoadContext(std::string_view con
 void HostInstance::UnloadAssemblyLoadContext(AssemblyLoadContext& loadContext) {
 	assert(_ctx);
 	Managed.UnloadAssemblyLoadContextFptr(loadContext._contextId);
-	loadContext._contextId = -1;
+	loadContext._contextId = {};
 	loadContext._loadedAssemblies.clear();
 }
 
@@ -251,7 +251,7 @@ void HostInstance::LoadManagedFunctions(const fs::path& assemblyPath) {
 	Managed.GetAssemblyNameFptr = GetDelegate<GetAssemblyNameFn>(path, NETLM_NSTR("Plugify.AssemblyLoader, Plugify"), NETLM_NSTR("GetAssemblyName"));
 
 	Managed.GetAssemblyTypesFptr = GetDelegate<GetAssemblyTypesFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetAssemblyTypes"));
-	Managed.GetTypeIdFptr = GetDelegate<GetTypeIdFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetTypeId"));
+	Managed.GetTypeFptr = GetDelegate<GetTypeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetType"));
 	Managed.GetFullTypeNameFptr = GetDelegate<GetFullTypeNameFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetFullTypeName"));
 	Managed.GetAssemblyQualifiedNameFptr = GetDelegate<GetAssemblyQualifiedNameFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetAssemblyQualifiedName"));
 	Managed.GetBaseTypeFptr = GetDelegate<GetBaseTypeFn>(path, NETLM_NSTR("Plugify.TypeInterface, Plugify"), NETLM_NSTR("GetBaseType"));

@@ -22,11 +22,11 @@ namespace netlm {
 		std::vector<Attribute> GetReturnAttributes() const;
 
 		bool operator==(const MethodInfo& other) const { return _handle == other._handle; }
-		operator bool() const { return _handle != -1; }
+		operator bool() const { return _handle; }
 		ManagedHandle GetHandle() const { return _handle; }
 
 	private:
-		ManagedHandle _handle = -1;
+		ManagedHandle _handle{};
 		std::unique_ptr<Type> _returnType;
 		std::vector<Type> _parameterTypes;
 

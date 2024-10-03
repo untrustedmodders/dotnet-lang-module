@@ -12,11 +12,12 @@
 namespace netlm {
 	class ScriptInstance {
 	public:
-		ScriptInstance(plugify::PluginRef plugin, Type& type);
+		ScriptInstance(plugify::PluginRef plugin, ManagedGuid assembly, Type& type);
 		~ScriptInstance();
 
 		plugify::PluginRef GetPlugin() const { return _plugin; }
 		const ManagedObject& GetManagedObject() const { return _instance; }
+		const ManagedGuid& GetAssemblyId() const { return _assembly; }
 
 		bool operator==(const ScriptInstance& other) const { return _instance == other._instance; }
 		operator bool() const { return _instance; }
@@ -27,13 +28,15 @@ namespace netlm {
 
 	private:
 		plugify::PluginRef _plugin;
+		ManagedGuid _assembly;
 		ManagedObject _instance;
 
 		friend class DotnetLanguageModule;
 	};
 
 	using ScriptMap = std::map<plugify::UniqueId, ScriptInstance>;
-	using FunctionList = std::vector<plugify::JitCallback>;
+	using HandleData = std::pair<ManagedHandle, ManagedHandle>;
+	using FunctionList = std::vector<std::pair<plugify::JitCallback, std::unique_ptr<HandleData>>>;
 
 	class DotnetLanguageModule final : public plugify::ILanguageModule {
 	public:
@@ -59,7 +62,7 @@ namespace netlm {
 		static void MessageCallback(std::string_view message, MessageLevel level);
 		static void DetectLeaks();
 
-		static void InternalCall(plugify::MethodRef method, plugify::MemAddr data, const plugify::JitCallback::Parameters* p, uint8_t count, const plugify::JitCallback::ReturnValue* ret);
+		static void InternalCall(plugify::MethodRef method, plugify::MemAddr data, const plugify::JitCallback::Parameters* p, uint8_t count, const plugify::JitCallback::Return* ret);
 
 	private:
 		std::shared_ptr<plugify::IPlugifyProvider> _provider;

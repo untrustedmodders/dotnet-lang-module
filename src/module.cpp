@@ -72,7 +72,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 	fs::path assemblyPath(plugin.GetBaseDir());
 	assemblyPath /= plugin.GetDescriptor().GetEntryPoint();
 
-	ManagedAssembly& assembly = _alc.LoadAssembly(assemblyPath, plugin.GetId());
+	ManagedAssembly& assembly = _alc.LoadAssembly(assemblyPath);
 	if (!assembly) {
 		return ErrorData{ _alc.GetError() };
 	}
@@ -172,15 +172,15 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 		if (methodFail)
 			continue;
 
-		int64_t packed = (static_cast<int64_t>(type.GetTypeId()) << 32) | (static_cast<int64_t>(methodInfo.GetHandle()) & 0xFFFFFFFF);
+		auto data = std::make_unique<HandleData>(type.GetHandle(), methodInfo.GetHandle());
 
 		JitCallback callback(_rt);
-		MemAddr methodAddr = callback.GetJitFunc(method, &InternalCall, static_cast<uintptr_t>(packed));
+		MemAddr methodAddr = callback.GetJitFunc(method, &InternalCall, data.get());
 		if (!methodAddr) {
 			methodErrors.emplace_back(std::format("Method '{}' has JIT generation error: {}", method.GetFunctionName(), callback.GetError()));
 			continue;
 		}
-		_functions.emplace_back(std::move(callback));
+		_functions.emplace_back(std::move(callback), std::move(data));
 
 		methods.emplace_back(method, methodAddr);
 	}
@@ -193,7 +193,7 @@ LoadResult DotnetLanguageModule::OnPluginLoad(PluginRef plugin) {
 		return ErrorData{ std::format("Not found {} method function(s)", funcs) };
 	}
 
-	const auto [_, result] = _scripts.try_emplace(plugin.GetId(), plugin, pluginClassType);
+	const auto [_, result] = _scripts.try_emplace(plugin.GetId(), plugin,  assembly.GetAssemblyID(), pluginClassType);
 	if (!result) {
 		return ErrorData{ "Plugin key duplicate" };
 	}
@@ -220,17 +220,16 @@ bool DotnetLanguageModule::IsDebugBuild() {
 }
 
 void DotnetLanguageModule::OnMethodExport(PluginRef plugin) {
-	auto pluginId = plugin.GetId();
 	auto className = std::format("{}.{}", plugin.GetName(), plugin.GetName());
 
-	ScriptInstance* script = FindScript(pluginId);
+	ScriptInstance* script = FindScript(plugin.GetId());
 	if (script) {
+		auto& assemblyId = script->GetAssemblyId();
 		// Add as C# calls (direct)
-		auto& ownerAssembly = _alc.GetLoadedAssemblies()[pluginId];
+		auto& ownerAssembly = _alc.FindAssembly(assemblyId);
+		assert(ownerAssembly);
 
 		for (const auto& [method, _] : plugin.GetMethods()) {
-			void* addr = nullptr;
-
 			auto separated= Utils::Split(method.GetFunctionName(), ".");
 			size_t size = separated.size();
 
@@ -241,11 +240,11 @@ void DotnetLanguageModule::OnMethodExport(PluginRef plugin) {
 			MethodInfo methodInfo = type.GetMethod(separated[size-1]);
 			assert(methodInfo);
 
-			addr = methodInfo.GetFunctionAddress();
+			void* addr = methodInfo.GetFunctionAddress();
 
 			for (auto& [id, assembly] : _alc.GetLoadedAssemblies()) {
 				// No self export
-				if (id == pluginId)
+				if (id == assemblyId)
 					continue;
 
 				assembly.AddInternalCall(className, method.GetName(), addr);
@@ -264,7 +263,7 @@ void DotnetLanguageModule::OnMethodExport(PluginRef plugin) {
 
 	const bool warnOnMissing = NETLM_IS_DEBUG;
 
-	for (auto& [id, assembly] : _alc.GetLoadedAssemblies()) {
+	for (auto& [_, assembly] : _alc.GetLoadedAssemblies()) {
 		assembly.UploadInternalCalls(warnOnMissing);
 	}
 }
@@ -277,10 +276,8 @@ ScriptInstance* DotnetLanguageModule::FindScript(UniqueId pluginId) {
 }
 
 // C++ to C#
-void DotnetLanguageModule::InternalCall(MethodRef method, MemAddr data, const JitCallback::Parameters* p, uint8_t count, const JitCallback::ReturnValue* ret) {
-	auto combined = data.CCast<int64_t>();
-	auto typeId = static_cast<int32_t>((combined >> 32) & 0xFFFFFFFF);
-	auto methodId = static_cast<int32_t>(combined & 0xFFFFFFFF);
+void DotnetLanguageModule::InternalCall(MethodRef method, MemAddr data, const JitCallback::Parameters* p, uint8_t count, const JitCallback::Return* ret) {
+	const auto& [typeHandle, methodHandle] = *data.CCast<HandleData*>();
 
 	PropertyRef retProp = method.GetReturnType();
 	ValueType retType = retProp.GetType();
@@ -403,12 +400,12 @@ void DotnetLanguageModule::InternalCall(MethodRef method, MemAddr data, const Ji
 		}
 	}
 
-	Type type(typeId);
+	Type type(typeHandle);
 
 	if (retType != ValueType::Void) {
-		type.InvokeStaticMethodRetInternal(methodId, args.data(), args.size(), retPtr);
+		type.InvokeStaticMethodRetInternal(methodHandle, args.data(), args.size(), retPtr);
 	} else {
-		type.InvokeStaticMethodInternal(methodId, args.data(), args.size());
+		type.InvokeStaticMethodInternal(methodHandle, args.data(), args.size());
 	}
 
 	if (hasRet) {
@@ -474,7 +471,7 @@ void DotnetLanguageModule::DetectLeaks() {
 
 /*_________________________________________________*/
 
-ScriptInstance::ScriptInstance(PluginRef plugin, Type& type) : _plugin{plugin}, _instance{type.CreateInstance()} {
+ScriptInstance::ScriptInstance(PluginRef plugin, ManagedGuid assembly, Type& type) : _plugin{plugin}, _assembly{assembly}, _instance{type.CreateInstance()} {
 	PluginDescriptorRef desc = plugin.GetDescriptor();
 	std::span<const PluginReferenceDescriptorRef> dependencies = desc.GetDependencies();
 

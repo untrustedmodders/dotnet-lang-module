@@ -1,5 +1,7 @@
 #pragma once
 
+#include "managed_guid.h"
+
 namespace netlm {
 #if NETLM_PLATFORM_WINDOWS
 	#ifdef _WCHAR_T_DEFINED
@@ -28,8 +30,7 @@ namespace netlm {
 		PrivateProtected
 	};
 
-	using TypeId = int32_t;
-	using ManagedHandle = int32_t;
+	using ManagedHandle = int64_t;
 
 	struct InternalCall {
 		const char_t* name;

@@ -16,7 +16,7 @@ namespace netlm {
 
 	class ManagedAssembly {
 	public:
-		int32_t GetAssemblyID() const { return _assemblyId; }
+		ManagedGuid GetAssemblyID() const { return _assemblyId; }
 		AssemblyLoadStatus GetLoadStatus() const { return _loadStatus; }
 		std::string_view GetFullName() const { return _name; }
 
@@ -28,10 +28,10 @@ namespace netlm {
 		Type& GetTypeByBaseType(std::string_view baseName);
 
 		bool operator==(const ManagedAssembly& other) const { return _assemblyId == other._assemblyId; }
-		operator bool() const { return _assemblyId != -1; }
+		operator bool() const { return _assemblyId; }
 
 	private:
-		int32_t _assemblyId = -1;
+		ManagedGuid _assemblyId{};
 		AssemblyLoadStatus _loadStatus = AssemblyLoadStatus::UnknownError;
 		std::string _name;
 		std::vector<string_t> _internalCallNameStorage;
@@ -44,20 +44,20 @@ namespace netlm {
 		friend class AssemblyLoadContext;
 	};
 
-	using AssemblyMap = std::map<int64_t, ManagedAssembly>;
+	using AssemblyMap = std::unordered_map<ManagedGuid, ManagedAssembly>;
 
 	class AssemblyLoadContext {
 	public:
-		ManagedAssembly& LoadAssembly(const fs::path& assemblyPath, int64_t assemblyId = -1); // -1 will generate automatically
-		ManagedAssembly& FindAssembly(int64_t assemblyId);
+		ManagedAssembly& LoadAssembly(const fs::path& assemblyPath);
+		ManagedAssembly& FindAssembly(ManagedGuid assemblyId);
 		AssemblyMap& GetLoadedAssemblies() { return _loadedAssemblies; }
 		const std::string& GetError() { return _error; }
 
 		bool operator==(const AssemblyLoadContext& other) const { return _contextId == other._contextId; }
-		operator bool() const { return _contextId != -1; }
+		operator bool() const { return _contextId; }
 
 	private:
-		int32_t _contextId = -1;
+		ManagedGuid _contextId{};
 		AssemblyMap _loadedAssemblies;
 		std::string _error;
 

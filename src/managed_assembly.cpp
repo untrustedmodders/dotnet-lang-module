@@ -4,7 +4,7 @@
 
 using namespace netlm;
 
-ManagedAssembly& AssemblyLoadContext::LoadAssembly(const fs::path& assemblyPath, int64_t assemblyKey) {
+ManagedAssembly& AssemblyLoadContext::LoadAssembly(const fs::path& assemblyPath) {
 	std::error_code ec;
 	auto absolutePath= fs::absolute(assemblyPath, ec);
 	if (ec) {
@@ -37,11 +37,7 @@ ManagedAssembly& AssemblyLoadContext::LoadAssembly(const fs::path& assemblyPath,
 			break;
 	}
 
-	if (assemblyKey == -1) {
-		assemblyKey = static_cast<int64_t>(assemblyId);
-	}
-
-	auto [it, result] = _loadedAssemblies.try_emplace(assemblyKey);
+	auto [it, result] = _loadedAssemblies.try_emplace(assemblyId);
 	if (!result) {
 		_error = "Assembly key duplicate";
 		return InvalidAssembly;
@@ -58,17 +54,17 @@ ManagedAssembly& AssemblyLoadContext::LoadAssembly(const fs::path& assemblyPath,
 
 	int32_t typeCount = 0;
 	Managed.GetAssemblyTypesFptr(assembly._assemblyId, nullptr, &typeCount);
-	std::vector<TypeId> typeIds(static_cast<size_t>(typeCount));
-	Managed.GetAssemblyTypesFptr(assembly._assemblyId, typeIds.data(), &typeCount);
+	std::vector<ManagedHandle> typeHandles(static_cast<size_t>(typeCount));
+	Managed.GetAssemblyTypesFptr(assembly._assemblyId, typeHandles.data(), &typeCount);
 
-	for (auto typeId : typeIds) {
-		assembly._types.emplace_back(typeId);
+	for (auto type : typeHandles) {
+		assembly._types.emplace_back(type);
 	}
 
 	return assembly;
 }
 
-ManagedAssembly& AssemblyLoadContext::FindAssembly(int64_t assemblyId) {
+ManagedAssembly& AssemblyLoadContext::FindAssembly(ManagedGuid assemblyId) {
 	auto it = _loadedAssemblies.find(assemblyId);
 
 	if (it != _loadedAssemblies.end()) {

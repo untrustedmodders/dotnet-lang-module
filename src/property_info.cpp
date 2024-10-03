@@ -15,7 +15,7 @@ std::string PropertyInfo::GetName() const {
 Type& PropertyInfo::GetType() {
 	if (!_type) {
 		_type = std::make_unique<Type>();
-		Managed.GetPropertyInfoTypeFptr(_handle, &_type->_id);
+		Managed.GetPropertyInfoTypeFptr(_handle, &_type->_handle);
 	}
 
 	return *_type;

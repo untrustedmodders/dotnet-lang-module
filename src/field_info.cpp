@@ -15,7 +15,7 @@ std::string FieldInfo::GetName() const {
 Type& FieldInfo::GetType() {
 	if (!_type) {
 		_type = std::make_unique<Type>();
-		Managed.GetFieldInfoTypeFptr(_handle, &_type->_id);
+		Managed.GetFieldInfoTypeFptr(_handle, &_type->_handle);
 	}
 
 	return *_type;

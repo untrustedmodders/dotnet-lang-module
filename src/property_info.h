@@ -15,11 +15,11 @@ namespace netlm {
 		std::vector<Attribute> GetAttributes() const;
 
 		bool operator==(const PropertyInfo& other) const { return _handle == other._handle; }
-		operator bool() const { return _handle != -1; }
+		operator bool() const { return _handle; }
 		ManagedHandle GetHandle() const { return _handle; }
 
 	private:
-		ManagedHandle _handle = -1;
+		ManagedHandle _handle{};
 		std::unique_ptr<Type> _type;
 
 		friend class Type;

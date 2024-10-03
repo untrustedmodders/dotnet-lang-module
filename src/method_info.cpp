@@ -19,7 +19,7 @@ void* MethodInfo::GetFunctionAddress() const {
 Type& MethodInfo::GetReturnType() {
 	if (!_returnType) {
 		_returnType = std::make_unique<Type>();
-		Managed.GetMethodInfoReturnTypeFptr(_handle, &_returnType->_id);
+		Managed.GetMethodInfoReturnTypeFptr(_handle, &_returnType->_handle);
 	}
 
 	return *_returnType;
@@ -29,12 +29,12 @@ const std::vector<Type>& MethodInfo::GetParameterTypes() {
 	if (_parameterTypes.empty()) {
 		int32_t parameterCount;
 		Managed.GetMethodInfoParameterTypesFptr(_handle, nullptr, &parameterCount);
-		std::vector<TypeId> parameterTypes(static_cast<size_t>(parameterCount));
+		std::vector<ManagedHandle> parameterTypes(static_cast<size_t>(parameterCount));
 		Managed.GetMethodInfoParameterTypesFptr(_handle, parameterTypes.data(), &parameterCount);
 
 		_parameterTypes.reserve(parameterTypes.size());
 
-		for (TypeId parameterType : parameterTypes) {
+		for (ManagedHandle parameterType : parameterTypes) {
 			_parameterTypes.emplace_back(parameterType);
 		}
 	}

@@ -98,8 +98,8 @@ namespace netlm {
 		//void* GetHandle() const { return _handle; }
 
 	//private:
-		void InvokeMethodInternal(ManagedHandle methodId, const void** parameters, size_t length) const;
-		void InvokeMethodRetInternal(ManagedHandle methodId, const void** parameters, size_t length, void* resultStorage) const;
+		void InvokeMethodInternal(ManagedHandle methodHandle, const void** parameters, size_t length) const;
+		void InvokeMethodRetInternal(ManagedHandle methodHandle, const void** parameters, size_t length, void* resultStorage) const;
 
 	private:
 		void* _handle = nullptr;

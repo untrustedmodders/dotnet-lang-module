@@ -12,8 +12,8 @@ namespace netlm {
 	class Type {
 	public:
 		Type() = default;
-		explicit Type(TypeId id) : _id{id} {}
-		//Type(const Type& type) : _id{type._id} {}
+		explicit Type(ManagedHandle handle) : _handle{handle} {}
+		//Type(const Type& type) : _handle{type._handle {}
 
 		std::string GetFullName() const;
 		std::string GetAssemblyQualifiedName() const;
@@ -50,9 +50,9 @@ namespace netlm {
 		bool IsByRef() const;
 		Type& GetElementType();
 
-		bool operator==(const Type& other) const { return _id == other._id; }
-		operator bool() const { return _id != -1; }
-		TypeId GetTypeId() const { return _id; }
+		bool operator==(const Type& other) const { return _handle == other._handle; }
+		operator bool() const { return _handle; }
+		ManagedHandle GetHandle() const { return _handle; }
 
 	public:
 		template<typename... TArgs>
@@ -113,11 +113,11 @@ namespace netlm {
 
 	//private:
 		ManagedObject CreateInstanceInternal(const void** arguments, size_t length) const;
-		void InvokeStaticMethodInternal(ManagedHandle methodId, const void** parameters, size_t length) const;
-		void InvokeStaticMethodRetInternal(ManagedHandle methodId, const void** parameters, size_t length, void* resultStorage) const;
+		void InvokeStaticMethodInternal(ManagedHandle methodHandle, const void** parameters, size_t length) const;
+		void InvokeStaticMethodRetInternal(ManagedHandle methodHandle, const void** parameters, size_t length, void* resultStorage) const;
 
 	private:
-		TypeId _id = -1;
+		ManagedHandle _handle{};
 		std::unique_ptr<Type> _baseType;
 		std::unique_ptr<Type> _elementType;
 

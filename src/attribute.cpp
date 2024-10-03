@@ -7,7 +7,7 @@ using namespace netlm;
 Type& Attribute::GetType() {
 	if (!_type) {
 		_type = std::make_unique<Type>();
-		Managed.GetAttributeTypeFptr(_handle, &_type->_id);
+		Managed.GetAttributeTypeFptr(_handle, &_type->_handle);
 	}
 
 	return *_type;
