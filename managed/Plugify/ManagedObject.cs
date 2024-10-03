@@ -14,11 +14,11 @@ internal static class ManagedObject
 		public readonly ManagedType[] Types;
 		public readonly int ParameterCount;
 
-		public MethodKey(string typeIdName, string name, ManagedType[] typeIds, int parameterCount)
+		public MethodKey(string typeHandleName, string name, ManagedType[] typeHandles, int parameterCount)
 		{
-			TypeName = typeIdName;
+			TypeName = typeHandleName;
 			Name = name;
-			Types = typeIds;
+			Types = typeHandles;
 			ParameterCount = parameterCount;
 		}
 
@@ -56,13 +56,13 @@ internal static class ManagedObject
 	internal static Dictionary<MethodKey, MethodInfo> CachedMethods = new Dictionary<MethodKey, MethodInfo>();*/
 
 	[UnmanagedCallersOnly]
-	private static unsafe nint CreateObject(int typeId, Bool32 weakRef, nint parameterPtr, ManagedType* parameterTypes, int parameterCount)
+	private static unsafe nint CreateObject(nint typeHandle, Bool32 weakRef, nint parameterPtr, ManagedType* parameterTypes, int parameterCount)
 	{
 		try
 		{
-			if (!TypeInterface.CachedTypes.TryGetValue(typeId, out var type))
+			if (!TypeInterface.CachedTypes.TryGetValue(typeHandle, out var type))
 			{
-				LogMessage($"Failed to find type with id '{typeId}'.", MessageLevel.Error);
+				LogMessage($"Failed to find type with id '{typeHandle}'.", MessageLevel.Error);
 				return nint.Zero;
 			}
 			
@@ -136,7 +136,7 @@ internal static class ManagedObject
 		}
 	}
 
-	/*private static unsafe MethodInfo? TryGetMethodInfo(Type typeId, string methodName, ManagedType* parameterTypes, int parameterCount, BindingFlags bindingFlags)
+	/*private static unsafe MethodInfo? TryGetMethodInfo(Type typeHandle, string methodName, ManagedType* parameterTypes, int parameterCount, BindingFlags bindingFlags)
 	{
 		MethodInfo? methodInfo = null;
 
@@ -151,13 +151,13 @@ internal static class ManagedObject
 			}
 		}
 
-		var methodKey = new MethodKey(typeId.FullName, methodName, parameterTypes, parameterCount);
+		var methodKey = new MethodKey(typeHandle.FullName, methodName, parameterTypes, parameterCount);
 
 		if (!CachedMethods.TryGetValue(methodKey, out methodInfo))
 		{
-			List<MethodInfo> methods = [..typeId.GetMethods(bindingFlags)];
+			List<MethodInfo> methods = [..typeHandle.GetMethods(bindingFlags)];
 
-			Type? baseType = typeId.BaseType;
+			Type? baseType = typeHandle.BaseType;
 			while (baseType != null)
 			{
 				methods.AddRange(baseType.GetMethods(bindingFlags));
@@ -168,7 +168,7 @@ internal static class ManagedObject
 
 			if (methodInfo == null)
 			{
-				LogMessage($"Failed to find method '{methodName}' for type {typeId.FullName} with {parameterCount} parameters.", Severity.Error);
+				LogMessage($"Failed to find method '{methodName}' for type {typeHandle.FullName} with {parameterCount} parameters.", Severity.Error);
 				return null;
 			}
 
@@ -179,17 +179,17 @@ internal static class ManagedObject
 	}*/
 
 	[UnmanagedCallersOnly]
-	private static void InvokeStaticMethod(int typeId, int methodId, nint parameterPtr, int parameterCount)
+	private static void InvokeStaticMethod(nint typeHandle, nint methodHandle, nint parameterPtr, int parameterCount)
 	{
 		try
 		{
-			if (!TypeInterface.CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!TypeInterface.CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 			{
-				LogMessage($"Cannot find method {methodId}.", MessageLevel.Error);
+				LogMessage($"Cannot find method {methodHandle}.", MessageLevel.Error);
 				return;
 			}
 			
-			/*if (!TypeInterface.CachedTypes.TryGetValue(typeId, out var type))
+			/*if (!TypeInterface.CachedTypes.TryGetValue(typeHandle, out var type))
 			{
 				LogMessage($"Cannot invoke method {methodInfo.Name} on a null type.", Severity.Error);
 				return;
@@ -209,17 +209,17 @@ internal static class ManagedObject
 	}
 
 	[UnmanagedCallersOnly]
-	private static void InvokeStaticMethodRet(int typeId, int methodId, nint parameterPtr, int parameterCount, nint resultStorage)
+	private static void InvokeStaticMethodRet(nint typeHandle, nint methodHandle, nint parameterPtr, int parameterCount, nint resultStorage)
 	{
 		try
 		{
-			if (!TypeInterface.CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!TypeInterface.CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 			{
-				LogMessage($"Cannot find method {methodId}.", MessageLevel.Error);
+				LogMessage($"Cannot find method {methodHandle}.", MessageLevel.Error);
 				return;
 			}
 			
-			/*if (!TypeInterface.CachedTypes.TryGetValue(typeId, out var type))
+			/*if (!TypeInterface.CachedTypes.TryGetValue(typeHandle, out var type))
 			{
 				LogMessage($"Cannot invoke method {methodInfo.Name} on a null type.", Severity.Error);
 				return;
@@ -250,13 +250,13 @@ internal static class ManagedObject
 	}
 
 	[UnmanagedCallersOnly]
-	private static void InvokeMethod(nint objectHandle, int methodId, nint parameterPtr, int parameterCount)
+	private static void InvokeMethod(nint objectHandle, nint methodHandle, nint parameterPtr, int parameterCount)
 	{
 		try
 		{
-			if (!TypeInterface.CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!TypeInterface.CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 			{
-				LogMessage($"Cannot find method {methodId}.", MessageLevel.Error);
+				LogMessage($"Cannot find method {methodHandle}.", MessageLevel.Error);
 				return;
 			}
 
@@ -283,13 +283,13 @@ internal static class ManagedObject
 	}
 
 	[UnmanagedCallersOnly]
-	private static void InvokeMethodRet(nint objectHandle, int methodId, nint parameterPtr, int parameterCount, nint resultStorage)
+	private static void InvokeMethodRet(nint objectHandle, nint methodHandle, nint parameterPtr, int parameterCount, nint resultStorage)
 	{
 		try
 		{
-			if (!TypeInterface.CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!TypeInterface.CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 			{
-				LogMessage($"Cannot find method {methodId}.", MessageLevel.Error);
+				LogMessage($"Cannot find method {methodHandle}.", MessageLevel.Error);
 				return;
 			}
 

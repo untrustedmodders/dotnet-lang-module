@@ -75,7 +75,7 @@ internal static class TypeInterface
 	}*/
 	
 	[UnmanagedCallersOnly]
-	private static unsafe void GetAssemblyTypes(int assemblyId, int* outTypeArrayPtr, int* outTypeCount)
+	private static unsafe void GetAssemblyTypes(Guid assemblyId, nint* outTypeArrayPtr, int* outTypeCount)
 	{
 		try
 		{
@@ -116,7 +116,7 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetTypeId(NativeString name, int* outType)
+	private static unsafe void GetType(NativeString name, nint* outType)
 	{
 		try
 		{
@@ -137,11 +137,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe NativeString GetFullTypeName(int typeId)
+	private static unsafe NativeString GetFullTypeName(nint typeHandle)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return NativeString.Null();
 
 			return type.FullName;
@@ -154,11 +154,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe NativeString GetAssemblyQualifiedName(int typeId)
+	private static unsafe NativeString GetAssemblyQualifiedName(nint typeHandle)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return NativeString.Null();
 
 			return type.AssemblyQualifiedName;
@@ -171,16 +171,16 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetBaseType(int typeId, int* outBaseType)
+	private static unsafe void GetBaseType(nint typeHandle, nint* outBaseType)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type) || outBaseType == null)
+			if (!CachedTypes.TryGetValue(typeHandle, out var type) || outBaseType == null)
 				return;
 
 			if (type.BaseType == null)
 			{
-				*outBaseType = 0;
+				*outBaseType = nint.Zero;
 				return;
 			}
 
@@ -193,11 +193,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static int GetTypeSize(int typeId)
+	private static int GetTypeSize(nint typeHandle)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return -1;
 
 			return Marshal.SizeOf(type);
@@ -210,11 +210,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe Bool32 IsTypeSubclassOf(int typeId0, int typeId1)
+	private static unsafe Bool32 IsTypeSubclassOf(nint typeHandle0, nint typeHandle1)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId0, out var type0) || !CachedTypes.TryGetValue(typeId1, out var type1))
+			if (!CachedTypes.TryGetValue(typeHandle0, out var type0) || !CachedTypes.TryGetValue(typeHandle1, out var type1))
 				return false;
 
 			return type0.IsSubclassOf(type1);
@@ -227,11 +227,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe Bool32 IsTypeAssignableTo(int typeId0, int typeId1)
+	private static unsafe Bool32 IsTypeAssignableTo(nint typeHandle0, nint typeHandle1)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId0, out var type0) || !CachedTypes.TryGetValue(typeId1, out var type1))
+			if (!CachedTypes.TryGetValue(typeHandle0, out var type0) || !CachedTypes.TryGetValue(typeHandle1, out var type1))
 				return false;
 
 			return type0.IsAssignableTo(type1);
@@ -244,11 +244,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe Bool32 IsTypeAssignableFrom(int typeId0, int typeId1)
+	private static unsafe Bool32 IsTypeAssignableFrom(nint typeHandle0, nint typeHandle1)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId0, out var type0) || !CachedTypes.TryGetValue(typeId1, out var type1))
+			if (!CachedTypes.TryGetValue(typeHandle0, out var type0) || !CachedTypes.TryGetValue(typeHandle1, out var type1))
 				return false;
 
 			return type0.IsAssignableFrom(type1);
@@ -261,11 +261,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe Bool32 IsTypeSZArray(int typeId)
+	private static unsafe Bool32 IsTypeSZArray(nint typeHandle)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return false;
 
 			return type.IsSZArray;
@@ -278,11 +278,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe Bool32 IsTypeByRef(int typeId)
+	private static unsafe Bool32 IsTypeByRef(nint typeHandle)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return false;
 
 			return type.IsByRef;
@@ -295,17 +295,17 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetElementType(int typeId, int* outElementTypeId)
+	private static unsafe void GetElementType(nint typeHandle, nint* outElementTypeId)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return;
 
 			var elementType = type.GetElementType();
 
 			if (elementType == null)
-				*outElementTypeId = 0;
+				*outElementTypeId = nint.Zero;
 
 			*outElementTypeId = CachedTypes.Add(elementType);
 		}
@@ -316,11 +316,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetTypeMethods(int typeId, int* outMethodArrayPtr, int* outMethodCount)
+	private static unsafe void GetTypeMethods(nint typeHandle, nint* outMethodArrayPtr, int* outMethodCount)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return;
 
 			MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
@@ -348,11 +348,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetTypeFields(int typeId, int* outFieldArrayPtr, int* outFieldCount)
+	private static unsafe void GetTypeFields(nint typeHandle, nint* outFieldArrayPtr, int* outFieldCount)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return;
 
 			FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
@@ -380,11 +380,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetTypeProperties(int typeId, int* outPropertyArrayPtr, int* outPropertyCount)
+	private static unsafe void GetTypeProperties(nint typeHandle, nint* outPropertyArrayPtr, int* outPropertyCount)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return;
 
 			PropertyInfo[] properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
@@ -412,11 +412,11 @@ internal static class TypeInterface
 	}
 	
 	[UnmanagedCallersOnly]
-	private static unsafe void GetTypeMethod(int typeId, NativeString name, int* outMethod)
+	private static unsafe void GetTypeMethod(nint typeHandle, NativeString name, nint* outMethod)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return;
 
 			MethodInfo method = type.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
@@ -436,11 +436,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetTypeField(int typeId, NativeString name, int* outField)
+	private static unsafe void GetTypeField(nint typeHandle, NativeString name, nint* outField)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return;
 
 			FieldInfo field = type.GetField(name, BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
@@ -460,11 +460,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetTypeProperty(int typeId, NativeString name, int* outProperty)
+	private static unsafe void GetTypeProperty(nint typeHandle, NativeString name, nint* outProperty)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return;
 
 			PropertyInfo property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
@@ -484,11 +484,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe Bool32 HasTypeAttribute(int typeId, int attributeTypeId)
+	private static unsafe Bool32 HasTypeAttribute(nint typeHandle, nint attributeTypeHandle)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type) || !CachedTypes.TryGetValue(attributeTypeId, out var attributeType))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type) || !CachedTypes.TryGetValue(attributeTypeHandle, out var attributeType))
 				return false;
 
 			return type.GetCustomAttribute(attributeType) != null;
@@ -501,11 +501,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetTypeAttributes(int typeId, int* outAttributeArrayPtr, int* outAttributeCount)
+	private static unsafe void GetTypeAttributes(nint typeHandle, nint* outAttributeArrayPtr, int* outAttributeCount)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return;
 
 			var attributes = type.GetCustomAttributes().ToImmutableArray();
@@ -534,11 +534,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe ManagedType GetTypeManagedType(int typeId)
+	private static unsafe ManagedType GetTypeManagedType(nint typeHandle)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return ManagedType.Invalid;
 
 			return new ManagedType(type, type.GetCustomAttributes(false));
@@ -551,11 +551,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe NativeString GetMethodInfoName(int methodId)
+	private static unsafe NativeString GetMethodInfoName(nint methodHandle)
 	{
 		try
 		{
-			if (!CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 				return NativeString.Null();
 
 			return methodInfo.Name;
@@ -568,11 +568,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe nint GetMethodInfoFunctionAddress(int methodId)
+	private static unsafe nint GetMethodInfoFunctionAddress(nint methodHandle)
 	{
 		try
 		{
-			if (!CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 				return nint.Zero;
 
 			return methodInfo.MethodHandle.GetFunctionPointer();
@@ -585,11 +585,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetMethodInfoReturnType(int methodId, int* outReturnType)
+	private static unsafe void GetMethodInfoReturnType(nint methodHandle, nint* outReturnType)
 	{
 		try
 		{
-			if (!CachedMethods.TryGetValue(methodId, out var methodInfo) || outReturnType == null)
+			if (!CachedMethods.TryGetValue(methodHandle, out var methodInfo) || outReturnType == null)
 				return;
 
 			*outReturnType = CachedTypes.Add(methodInfo.ReturnType);
@@ -601,11 +601,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetMethodInfoParameterTypes(int methodId, int* outParameterTypeArrayPtr, int* outParameterCount)
+	private static unsafe void GetMethodInfoParameterTypes(nint methodHandle, nint* outParameterTypeArrayPtr, int* outParameterCount)
 	{
 		try
 		{
-			if (!CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 				return;
 
 			ParameterInfo[] parameters = methodInfo.GetParameters();
@@ -632,11 +632,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetMethodInfoAttributes(int methodId, int* outAttributeArrayPtr, int* outAttributeCount)
+	private static unsafe void GetMethodInfoAttributes(nint methodHandle, nint* outAttributeArrayPtr, int* outAttributeCount)
 	{
 		try
 		{
-			if (!CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 				return;
 
 			var attributes = methodInfo.GetCustomAttributes().ToImmutableArray();
@@ -664,11 +664,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetMethodInfoParameterAttributes(int methodId, int parameterIndex, int* outAttributeArrayPtr, int* outAttributeCount)
+	private static unsafe void GetMethodInfoParameterAttributes(nint methodHandle, int parameterIndex, nint* outAttributeArrayPtr, int* outAttributeCount)
 	{
 		try
 		{
-			if (!CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 				return;
 
 			ParameterInfo[] parameters = methodInfo.GetParameters();
@@ -703,11 +703,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetMethodInfoReturnAttributes(int methodId, int* outAttributeArrayPtr, int* outAttributeCount)
+	private static unsafe void GetMethodInfoReturnAttributes(nint methodHandle, nint* outAttributeArrayPtr, int* outAttributeCount)
 	{
 		try
 		{
-			if (!CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 				return;
 
 			var attributes = methodInfo.ReturnTypeCustomAttributes.GetCustomAttributes(false).ToImmutableArray();
@@ -767,11 +767,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe TypeAccessibility GetMethodInfoAccessibility(int methodId)
+	private static unsafe TypeAccessibility GetMethodInfoAccessibility(nint methodHandle)
 	{
 		try
 		{
-			if (!CachedMethods.TryGetValue(methodId, out var methodInfo))
+			if (!CachedMethods.TryGetValue(methodHandle, out var methodInfo))
 				return TypeAccessibility.Internal;
 
 			return GetTypeAccessibility(methodInfo);
@@ -784,11 +784,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe NativeString GetFieldInfoName(int fieldId)
+	private static unsafe NativeString GetFieldInfoName(nint fieldHandle)
 	{
 		try
 		{
-			if (!CachedFields.TryGetValue(fieldId, out var fieldInfo))
+			if (!CachedFields.TryGetValue(fieldHandle, out var fieldInfo))
 				return NativeString.Null();
 
 			return fieldInfo.Name;
@@ -801,11 +801,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetFieldInfoType(int fieldId, int* outFieldType)
+	private static unsafe void GetFieldInfoType(nint fieldHandle, nint* outFieldType)
 	{
 		try
 		{
-			if (!CachedFields.TryGetValue(fieldId, out var fieldInfo))
+			if (!CachedFields.TryGetValue(fieldHandle, out var fieldInfo))
 				return;
 
 			*outFieldType = CachedTypes.Add(fieldInfo.FieldType);
@@ -817,11 +817,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe TypeAccessibility GetFieldInfoAccessibility(int fieldId)
+	private static unsafe TypeAccessibility GetFieldInfoAccessibility(nint fieldHandle)
 	{
 		try
 		{
-			if (!CachedFields.TryGetValue(fieldId, out var fieldInfo))
+			if (!CachedFields.TryGetValue(fieldHandle, out var fieldInfo))
 				return TypeAccessibility.Public;
 
 			return GetTypeAccessibility(fieldInfo);
@@ -834,11 +834,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetFieldInfoAttributes(int fieldId, int* outAttributeArrayPtr, int* outAttributeCount)
+	private static unsafe void GetFieldInfoAttributes(nint fieldHandle, nint* outAttributeArrayPtr, int* outAttributeCount)
 	{
 		try
 		{
-			if (!CachedFields.TryGetValue(fieldId, out var fieldInfo))
+			if (!CachedFields.TryGetValue(fieldHandle, out var fieldInfo))
 				return;
 
 			var attributes = fieldInfo.GetCustomAttributes().ToImmutableArray();
@@ -866,11 +866,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe NativeString GetPropertyInfoName(int propertyId)
+	private static unsafe NativeString GetPropertyInfoName(nint propertyHandle)
 	{
 		try
 		{
-			if (!CachedProperties.TryGetValue(propertyId, out var propertyInfo))
+			if (!CachedProperties.TryGetValue(propertyHandle, out var propertyInfo))
 				return NativeString.Null();
 
 			return propertyInfo.Name;
@@ -883,11 +883,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetPropertyInfoType(int propertyId, int* outPropertyType)
+	private static unsafe void GetPropertyInfoType(nint propertyHandle, nint* outPropertyType)
 	{
 		try
 		{
-			if (!CachedProperties.TryGetValue(propertyId, out var propertyInfo))
+			if (!CachedProperties.TryGetValue(propertyHandle, out var propertyInfo))
 				return;
 
 			*outPropertyType = CachedTypes.Add(propertyInfo.PropertyType);
@@ -899,11 +899,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetPropertyInfoAttributes(int propertyId, int* outAttributeArrayPtr, int* outAttributeCount)
+	private static unsafe void GetPropertyInfoAttributes(nint propertyHandle, nint* outAttributeArrayPtr, int* outAttributeCount)
 	{
 		try
 		{
-			if (!CachedProperties.TryGetValue(propertyId, out var propertyInfo))
+			if (!CachedProperties.TryGetValue(propertyHandle, out var propertyInfo))
 				return;
 
 			var attributes = propertyInfo.GetCustomAttributes().ToImmutableArray();
@@ -931,11 +931,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetAttributeFieldValue(int attributeId, NativeString fieldName, nint outValue)
+	private static unsafe void GetAttributeFieldValue(nint attributeHandle, NativeString fieldName, nint outValue)
 	{
 		try
 		{
-			if (!CachedAttributes.TryGetValue(attributeId, out var attribute))
+			if (!CachedAttributes.TryGetValue(attributeHandle, out var attribute))
 				return;
 
 			Type targetType = attribute.GetType();
@@ -956,11 +956,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe void GetAttributeType(int attributeId, int* outType)
+	private static unsafe void GetAttributeType(nint attributeHandle, nint* outType)
 	{
 		try
 		{
-			if (!CachedAttributes.TryGetValue(attributeId, out var attribute))
+			if (!CachedAttributes.TryGetValue(attributeHandle, out var attribute))
 				return;
 
 			*outType = CachedTypes.Add(attribute.GetType());
@@ -972,11 +972,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe Bool32 IsClass(int typeId)
+	private static unsafe Bool32 IsClass(nint typeHandle)
 	{
 		try
 		{
-			if (CachedTypes.TryGetValue(typeId, out var type))
+			if (CachedTypes.TryGetValue(typeHandle, out var type))
 				return type.IsClass;
 		}
 		catch (Exception e)
@@ -988,11 +988,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe Bool32 IsEnum(int typeId)
+	private static unsafe Bool32 IsEnum(nint typeHandle)
 	{
 		try
 		{
-			if (CachedTypes.TryGetValue(typeId, out var type))
+			if (CachedTypes.TryGetValue(typeHandle, out var type))
 				return type.IsEnum;
 		}
 		catch (Exception e)
@@ -1004,11 +1004,11 @@ internal static class TypeInterface
 	}
 
 	[UnmanagedCallersOnly]
-	private static unsafe Bool32 IsValueType(int typeId)
+	private static unsafe Bool32 IsValueType(nint typeHandle)
 	{
 		try
 		{
-			if (CachedTypes.TryGetValue(typeId, out var type))
+			if (CachedTypes.TryGetValue(typeHandle, out var type))
 				return type.IsValueType;
 		}
 		catch (Exception e)
@@ -1020,11 +1020,11 @@ internal static class TypeInterface
 	}
 	
 	[UnmanagedCallersOnly]
-	private static unsafe void GetEnumNames(int typeId, NativeString* outNameArrayPtr, int* outCount)
+	private static unsafe void GetEnumNames(nint typeHandle, NativeString* outNameArrayPtr, int* outCount)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return;
 
 			string[] names = Enum.GetNames(type);
@@ -1044,11 +1044,11 @@ internal static class TypeInterface
 	}
 		
 	[UnmanagedCallersOnly]
-	private static unsafe void GetEnumValues(int typeId, int* outValueArrayPtr, int* outCount)
+	private static unsafe void GetEnumValues(nint typeHandle, int* outValueArrayPtr, int* outCount)
 	{
 		try
 		{
-			if (!CachedTypes.TryGetValue(typeId, out var type))
+			if (!CachedTypes.TryGetValue(typeHandle, out var type))
 				return;
 
 			Array values = Enum.GetValues(type);

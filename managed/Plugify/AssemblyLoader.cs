@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 
@@ -11,14 +12,21 @@ internal enum AssemblyLoadStatus
 	Success, FileNotFound, FileLoadFailure, InvalidFilePath, InvalidAssembly, UnknownError
 }
 
+internal class AssemblyInstance(Assembly assembly)
+{
+	public Assembly Assembly { get; } = assembly;
+	public Guid Id { get; } = Guid.NewGuid();
+}
+
 internal static class AssemblyLoader
 {
 	private static readonly Dictionary<Type, AssemblyLoadStatus> AssemblyLoadErrorLookup = new();
-	private static readonly Dictionary<int, AssemblyLoadContext?> AssemblyContexts = new();
-	private static readonly Dictionary<int, Assembly> AssemblyCache = new();
-	private static readonly Dictionary<int, List<GCHandle>> AllocatedHandles = new();
+	private static readonly Dictionary<Guid, AssemblyLoadContext?> AssemblyContexts = new();
+	private static readonly Dictionary<string, AssemblyInstance> AssemblyCache = new();
+	private static readonly Dictionary<string, List<GCHandle>> AllocatedHandles = new();
 	private static AssemblyLoadStatus LastLoadStatus = AssemblyLoadStatus.Success;
-
+	
+	//private static int _contextCounter = 0;
 	private static readonly AssemblyLoadContext? PlugifyAssemblyLoadContext;
 
 	static AssemblyLoader()
@@ -39,25 +47,33 @@ internal static class AssemblyLoader
 	{
 		foreach (var assembly in PlugifyAssemblyLoadContext!.Assemblies)
 		{
-			int assemblyId = assembly.GetName().Name!.GetHashCode();
-			AssemblyCache.Add(assemblyId, assembly);
+			var assemblyName = assembly.GetName();
+			AssemblyCache.Add(assemblyName.Name!, new AssemblyInstance(assembly));
 		}
 	}
 
-	internal static bool TryGetAssembly(int assemblyId, out Assembly? assembly)
+	internal static bool TryGetAssembly(Guid guid, [MaybeNullWhen(false)] out Assembly assembly)
 	{
-		return AssemblyCache.TryGetValue(assemblyId, out assembly);
-	}
+		foreach (var assemblyInstance in AssemblyCache.Values)
+		{
+			if (assemblyInstance.Id == guid)
+			{
+				assembly = assemblyInstance.Assembly;
+				return true;
+			}
+		}
 
+		assembly = null;
+		return false;
+	}
+	
 	internal static Assembly? ResolveAssembly(AssemblyLoadContext? assemblyLoadContext, AssemblyName assemblyName)
 	{
 		try
 		{
-			int assemblyId = assemblyName.Name!.GetHashCode();
-			
-			if (AssemblyCache.TryGetValue(assemblyId, out var cachedAssembly))
+			if (AssemblyCache.TryGetValue(assemblyName.Name!, out var cachedAssembly))
 			{
-				return cachedAssembly;
+				return cachedAssembly.Assembly;
 			}
 
 			foreach (var loadContext in AssemblyLoadContext.All)
@@ -67,7 +83,7 @@ internal static class AssemblyLoader
 					if (assembly.GetName().Name != assemblyName.Name)
 						continue;
 
-					AssemblyCache.Add(assemblyId, assembly);
+					AssemblyCache.Add(assemblyName.Name!, new AssemblyInstance(assembly));
 					return assembly;
 				}
 			}
@@ -81,12 +97,12 @@ internal static class AssemblyLoader
 	}
 
 	[UnmanagedCallersOnly]
-	private static int CreateAssemblyLoadContext(NativeString name)
+	private static Guid CreateAssemblyLoadContext(NativeString name)
 	{
 		string? contextName = name;
 
 		if (contextName == null)
-			return -1;
+			return Guid.Empty;
 
 		var alc = new AssemblyLoadContext(contextName, true);
 		alc.Resolving += ResolveAssembly;
@@ -94,19 +110,18 @@ internal static class AssemblyLoader
 		{
 			foreach (var assembly in ctx.Assemblies)
 			{
-				var assemblyName = assembly.GetName();
-				int assemblyId = assemblyName.Name!.GetHashCode();
-				AssemblyCache.Remove(assemblyId);
+				string assemblyName = assembly.GetName().Name!;
+				AssemblyCache.Remove(assemblyName);
 			}
 		};
 
-		int contextId = contextName.GetHashCode();
+		Guid contextId = Guid.NewGuid();
 		AssemblyContexts.Add(contextId, alc);
 		return contextId;
 	}
 
 	[UnmanagedCallersOnly]
-	private static void UnloadAssemblyLoadContext(int contextId)
+	private static void UnloadAssemblyLoadContext(Guid contextId)
 	{
 		if (!AssemblyContexts.TryGetValue(contextId, out var alc))
 		{
@@ -123,9 +138,8 @@ internal static class AssemblyLoader
 		foreach (var assembly in alc.Assemblies)
 		{
 			var assemblyName = assembly.GetName();
-			int assemblyId = assemblyName.Name!.GetHashCode();
 
-			if (!AllocatedHandles.TryGetValue(assemblyId, out var handles))
+			if (!AllocatedHandles.TryGetValue(assemblyName.Name!, out var handles))
 			{
 				continue;
 			}
@@ -155,7 +169,7 @@ internal static class AssemblyLoader
 	}
 
 	[UnmanagedCallersOnly]
-	private static int LoadAssembly(int contextId, NativeString assemblyFilePath)
+	private static Guid LoadAssembly(Guid contextId, NativeString assemblyFilePath)
 	{
 		try
 		{
@@ -164,30 +178,31 @@ internal static class AssemblyLoader
 			if (string.IsNullOrEmpty(assemblyPath))
 			{
 				LastLoadStatus = AssemblyLoadStatus.InvalidFilePath;
-				return -1;
+				return Guid.Empty;
 			}
 
 			if (!File.Exists(assemblyPath))
 			{
 				LogMessage($"Failed to load assembly '{assemblyPath}', file not found.", MessageLevel.Error);
 				LastLoadStatus = AssemblyLoadStatus.FileNotFound;
-				return -1;
+				return Guid.Empty;
 			}
 
 			if (!AssemblyContexts.TryGetValue(contextId, out var alc))
 			{
-				LogMessage($"Failed to load assembly '{assemblyPath}', couldn't find AssemblyLoadContext with id {contextId}.", MessageLevel.Error);
+				LogMessage($"Failed to load assembly '{assemblyPath}', couldn't find AssemblyLoadContext with id '{contextId}'.", MessageLevel.Error);
 				LastLoadStatus = AssemblyLoadStatus.UnknownError;
-				return -1;
+				return Guid.Empty;
 			}
 
 			if (alc == null)
 			{
-				LogMessage($"Failed to load assembly '{assemblyPath}', AssemblyLoadContext with id {contextId} was null.", MessageLevel.Error);
+				LogMessage($"Failed to load assembly '{assemblyPath}', AssemblyLoadContext with id '{contextId}' was null.", MessageLevel.Error);
 				LastLoadStatus = AssemblyLoadStatus.UnknownError;
-				return -1;
+				return Guid.Empty;
 			}
 
+			LogMessage($"Loading assembly '{assemblyPath}'.", MessageLevel.Info);
 			Assembly assembly = alc.LoadFromAssemblyPath(assemblyPath);
 			
 			/*Assembly? assembly = null;
@@ -198,18 +213,17 @@ internal static class AssemblyLoader
 				assembly = alc.LoadFromStream(stream);
 			}*/
 
-			LogMessage($"Loading assembly '{assemblyPath}'", MessageLevel.Info);
 			var assemblyName = assembly.GetName();
-			int assemblyId = assemblyName.Name!.GetHashCode();
-			AssemblyCache.Add(assemblyId, assembly);
+			var assemblyInstance = new AssemblyInstance(assembly);
+			AssemblyCache.Add(assemblyName.Name!, assemblyInstance);
 			LastLoadStatus = AssemblyLoadStatus.Success;
-			return assemblyId;
+			return assemblyInstance.Id;
 		}
 		catch (Exception e)
 		{
 			AssemblyLoadErrorLookup.TryGetValue(e.GetType(), out LastLoadStatus);
 			HandleException(e);
-			return -1;
+			return Guid.Empty;
 		}
 	}
 
@@ -217,9 +231,9 @@ internal static class AssemblyLoader
 	private static AssemblyLoadStatus GetLastLoadStatus() => LastLoadStatus;
 
 	[UnmanagedCallersOnly]
-	private static NativeString GetAssemblyName(int assemblyId)
+	private static NativeString GetAssemblyName(Guid assemblyId)
 	{
-		if (!AssemblyCache.TryGetValue(assemblyId, out var assembly))
+		if (!TryGetAssembly(assemblyId, out var assembly))
 		{
 			LogMessage($"Couldn't get assembly name for assembly '{assemblyId}', assembly not in dictionary.", MessageLevel.Error);
 			return "";
@@ -232,12 +246,11 @@ internal static class AssemblyLoader
 	internal static void RegisterHandle(Assembly assembly, GCHandle handle)
 	{
 		var assemblyName = assembly.GetName();
-		int assemblyId = assemblyName.Name!.GetHashCode();
 
-		if (!AllocatedHandles.TryGetValue(assemblyId, out var handles))
+		if (!AllocatedHandles.TryGetValue(assemblyName.Name!, out var handles))
 		{
-			AllocatedHandles.Add(assemblyId, []);
-			handles = AllocatedHandles[assemblyId];
+			handles = [];
+			AllocatedHandles.Add(assemblyName.Name!, handles);
 		}
 
 		handles.Add(handle);

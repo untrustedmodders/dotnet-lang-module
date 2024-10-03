@@ -1,36 +1,44 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+using System.Reflection;
 
 namespace Plugify;
 
 internal class UniqueIdList<T>
 {
-	private readonly Dictionary<int, T> _objects = new();
+	private readonly Dictionary<nint, T> _objects = new();
 
-	public bool Contains(int id)
-	{
-		return _objects.ContainsKey(id);
-	}
-
-	public int Add(T? obj)
+	public nint Add(T? obj)
 	{
 		if (obj == null)
 		{
 			throw new ArgumentNullException(nameof(obj));
 		}
 
-		int hashCode = RuntimeHelpers.GetHashCode(obj);
-		_ = _objects.TryAdd(hashCode, obj);
-		return hashCode;
+		nint handle = GetRuntimeHandle(obj);
+		_ = _objects.TryAdd(handle, obj);
+		return handle;
 	}
 
-	public bool TryGetValue(int id, [MaybeNullWhen(false)] out T obj)
+	public bool TryGetValue(nint handle, [MaybeNullWhen(false)] out T obj)
 	{
-		return _objects.TryGetValue(id, out obj);
+		return _objects.TryGetValue(handle, out obj);
 	}
 
 	public void Clear()
 	{
 		_objects.Clear();
+	}
+
+	private static nint GetRuntimeHandle(object obj)
+	{
+		return obj switch
+		{
+			Type type => type.TypeHandle.Value,
+			MethodInfo method => method.MethodHandle.Value,
+			FieldInfo field => field.FieldHandle.Value,
+			PropertyInfo property => property.GetAccessors(true).First().MethodHandle.Value,
+			Attribute attribute => attribute.GetType().TypeHandle.Value,
+			_ => throw new NotSupportedException($"Type {nameof(obj.GetType)} not supported for runtime handle")
+		};
 	}
 }
