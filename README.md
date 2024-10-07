@@ -57,7 +57,23 @@ The C# (.NET) Language Module for Plugify facilitates the development of plugins
 ## Example
 
 ```c#
+﻿using Plugify;
 
+namespace ExamplePlugin
+{
+    public class SamplePlugin : Plugin
+    {
+        public void OnStart()
+        {
+            Console.WriteLine(".NET: OnStart");
+        }
+    
+        public void OnEnd()
+        {
+            Console.WriteLine(".NET: OnEnd");
+        }
+    }
+}
 ```
 
 ## Documentation
