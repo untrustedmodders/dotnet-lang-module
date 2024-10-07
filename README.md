@@ -20,6 +20,16 @@ The C# (.NET) Language Module for Plugify facilitates the development of plugins
 
 ### Installation
 
+#### Option 1: Install via Plugify Plugin Manager
+
+You can install the C++ Language Module using the Plugify plugin manager by running the following command:
+
+```bash
+plugify install plugify-module-dotnet
+```
+
+#### Option 2: Manual Installation
+
 1. Clone this repository:
 
     ```bash
@@ -44,7 +54,7 @@ The C# (.NET) Language Module for Plugify facilitates the development of plugins
 
 2. **Write C# Plugins**
 
-   Develop your plugins in C# using the Plugify C# API. Refer to the [Plugify C# Plugin Guide](https://docs.plugify.io/csharp-plugin-guide) for detailed instructions.
+   Develop your plugins in C# using the Plugify C# API. Refer to the [Plugify C# Plugin Guide](https://untrustedmodders.github.io/en/developing/plugins/first-plugin) for detailed instructions.
 
 3. **Build and Install Plugins**
 
@@ -78,7 +88,7 @@ namespace ExamplePlugin
 
 ## Documentation
 
-For comprehensive documentation on writing plugins in C# (.NET) using the Plugify framework, refer to the [Plugify Documentation](https://docs.plugify.io).
+For comprehensive documentation on writing plugins in C# (.NET) using the Plugify framework, refer to the [Plugify Documentation](https://untrustedmodders.github.io).
 
 ## Contributing
 
